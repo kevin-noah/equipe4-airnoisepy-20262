@@ -1,4 +1,5 @@
 # Responsable : Kevin
+# status      : in progress
 # Classe NoiseCalculator — calcul SEL + Lden par récepteur (ECAC Doc 29), grille 400x400
 
 import math

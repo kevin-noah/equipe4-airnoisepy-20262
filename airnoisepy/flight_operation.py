@@ -1,4 +1,5 @@
 # Responsable : Kevin
+# Status      : done
 # Classe FlightOperation — trajectoire 3D en segments, classification départ/arrivée, profil de poussée
 
 import math
