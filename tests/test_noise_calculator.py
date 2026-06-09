@@ -9,8 +9,8 @@ import os
 import numpy as np
 import pytest
 
-from airnoisepy.flight_operation import FlightOperation
-from airnoisepy.noise_calculator import NoiseCalculator
+from airnoisepy.flight.operation import FlightOperation
+from airnoisepy.noise.calculator import NoiseCalculator
 
 # ---------------------------------------------------------------------------
 # Mock ANPDatabase — table synthétique A320 (formule du doc de tâches)

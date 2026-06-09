@@ -6,7 +6,7 @@ import math
 import os
 import pytest
 
-from airnoisepy.flight_operation import FlightOperation
+from airnoisepy.flight.operation import FlightOperation
 
 # ---------------------------------------------------------------------------
 # Fixtures
