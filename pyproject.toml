@@ -6,7 +6,6 @@
 # setuptools est l'outil classique utilisé pour créer
 # des packages Python installables.
 
-
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
@@ -64,8 +63,7 @@ dependencies = [
     "scipy>=1.10",
     "matplotlib>=3.7",
     "folium>=0.14",
-    "requests>=2.28",
-    "imageio>=2.34"
+    "requests>=2.28"
 ]
 
 
