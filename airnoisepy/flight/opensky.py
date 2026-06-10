@@ -1,7 +1,10 @@
 """
 airnoisepy.flight.opensky : Récupération et nettoyage des trajectoires ADS-B depuis OpenSky Network
 Responsable : Syndia Jean
-Référence : opensky-network.org et ECAC Doc 29, vol 2 - segmentation de trajectoire
+Référence :
+- https://openskynetwork.github.io/opensky-api/python.html
+- https://openskynetwork.github.io/opensky-api/python.html#opensky_api.FlightData
+- opensky-network.org et ECAC Doc 29, vol 2 - segmentation de trajectoire
 """
 import os
 import requests
@@ -118,6 +121,77 @@ class OpenSkyFetcher:
                 seen.add(key)
                 unique.append(flight)
         return unique
+
+    def fetch_track(self, icao24, time):
+        """
+        Récupère la trajectoire complète d'un avion pour un vol donné.
+
+        Paramètres:
+        - icao24 : str (Identifiant hexadécimal de l'avion ex: 'c07e32' pour Air Canada)
+        - time : int (Timestamp UNIX du vol - dans la fenêtre du vol, pas nécessairement exactement à firstSeen)
+
+        Retourne:
+        - dict: Trajectoire brute au format OpenSky :
+                {'icao24': ..., 'callsign': ..., 'path': [[time, latitude, longitude, baro_altitude, true_track, on_ground], ...]}
+            où :
+              time   = timestamp UNIX
+              latitude = latitude (degrés)
+              longitude = longitude (degrés)
+              baro_altitude = altitude barométrique (mètres)
+              true_track = cap magnétique (degrés)
+              on_ground = True si l'avion est au sol
+
+        Exemple:
+        - track = fetcher.fetch_track('c07e32', 1748649600)
+        - print(f"{len(track['path'])} points de trajectoire")
+        """
+        authentification = (self.username, self.password) if self.username else None
+        parametres = {"icao24": icao24, "time": time}
+        return self._api_get("/tracks/all", parametres, authentification)
+
+    def fetch_realtime(self, bbox=(45.30, 45.65, -74.05, -73.40)):
+        """
+        Récupère les avions en vol en temps réel dans la zone YUL.
+
+        Ne nécessite pas de compte OpenSky (données publiques).
+
+        Paramètres:
+        bbox : tuple de 4 float
+            Boîte englobante (lat_min, lat_max, lon_min, lon_max).
+            Valeur par défaut centrée sur YUL, rayon ~25 km.
+
+        Retourne:
+        list[dict] : Liste d'avions en vol, chaque dict contient :
+                    {'icao24': ..., 'callsign': ..., 'path': [[time, latitude, longitude, baro_altitude, true_track, on_ground], ...]}
+
+        Exemple:
+        - avions = fetcher.fetch_realtime()
+        - print(f"{len(avions)} avions en vol autour de YUL")
+        """
+        latitude_min, latitude_max, longitude_min, longitude_max = bbox
+        parametres = {"latitude_min": latitude_min, "latitude_max": latitude_max,
+                      "longitude_min": longitude_min, "longitude_max": longitude_max}
+        response = self._api_get("/states/all", parametres, authentification=None)
+
+        states = response.get("states", []) if isinstance(response, dict) else []
+        avions = []
+        for state in states:
+            if state is None or len(state) < 9:
+                continue
+            avions.append({
+                "icao24": state[0],
+                "callsign": (state[1] or "").strip(),
+                "longitude": state[5],
+                "latitude": state[6],
+                "baro_altitude": state[13] if len(state) > 13 else None,
+                "on_ground": state[8],
+                "velocity": state[9] if len(state) > 9 else None,
+                "true_track": state[10] if len(state) > 10 else None,
+            })
+        return avions
+
+
+
 
 #Méthodes privées
 
