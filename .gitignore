@@ -12,6 +12,9 @@ __pycache__/
 # Fichiers locaux générés par PyCharm.
 .idea/
 
+# Métadonnées de packaging générées automatiquement.
+*.egg-info/
+
 # Fichier local pouvant contenir des mots de passe ou clés API.
 .env
 
