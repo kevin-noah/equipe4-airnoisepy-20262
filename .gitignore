@@ -1,0 +1,19 @@
+# Environnement virtuel local.
+# Il ne doit pas être envoyé sur GitHub.
+.venv/
+
+# Fichiers temporaires générés automatiquement par Python.
+__pycache__/
+*.pyc
+
+# Cache généré par pytest.
+.pytest_cache/
+
+# Fichiers locaux générés par PyCharm.
+.idea/
+
+# Fichier local pouvant contenir des mots de passe ou clés API.
+.env
+
+# Dossier de résultats générés automatiquement.
+results/
