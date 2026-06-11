@@ -5,6 +5,9 @@
 # pour construire et installer le package.
 # setuptools est l'outil classique utilisé pour créer
 # des packages Python installables.
+# Responsable : Laura
+# Configuration du package Python (métadonnées, dépendances, build system)
+
 
 [build-system]
 requires = ["setuptools>=61.0"]
