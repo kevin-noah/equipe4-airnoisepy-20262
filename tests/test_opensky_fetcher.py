@@ -169,3 +169,37 @@ class TestFletchFlights:
             fetcher.fetch_flights("CYUL", 0, 86_400)
             auth = mock_get.call_args[1]["auth"]
             assert auth is None
+
+#Tests fetch_track
+
+class TestFetchTrack:
+
+    def test_retourne_trajectoire(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = TRACK_VALIDE
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock):
+            result = fetcher.fetch_track("c07e32", 1748649600)
+        assert result["icao24"] == "c07e32"
+        assert len(result["path"]) == 6
+
+    def test_parametres_transmis_a_lapi(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = TRACK_VALIDE
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock) as mock_get:
+            fetcher.fetch_track("c07e32", 1748649600)
+            params = mock_get.call_args[1]["params"]
+            assert params["icao24"] == "c07e32"
+            assert params["time"] == 1748649600
+
+    def test_endpoint_correct(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = TRACK_VALIDE
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock) as mock_get:
+            fetcher.fetch_track("c07e32", 1748649600)
+            url = mock_get.call_args[0][0]
+            assert "/tracks/all" in url
+
+#Tests fetch_realtime
