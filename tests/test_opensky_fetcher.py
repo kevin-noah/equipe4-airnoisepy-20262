@@ -8,6 +8,7 @@ from airnoisepy.flight.opensky import (OpenSkyFetcher,
                                        MAX_ALTITUDE_AGL_M,
                                        YUL_LATITUDE_KM,
                                        YUL_LONGITUDE_KM)
+from unittest.mock import patch, MagicMock
 
 #Données de test
 
@@ -68,4 +69,28 @@ def fetcher_auth():
     return OpenSkyFetcher(username="username", password="test123")
 
 #Test init
+
+class TestInit:
+
+    def test_sans_identifiants(self, fetcher):
+        assert fetcher.username is None
+        assert fetcher.password is None
+        assert fetcher.dem is None
+
+    def test_avec_identifiants(self, fetcher_auth):
+        assert fetcher_auth.username == "username"
+        assert fetcher_auth.password == "test123"
+
+    def test_dem_path_inexistant(self):
+        "doit annoncer file not found"
+        with pytest.raises(FileNotFoundError):
+            OpenSkyFetcher(dem_path="chemin/inexistant/yul_dem.tif")
+
+    def test_rasterio_absent(self):
+        with patch("airnoisepy.flight.opensky.RASTERIO_AVAILABLE", False):
+            with pytest.raises(ImportError):
+                OpenSkyFetcher(dem_path="yul_dem.tif")
+
+    def test_base_url_correcte(self, fetcher):
+        assert fetcher.BASE_URL == "https://opensky-network.org/api"
 
