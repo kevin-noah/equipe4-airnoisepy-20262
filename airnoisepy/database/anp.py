@@ -275,3 +275,53 @@ class ANPDatabase:
         df = df.copy()
         df["aircraft_id"] = df["aircraft_id"].apply(_map_one)
         return df
+
+
+
+    # ------------------------------------------------------------------ #
+    #  Construction du cache d'interpolateurs                              #
+    # ------------------------------------------------------------------ #
+
+    def _build_interpolators(self):
+
+        #Pré-construit un RegularGridInterpolator par combinaison
+        #(aircraft_id, operation, metric) pour accélérer interpolate().
+
+        self._interpolators = {}
+
+        dist_cols = [f"{d}m" for d in self.DISTANCES_M if f"{d}m" in self._data.columns]
+        dist_values = np.array([int(c.replace("m", "")) for c in dist_cols], dtype=float)
+
+        group_cols = [c for c in ["aircraft_id", "operation", "metric"]
+                      if c in self._data.columns]
+
+        for key, group in self._data.groupby(group_cols):
+            if not isinstance(key, tuple):
+                key = (key,)
+
+            thrust_vals = np.array(sorted(group["thrust"].unique()), dtype=float)
+            levels = np.zeros((len(thrust_vals), len(dist_values)))
+
+            for i, t in enumerate(thrust_vals):
+                row = group[group["thrust"] == t]
+                if row.empty:
+                    levels[i, :] = np.nan
+                else:
+                    levels[i, :] = row[dist_cols].values[0].astype(float)
+
+            # Interpoler les NaN résiduels sur l'axe distance
+            for i in range(len(thrust_vals)):
+                nans = np.isnan(levels[i])
+                if nans.any() and not nans.all():
+                    xp = dist_values[~nans]
+                    fp = levels[i, ~nans]
+                    levels[i, nans] = np.interp(dist_values[nans], xp, fp)
+
+            interp = RegularGridInterpolator(
+                (thrust_vals, dist_values),
+                levels,
+                method="linear",
+                bounds_error=False,
+                fill_value=None,
+            )
+            self._interpolators[key] = (interp, thrust_vals, dist_values)
