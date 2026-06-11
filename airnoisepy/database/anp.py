@@ -149,3 +149,71 @@ class ANPDatabase:
         self._data = pd.DataFrame(records)
         self._build_interpolators()
 
+# ------------------------------------------------------------------
+#  Nettoyage et validation                                             #
+# ------------------------------------------------------------------ #
+
+    def _clean_data(self, df):
+        #Nettoie le DataFrame brut issu du fichier Excel ANP Eurocontrol v9.
+
+        #Étapes :
+        #1. Renommer les colonnes vers le format interne normalisé
+        #2. Nettoyer les espaces parasites dans les valeurs texte
+        #3. Convertir Op Mode 'A'/'D' → 'arrival'/'departure'
+        #4. Appliquer _map_icao_codes() sur NPD_ID → aircraft_id
+        #5. Renommer les colonnes de distance L_Xft → Ym (pieds→mètres)
+        #6. Interpoler les NaN dans les colonnes de distance
+        #7. Supprimer les lignes entièrement vides
+        #8. Filtrer sur métrique SEL uniquement (pour cohérence interne)
+
+        #Paramètre
+        #df : pd.DataFrame — brut depuis Excel
+
+        #Retourne
+        #pd.DataFrame nettoyé avec colonnes :
+        #    aircraft_id | operation | metric | thrust | 61m | 122m | … | 7620m
+
+        df = df.copy()
+
+        # 1. Renommer les colonnes Eurocontrol → noms internes
+        col_rename = {
+            "NPD_ID":         "aircraft_id",
+            "Noise Metric":   "metric",
+            "Op Mode":        "operation",
+            "Power Setting":  "thrust",
+        }
+        df = df.rename(columns=col_rename)
+
+        # 2. Nettoyer les espaces parasites dans les colonnes texte
+        for col in ["aircraft_id", "metric", "operation"]:
+            if col in df.columns:
+                df[col] = df[col].astype(str).str.strip()
+
+        # 3. Convertir Op Mode 'A'/'D' → 'arrival'/'departure'
+        op_map = {"A": "arrival", "D": "departure"}
+        df["operation"] = df["operation"].map(op_map).fillna(df["operation"])
+
+        # 4. Mapping NPD_ID → code OACI court
+        df = self._map_icao_codes(df)
+
+        # 5. Renommer colonnes de distance L_Xft → Ym (pieds → mètres)
+        dist_rename = {}
+        for ft_col, m_val in zip(self.FT_COLS, self.DISTANCES_M):
+            if ft_col in df.columns:
+                dist_rename[ft_col] = f"{m_val}m"
+        df = df.rename(columns=dist_rename)
+
+        # 6. Supprimer les lignes entièrement vides
+        df = df.dropna(how="all")
+
+        # 7. Interpoler les NaN dans les colonnes de distance
+        dist_cols = [f"{d}m" for d in self.DISTANCES_M if f"{d}m" in df.columns]
+        if dist_cols:
+            df[dist_cols] = df[dist_cols].interpolate(axis=1, limit_direction="both")
+
+        # 8. Conserver seulement SEL (métrique principale ECAC Doc 29)
+        if "metric" in df.columns:
+            df = df[df["metric"] == "SEL"].copy()
+
+        df = df.reset_index(drop=True)
+        return df
