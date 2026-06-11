@@ -217,3 +217,61 @@ class ANPDatabase:
 
         df = df.reset_index(drop=True)
         return df
+    #Validation
+    def _validate_monotonicity(self, df):
+        #Vérifie que chaque courbe NPD est décroissante avec la distance.
+
+        #Émet un UserWarning pour chaque courbe non monotone
+        #(erreur de mesure ou de saisie dans les données sources).
+
+        #Paramètre
+        #df : pd.DataFrame nettoyé (colonnes Ym)
+
+        dist_cols = [f"{d}m" for d in self.DISTANCES_M if f"{d}m" in df.columns]
+        if not dist_cols:
+            return
+
+        for _, row in df.iterrows():
+            levels = row[dist_cols].values.astype(float)
+            if not all(levels[i] >= levels[i + 1] for i in range(len(levels) - 1)):
+                aircraft = row.get("aircraft_id", "?")
+                op       = row.get("operation",   "?")
+                thrust   = row.get("thrust",       "?")
+                warnings.warn(
+                    f"Courbe NPD non monotone — aircraft={aircraft}, "
+                    f"op={op}, thrust={thrust} lbs. "
+                    "Vérifiez les données sources.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+
+    def _map_icao_codes(self, df):
+        """
+        Normalise aircraft_id (colonne NPD_ID) vers des codes OACI courts.
+
+        Exemples :
+            'A320-250N' → 'A320'
+            '747400RN'  → 'B744'
+            'ERJ190-300'→ 'E290'
+
+        Paramètre
+        ---------
+        df : pd.DataFrame avec colonne aircraft_id
+
+        Retourne
+        --------
+        pd.DataFrame avec aircraft_id normalisé
+        """
+        def _map_one(name):
+            key = str(name).strip().lower()
+            if key in self.NPD_ID_MAP:
+                return self.NPD_ID_MAP[key]
+            # Correspondance partielle
+            for npd_id, code in self.NPD_ID_MAP.items():
+                if npd_id in key or key in npd_id:
+                    return code
+            return str(name).strip()
+
+        df = df.copy()
+        df["aircraft_id"] = df["aircraft_id"].apply(_map_one)
+        return df
