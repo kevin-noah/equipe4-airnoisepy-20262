@@ -94,3 +94,78 @@ class TestInit:
     def test_base_url_correcte(self, fetcher):
         assert fetcher.BASE_URL == "https://opensky-network.org/api"
 
+
+#Test fetch_flights
+
+class TestFletchFlights:
+
+    def test_time_superieure_7_jours(self, fetcher):
+        with pytest.raises(ValueError, match="7 jours"):
+            fetcher.fetch_flights("CYUL", 0, 8 * 86400)
+
+    def test_fenetre_exactement_7_jours(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = []
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock):
+            result = fetcher.fetch_flights("CYUL", 0, 7 * 86400)
+        assert result == []
+
+    def test_fusion_arrivees_et_departs(self, fetcher):
+        vol_a = {"icao24": "c07e32", "firstSeen": 1000, "callsign": "ACA750"}
+        vol_d = {"icao24": "c04b3a", "firstSeen": 2000, "callsign": "WJA100"}
+
+        mock_arr = MagicMock()
+        mock_arr.json.return_value = [vol_a]
+        mock_arr.raise_for_status = MagicMock()
+
+        mock_dep = MagicMock()
+        mock_dep.json.return_value = [vol_d]
+        mock_dep.raise_for_status = MagicMock()
+
+        with patch("requests.get", side_effect=[mock_arr, mock_dep]):
+            result = fetcher.fetch_flights("CYUL", 0, 86_400)
+
+        assert len(result) == 2
+
+    def test_deduplication_doublons(self, fetcher):
+        vol = {"icao24": "c07e32", "firstSeen": 1000, "callsign": "ACA750"}
+
+        mock_arr = MagicMock()
+        mock_arr.json.return_value = [vol]
+        mock_arr.raise_for_status = MagicMock()
+
+        mock_dep = MagicMock()
+        mock_dep.json.return_value = [vol]  # même vol dans les deux listes
+        mock_dep.raise_for_status = MagicMock()
+
+        with patch("requests.get", side_effect=[mock_arr, mock_dep]):
+            result = fetcher.fetch_flights("CYUL", 0, 86_400)
+
+        assert len(result) == 1
+
+    def test_retourne_liste_vide_si_aucun_vol(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = []
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock):
+            result = fetcher.fetch_flights("CYUL", 0, 86_400)
+        assert result == []
+
+    def test_identifiants_transmis_a_api(self, fetcher_auth):
+        mock = MagicMock()
+        mock.json.return_value = []
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock) as mock_get:
+            fetcher_auth.fetch_flights("CYUL", 0, 86_400)
+            auth = mock_get.call_args[1]["auth"]
+            assert auth == ("username", "test123")
+
+    def test_sans_identifiants_auth_none(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = []
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock) as mock_get:
+            fetcher.fetch_flights("CYUL", 0, 86_400)
+            auth = mock_get.call_args[1]["auth"]
+            assert auth is None
