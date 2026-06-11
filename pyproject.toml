@@ -64,7 +64,8 @@ dependencies = [
     "scipy>=1.10",
     "matplotlib>=3.7",
     "folium>=0.14",
-    "requests>=2.28"
+    "requests>=2.28",
+    "imageio>=2.34"
 ]
 
 
