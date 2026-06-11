@@ -9,7 +9,9 @@ CSV, carte HTML, animation et rapport de validation.
 """
 
 from pathlib import Path
+
 import pandas as pd
+import folium
 
 class ResultsExporter:
     """
@@ -110,6 +112,96 @@ class ResultsExporter:
         # Export du DataFrame vers un fichier CSV.
         # index=False évite d'ajouter une colonne d'index inutile.
         df.to_csv(output_path, index=False)
+
+        # Retourne le chemin du fichier sous forme de texte.
+        return str(output_path)
+
+    def export_map(self, noise_levels, receptor_grid, output_path=None):
+        """
+        Exporte les niveaux de bruit sur une carte HTML interactive.
+
+        Cette méthode crée une carte interactive avec Folium. Chaque récepteur
+        est représenté par un marqueur circulaire placé à sa latitude et sa
+        longitude. La couleur du marqueur dépend du niveau de bruit Lden.
+
+        :param noise_levels: Niveaux de bruit calculés, en dB(A).
+        :type noise_levels: list or numpy.ndarray
+        :param receptor_grid: Coordonnées des récepteurs au sol sous la forme
+            [(latitude, longitude), ...].
+        :type receptor_grid: list or numpy.ndarray
+        :param output_path: Chemin optionnel du fichier HTML à créer. Si aucune
+            valeur n'est fournie, le fichier est créé dans le dossier de sortie.
+        :type output_path: str or None
+        :return: Chemin du fichier HTML généré.
+        :rtype: str
+        :raises ValueError: Si le nombre de niveaux de bruit ne correspond pas
+            au nombre de récepteurs.
+        """
+
+        # Vérification que chaque niveau de bruit correspond à un récepteur.
+        if len(noise_levels) != len(receptor_grid):
+            raise ValueError(
+                "Le nombre de niveaux de bruit doit correspondre "
+                "au nombre de récepteurs."
+            )
+
+        # Si aucun chemin de sortie n'est fourni, on sauvegarde la carte
+        # dans le dossier de sortie par défaut.
+        if output_path is None:
+            output_path = self.output_dir / "noise_map.html"
+        else:
+            output_path = Path(output_path)
+
+        # Création du dossier parent si nécessaire.
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Calcul du centre de la carte.
+        # On prend la moyenne des latitudes et longitudes des récepteurs.
+        latitudes = [point[0] for point in receptor_grid]
+        longitudes = [point[1] for point in receptor_grid]
+
+        center_latitude = sum(latitudes) / len(latitudes)
+        center_longitude = sum(longitudes) / len(longitudes)
+
+        # Création de la carte Folium centrée sur la zone étudiée.
+        noise_map = folium.Map(
+            location=[center_latitude, center_longitude],
+            zoom_start=11,
+            tiles="OpenStreetMap",
+        )
+
+        # Ajout des récepteurs sur la carte.
+        for receptor, noise_level in zip(receptor_grid, noise_levels):
+            latitude = receptor[0]
+            longitude = receptor[1]
+
+            # Choix de la couleur selon le niveau sonore.
+            # Ces seuils sont cohérents avec les cartes de bruit Lden :
+            # vert  : bruit faible
+            # orange: bruit modéré
+            # rouge : bruit élevé
+            if noise_level < 55:
+                color = "green"
+            elif noise_level < 65:
+                color = "orange"
+            else:
+                color = "red"
+
+            # Création d'un marqueur circulaire.
+            # radius contrôle la taille du point affiché.
+            # popup affiche le niveau de bruit lorsqu'on clique sur le point.
+            folium.CircleMarker(
+                location=[latitude, longitude],
+                radius=5,
+                color=color,
+                fill=True,
+                fill_color=color,
+                fill_opacity=0.7,
+                popup=f"Lden : {noise_level:.2f} dB(A)",
+            ).add_to(noise_map)
+
+        # Sauvegarde de la carte dans un fichier HTML.
+        noise_map.save(output_path)
 
         # Retourne le chemin du fichier sous forme de texte.
         return str(output_path)
