@@ -201,7 +201,7 @@ class TestAggregateSel:
 
     def test_coherence_formule(self):
         levels = [65.0, 68.0, 62.0]
-        expected = 10 * math.log10(sum(10 ** (l / 10) for l in levels))
+        expected = 10 * math.log10(sum(10 ** (lvl / 10) for lvl in levels))
         assert NoiseCalculator._aggregate_sel(levels) == pytest.approx(expected, abs=0.01)
 
 

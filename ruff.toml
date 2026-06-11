@@ -1,0 +1,5 @@
+# Configuration ruff (lint) — utilisée par le CI GitHub Actions
+
+[lint.per-file-ignores]
+# Import conditionnel volontaire (try/except pour tester la disponibilité)
+"airnoisepy/flight/opensky.py" = ["F401"]

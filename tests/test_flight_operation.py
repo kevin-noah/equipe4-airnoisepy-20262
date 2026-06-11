@@ -2,7 +2,6 @@
 # Tests unitaires pour FlightOperation
 
 import json
-import math
 import os
 import pytest
 
