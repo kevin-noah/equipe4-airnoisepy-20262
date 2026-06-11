@@ -18,8 +18,10 @@ def _make_point(time=0, latitude=45.47, longitude=-73.74, altitude=500.0, true_t
         "time": time,
         "latitude": latitude,
         "longitude": longitude,
-        "base_altitude": altitude,
-        "true_track": true_track,}
+        "baro_altitude": altitude,
+        "true_track": true_track,
+        "on_ground": on_ground,
+        "velocity": None,}
 
 def _make_track(path, icao24="c07e32", callsign="ACA750"):
     """Construit un dictionnaire de track_data pour les tests"""
@@ -401,3 +403,106 @@ class TestToFlightOperation:
                 fetcher.to_flight_operation("c07e32", TRACK_VALIDE)
                 format_passe = mock_class.from_opensky.call_args[0][0]
         assert format_passe["callsign"] == "ACA750"
+
+
+#Tests Méthodes privées
+
+#Test _remove_outliers
+
+class TestRemoveOutliers:
+
+    def test_supprime_altitude_tres_haute(self, fetcher):
+        points = [_make_point(i, altitude=500.0) for i in range(20)]
+        points[10] = _make_point(10, altitude=99999.0)
+        result = fetcher._remove_outliers(points)
+        altitudes = [p["baro_altitude"] for p in result]
+        assert 99999.0 not in altitudes
+
+    def test_conserve_trajectoire_normale(self, fetcher):
+        points = [_make_point(i, altitude=float(500 + i * 5)) for i in range(10)]
+        result = fetcher._remove_outliers(points)
+        assert len(result) == len(points)
+
+    def test_retourne_intact_si_moins_de_window_points(self, fetcher):
+        points = [_make_point(i) for i in range(3)]
+        result = fetcher._remove_outliers(points, window=5)
+        assert result == points
+
+    def test_trajectoire_plate_conservee(self, fetcher):
+        points = [_make_point(i, altitude=500.0) for i in range(10)]
+        result = fetcher._remove_outliers(points)
+        assert len(result) == 10
+
+    def test_altitude_negative_aberrante_supprimee(self, fetcher):
+        points = [_make_point(i, altitude=500.0) for i in range(20)]
+        points[10] = _make_point(10, altitude=-9999.0)  # outlier négatif
+        result = fetcher._remove_outliers(points)
+        altitudes = [p["baro_altitude"] for p in result]
+        assert -9999.0 not in altitudes
+
+
+# Test _interpolate_gaps
+
+class TestInterpolateGaps:
+
+    def _pts(self, t1, t2, alt1=900.0, alt2=800.0):
+        return [
+            {"time": t1, "latitude": 45.50, "longitude": -73.80,
+             "baro_altitude": alt1, "true_track": 240.0,
+             "on_ground": False, "velocity": 0.0},
+            {"time": t2, "latitude": 45.48, "longitude": -73.78,
+             "baro_altitude": alt2, "true_track": 242.0,
+             "on_ground": False, "velocity": 0.0},
+        ]
+
+    def test_trou_court_interpole(self, fetcher):
+        points = self._pts(0, 10)
+        result = fetcher._interpolate_gaps(points, max_gaps=10)
+        assert len(result) > 2
+
+    def test_trou_long_non_interpole(self, fetcher):
+        points = self._pts(0, 30)
+        result = fetcher._interpolate_gaps(points, max_gaps=10)
+        assert len(result) == 2
+
+    def test_gap_zero_pas_de_doublon(self, fetcher):
+        points = self._pts(0, 0)
+        result = fetcher._interpolate_gaps(points)
+        assert len(result) == 2
+
+    def test_interpolation_lineaire_latitude(self, fetcher):
+        points = [
+            {"time": 0, "latitude": 45.00, "longitude": -73.00,
+             "baro_altitude": 1000.0, "true_track": 0.0,
+             "on_ground": False, "velocity": 0.0},
+            {"time": 10, "latitude": 45.10, "longitude": -73.10,
+             "baro_altitude": 900.0, "true_track": 0.0,
+             "on_ground": False, "velocity": 0.0},
+        ]
+        result = fetcher._interpolate_gaps(points, max_gaps=10)
+        pt_milieu = next(p for p in result if p["time"] == 5)
+        assert abs(pt_milieu["latitude"] - 45.05) < 0.001
+
+    def test_interpolation_lineaire_altitude(self, fetcher):
+        points = [
+            {"time": 0, "latitude": 45.00, "longitude": -73.00,
+             "baro_altitude": 1000.0, "true_track": 0.0,
+             "on_ground": False, "velocity": 0.0},
+            {"time": 10, "latitude": 45.10, "longitude": -73.10,
+             "baro_altitude": 900.0, "true_track": 0.0,
+             "on_ground": False, "velocity": 0.0},
+        ]
+        result = fetcher._interpolate_gaps(points, max_gaps=10)
+        pt_milieu = next(p for p in result if p["time"] == 5)
+        assert abs(pt_milieu["baro_altitude"] - 950.0) < 0.1
+
+    def test_point_interpole_on_ground_false(self, fetcher):
+        points = self._pts(0, 10)
+        result = fetcher._interpolate_gaps(points, max_gaps=10)
+        for pt in result[1:-1]:
+            assert pt["on_ground"] is False
+
+    def test_un_seul_point_retourne_intact(self, fetcher):
+        points = [_make_point(0)]
+        result = fetcher._interpolate_gaps(points)
+        assert result == points
