@@ -8,7 +8,7 @@
 selon la norme ECAC Doc 29**
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE_.md)
 [![Tests](https://img.shields.io/badge/tests-142%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![Streamlit](https://img.shields.io/badge/demo-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](app.py)
 [![ECAC Doc 29](https://img.shields.io/badge/norme-ECAC%20Doc%2029-blueviolet)](https://www.ecac-ceac.org/)
@@ -171,7 +171,7 @@ distance, croît avec la poussée, départ > arrivée).
 
 ## 📄 Licence
 
-Distribué sous licence MIT — voir [`LICENSE.md`](LICENSE.md).
+Distribué sous licence MIT — voir [`LICENSE.md`](LICENSE_.md).
 
 > *Please cite as:* Kevin, Bouchra, Syndia, Laura. **AirNoisePy: a Python
 > tool for aircraft noise modelling around Montréal-Trudeau airport
