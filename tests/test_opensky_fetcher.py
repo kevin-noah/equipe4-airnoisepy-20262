@@ -21,9 +21,9 @@ def _make_point(time=0, latitude=45.47, longitude=-73.74, altitude=500.0, true_t
         "base_altitude": altitude,
         "true_track": true_track,}
 
-def _make_track(path, icao24="c07e32", callsigne="ACA750"):
+def _make_track(path, icao24="c07e32", callsign="ACA750"):
     """Construit un dictionnaire de track_data pour les tests"""
-    return {"icao24": icao24, "callsign": callsigne, "path": path}
+    return {"icao24": icao24, "callsign": callsign, "path": path}
 
 # Trajectoire brute valide d'un avion en approche sur YUL
 TRACK_VALIDE = _make_track([
@@ -233,7 +233,6 @@ class TestFetchRealtime:
         assert avion["longitude"] == -73.74
 
     def test_baro_altitude_est_state_13(self, fetcher):
-        """Vérifie que baro_altitude vient de state[13] et non state[7]."""
         state = self._make_state()
         state[7] = 999.0  # geo_altitude — ne doit PAS être utilisé
         state[13] = 480.0  # baro_altitude — doit être utilisé
@@ -274,3 +273,131 @@ class TestFetchRealtime:
 
 # Test clean_track
 
+class TestCleanTrack:
+
+    def test_trajectoire_vide_retourne_liste_vide(self, fetcher):
+        assert fetcher.clean_track(TRACK_VIDE) == []
+
+    def test_retourne_liste_de_dicts(self, fetcher):
+        result = fetcher.clean_track(TRACK_VALIDE)
+        assert isinstance(result, list)
+        for point in result:
+            assert isinstance(point, dict)
+
+    def test_champs_obligatoires_presents(self, fetcher):
+        result = fetcher.clean_track(TRACK_VALIDE)
+        for point in result:
+            for cle in ("time", "latitude", "longitude",
+                        "baro_altitude", "altitude_agl", "velocity", "on_ground"):
+                assert cle in point, f"Clé manquante : {cle}"
+
+    def test_entrees_invalides_ignorees(self, fetcher):
+        result = fetcher.clean_track(TRACK_INVALIDE)
+        # Aucun point ne doit avoir latitude ou longitude None
+        for point in result:
+            assert point["latitude"] is not None
+            assert point["longitude"] is not None
+
+    def test_altitude_agl_non_negative(self, fetcher):
+        result = fetcher.clean_track(TRACK_VALIDE)
+        for point in result:
+            assert point["altitude_agl"] >= 0.0
+
+    def test_velocity_calculee(self, fetcher):
+        result = fetcher.clean_track(TRACK_VALIDE)
+        for point in result:
+            assert point["velocity"] is not None
+            assert point["velocity"] >= 0.0
+
+    def test_points_dans_zone_yul(self, fetcher):
+        result = fetcher.clean_track(TRACK_VALIDE)
+        for point in result:
+            dist = OpenSkyFetcher._haversine_distance_km(
+                point["latitude"], point["longitude"],
+                YUL_LATITUDE_KM, YUL_LONGITUDE_KM
+            )
+            assert dist <= DEFAULT_RADIUS_KM
+
+
+# Test to_flight_operation
+
+class TestToFlightOperation:
+
+    def test_leve_value_error_si_trajectoire_vide(self, fetcher):
+        with patch.object(fetcher, "clean_track", return_value=[]):
+            with pytest.raises(ValueError, match="c07e32"):
+                fetcher.to_flight_operation("c07e32", TRACK_VALIDE)
+
+    def test_leve_import_error_si_flight_operation_indisponible(self, fetcher):
+        with patch("airnoisepy.flight.opensky.FLIGHT_OPERATION_AVAILABLE", False):
+            with pytest.raises(ImportError, match="FlightOperation"):
+                fetcher.to_flight_operation("c07e32", TRACK_VALIDE)
+
+    def test_callsign_vide_fallback_sur_icao24(self, fetcher):
+        track_sans_callsign = _make_track(TRACK_VALIDE["path"], icao24="c07e32", callsign="")
+        with patch("airnoisepy.flight.opensky.FLIGHT_OPERATION_AVAILABLE", True):
+            with patch("airnoisepy.flight.opensky.FlightOperation") as mock_class:
+                mock_class.from_opensky.return_value = MagicMock()
+                fetcher.to_flight_operation("c07e32", track_sans_callsign)
+                format_passe = mock_class.from_opensky.call_args[0][0]
+        assert format_passe["callsign"] == "c07e32"
+
+    def test_aircraft_type_a320_pour_icao24_connu(self, fetcher):
+        with patch("airnoisepy.flight.opensky.FLIGHT_OPERATION_AVAILABLE", True):
+            with patch("airnoisepy.flight.opensky.FlightOperation") as mock_class:
+                mock_class.from_opensky.return_value = MagicMock()
+                fetcher.to_flight_operation("c07e32", TRACK_VALIDE)
+                format_passe = mock_class.from_opensky.call_args[0][0]
+        assert format_passe["aircraft_type"] == "A320"
+
+    def test_waypoints_champs_obligatoires(self, fetcher):
+        with patch("airnoisepy.flight.opensky.FLIGHT_OPERATION_AVAILABLE", True):
+            with patch("airnoisepy.flight.opensky.FlightOperation") as mock_class:
+                mock_class.from_opensky.return_value = MagicMock()
+                fetcher.to_flight_operation("c07e32", TRACK_VALIDE)
+                format_passe = mock_class.from_opensky.call_args[0][0]
+        for wp in format_passe["waypoints"]:
+            for cle in ("time", "latitude", "longitude",
+                        "baro_altitude", "altitude_agl", "velocity"):
+                assert cle in wp, f"Clé manquante dans waypoint : {cle}"
+
+    def test_altitude_agl_non_negative_dans_waypoints(self, fetcher):
+        with patch("airnoisepy.flight.opensky.FLIGHT_OPERATION_AVAILABLE", True):
+            with patch("airnoisepy.flight.opensky.FlightOperation") as mock_class:
+                mock_class.from_opensky.return_value = MagicMock()
+                fetcher.to_flight_operation("c07e32", TRACK_VALIDE)
+                format_passe = mock_class.from_opensky.call_args[0][0]
+        for wp in format_passe["waypoints"]:
+            assert wp["altitude_agl"] >= 0.0
+
+    def test_path_dans_format_meme_longueur_que_waypoints(self, fetcher):
+        with patch("airnoisepy.flight.opensky.FLIGHT_OPERATION_AVAILABLE", True):
+            with patch("airnoisepy.flight.opensky.FlightOperation") as mock_class:
+                mock_class.from_opensky.return_value = MagicMock()
+                fetcher.to_flight_operation("c07e32", TRACK_VALIDE)
+                format_passe = mock_class.from_opensky.call_args[0][0]
+        assert len(format_passe["path"]) == len(format_passe["waypoints"])
+
+    def test_retourne_objet_flight_operation(self, fetcher):
+        mock_fo = MagicMock()
+        with patch("airnoisepy.flight.opensky.FLIGHT_OPERATION_AVAILABLE", True):
+            with patch("airnoisepy.flight.opensky.FlightOperation") as mock_class:
+                mock_class.from_opensky.return_value = mock_fo
+                result = fetcher.to_flight_operation("c07e32", TRACK_VALIDE)
+        assert result is mock_fo
+
+    def test_icao24_transmis_a_from_opensky(self, fetcher):
+        with patch("airnoisepy.flight.opensky.FLIGHT_OPERATION_AVAILABLE", True):
+            with patch("airnoisepy.flight.opensky.FlightOperation") as mock_class:
+                mock_class.from_opensky.return_value = MagicMock()
+                fetcher.to_flight_operation("c07e32", TRACK_VALIDE)
+                format_passe = mock_class.from_opensky.call_args[0][0]
+        assert format_passe["icao24"] == "c07e32"
+
+    def test_callsign_transmis_a_from_opensky(self, fetcher):
+        with patch("airnoisepy.flight.opensky.FLIGHT_OPERATION_AVAILABLE", True):
+            with patch("airnoisepy.flight.opensky.FlightOperation") as mock_class:
+                mock_class.from_opensky.return_value = MagicMock()
+                fetcher.to_flight_operation("c07e32", TRACK_VALIDE)
+                format_passe = mock_class.from_opensky.call_args[0][0]
+        assert format_passe["callsign"] == "ACA750"
