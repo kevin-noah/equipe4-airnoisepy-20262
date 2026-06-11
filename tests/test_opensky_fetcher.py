@@ -203,3 +203,74 @@ class TestFetchTrack:
             assert "/tracks/all" in url
 
 #Tests fetch_realtime
+
+class TestFetchRealtime:
+
+    def _make_state(self):
+        """State vector OpenSky complet (17 champs)."""
+        return ["c07e32", "ACA750 ", "Canada", 1748649600, 1748649600,
+                -73.74, 45.47, 500.0, False, 250.0, 240.0, -3.0,
+                None, 480.0, "1234", False, 0]
+
+    def test_retourne_liste_avions(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = {"states": [self._make_state()]}
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock):
+            avions = fetcher.fetch_realtime()
+        assert len(avions) == 1
+
+    def test_champs_corrects(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = {"states": [self._make_state()]}
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock):
+            avion = fetcher.fetch_realtime()[0]
+        assert avion["icao24"] == "c07e32"
+        assert avion["callsign"] == "ACA750"  # strip() appliqué
+        assert avion["baro_altitude"] == 480.0  # state[13]
+        assert avion["latitude"] == 45.47
+        assert avion["longitude"] == -73.74
+
+    def test_baro_altitude_est_state_13(self, fetcher):
+        """Vérifie que baro_altitude vient de state[13] et non state[7]."""
+        state = self._make_state()
+        state[7] = 999.0  # geo_altitude — ne doit PAS être utilisé
+        state[13] = 480.0  # baro_altitude — doit être utilisé
+        mock = MagicMock()
+        mock.json.return_value = {"states": [state]}
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock):
+            avion = fetcher.fetch_realtime()[0]
+        assert avion["baro_altitude"] == 480.0
+
+    def test_states_none_ignores(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = {"states": [None, None]}
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock):
+            avions = fetcher.fetch_realtime()
+        assert avions == []
+
+    def test_states_trop_courts_ignores(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = {"states": [[1, 2, 3]]}  # < 9 champs
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock):
+            avions = fetcher.fetch_realtime()
+        assert avions == []
+
+    def test_bbox_transmise_correctement(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = {"states": []}
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock) as mock_get:
+            fetcher.fetch_realtime(bbox=(45.30, 45.65, -74.05, -73.40))
+            params = mock_get.call_args[1]["params"]
+        assert params["lamin"] == 45.30
+        assert params["lamax"] == 45.65
+        assert params["lomin"] == -74.05
+        assert params["lomax"] == -73.40
+
+# Test clean_track
+
