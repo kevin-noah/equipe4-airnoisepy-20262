@@ -206,6 +206,115 @@ class OpenSkyFetcher:
             })
         return avions
 
+    def clean_track(self, track_data):
+        """
+        Nettoie une trajectoire brute OpenSky et ajoute l'altitude AGL.
+
+        Pipeline appliqué dans l'ordre :
+          1. _remove_outliers() — supprimer les sauts d'altitude aberrants
+          2. _interpolate_gaps() — combler les trous temporels < max_gap_s
+          3. _correct_altitude_agl() — corriger l'altitude (barométrique → AGL)
+          4. _filter_yul_zone() — garder seulement la zone YUL
+
+        Paramètres:
+        - track_data : dict
+            Trajectoire brute OpenSky (sortie de fetch_track()).
+
+        Retourne:
+        list[dict] : Points nettoyés, chaque dict contient :
+            'time', 'latitude', 'longitude', 'baro_altitude', 'altitude_agl', 'velocity', 'on_ground'.
+
+        Notes
+        -----
+        L'altitude barométrique (baro_altitude) est relative au niveau de la mer
+        (QNH). Pour le calcul acoustique ECAC Doc 29, on a besoin de l'altitude
+        AGL (Above Ground Level). La différence est l'élévation du terrain
+        sous l'avion, lue dans le fichier SRTM.
+
+        Exemple:
+        - track  = fetcher.fetch_track('c07e32', 1748649600)
+        - points = fetcher.clean_track(track)
+        - print(f"{len(points)} points après nettoyage")
+        """
+
+        raw_path = track_data.get("path", [])
+        if not raw_path:
+            return []
+
+        points = []
+        for entry in raw_path:
+            if entry is None or len(entry) < 6:
+                continue
+            time, latitude, longitude, baro_altitude, true_track, on_ground = entry[:6]
+            if latitude is None or longitude is None:
+                continue
+            points.append({
+                "time": time,
+                "latitude": latitude,
+                "longitude": longitude,
+                "baro_altitude": baro_altitude if baro_altitude is not None else 0.0,
+                "true_track": true_track if true_track is not None else 0.0,
+                "on_ground": bool(on_ground),
+                "velocity": None,
+            })
+        if not points:
+            return []
+
+        points = self._compute_speed(points)
+
+        points = self._remove_outliers(points)
+        points = self._interpolate_gaps(points)
+        points = self._correct_altitude_agl(points)
+        points = self._filter_yul_zone(points)
+
+        return points
+
+    def to_flight_operation(self, icao24, track_data):
+        """
+        Convertit une trajectoire brute OpenSky en objet FlightOperation.
+
+        Paramètres:
+        - icao24 : str (Identifiant hexadécimal de l'avion)
+        - track_data : dict (Trajectoire brute OpenSky - sortie de fetch_track())
+
+        Retourne:
+        - FlightOperation : Objet prêt à être passé à NoiseCalculator.
+
+        Exemple:
+        - track = fetcher.fetch_track('c07e32', 1748649600)
+        - fo    = fetcher.to_flight_operations('c07e32', track)
+        - print(fo.operation_type)   # 'departure' ou 'arrival'
+        """
+
+        if not FLIGHT_OPERATION_AVAILABLE:
+            raise ImportError("FlightOperation n'est pas disponible. Assurez-vous que airnoisepy/flight/operation.py est présent.")
+        clean_points = self.clean_track(track_data)
+        if not clean_points:
+            raise ValueError(f"Trajectoire vide après nettoyage pour l'avion {icao24}")
+
+        aircraft_type = self._map_aircraft_type(icao24)
+        callsign = (track_data.get("callsign") or icao24).strip()
+        waypoints = [{
+            "time":          p["time"],
+            "latitude":      p["latitude"],
+            "longitude":     p["longitude"],
+            "baro_altitude": p["baro_altitude"],
+            "altitude_agl":  p.get("altitude_agl", p["baro_altitude"]),
+            "velocity":      p.get("velocity", 0.0),
+        } for p in clean_points]
+
+        opensky_format = {
+            "icao24": icao24,
+            "callsign": callsign,
+            "aircraft_type": aircraft_type,
+            "path": [
+                [p["time"], p["latitude"], p["longitude"],
+                 p["baro_altitude"], p.get("true_track", 0.0), p["on_ground"]]
+                for p in clean_points
+            ],
+            "waypoints": waypoints,
+        }
+        return FlightOperation.from_opensky(opensky_format)
 
 
 
@@ -223,7 +332,7 @@ class OpenSkyFetcher:
         - z_thresh : float (Seuil de z-score au-delà duquel un point est supprimé - défaut : 3)
 
         Retourne:
-        list[dict]
+        - list[dict]
 
         Notes:
         Parfois un avion reporte une altitude de -9999 ou +99999 ft par erreur. Un z-score > 3 signifie une valeur à plus de 3
@@ -277,7 +386,7 @@ class OpenSkyFetcher:
             current = points[i]
             gap = current["time"] - previous["time"]
 
-            if 0 <= gap <= max_gaps:
+            if 0 < gap <= max_gaps:
                 n_missing = int(gap // 5) - 1
                 for k in range(1, n_missing + 1):
                     alpha = k / (n_missing + 1)
@@ -321,7 +430,7 @@ class OpenSkyFetcher:
                 try:
                     row, col = rowcol(self.dem.transform, p["longitude"], p["latitude"])
                     elevation = float(self.dem.read(1)[row, col])
-                    if elevation < 500 or elevation > 5000:
+                    if elevation < -500 or elevation > 5000:
                         elevation = 0.0
                 except Exception:
                     elevation = 0.0
@@ -330,7 +439,7 @@ class OpenSkyFetcher:
             p["altitude_agl"] = max(0.0, p["baro_altitude"] - elevation)
         return points
 
-    def _filter_yul_zone(self, points, radiu_km=DEFAULT_RADIUS_KM):
+    def _filter_yul_zone(self, points, radius_km=DEFAULT_RADIUS_KM):
         """
         Conserve uniquement les points dans la zone d'intérêt autour de YUL.
 
@@ -356,7 +465,7 @@ class OpenSkyFetcher:
         for p in points:
             distance_km = self._haversine_distance_km(p["latitude"], p["longitude"], YUL_LATITUDE_KM, YUL_LONGITUDE_KM)
             altitude_agl = p.get("altitude_agl", p["baro_altitude"])
-            if distance_km <= radiu_km and altitude_agl <= MAX_ALTITUDE_AGL_M:
+            if distance_km <= radius_km and altitude_agl <= MAX_ALTITUDE_AGL_M:
                 filtered.append(p)
         return filtered
 
@@ -391,8 +500,7 @@ class OpenSkyFetcher:
         lat2, lon2 : float — coordonnées du point 2 (degrés décimaux)
 
         Retourne:
-        float
-            Distance en kilomètres.
+        - float : Distance en kilomètres.
         """
         R = 6371.0
         phi1 = math.radians(lat1)
@@ -400,4 +508,64 @@ class OpenSkyFetcher:
         delta_phi = math.radians(lat2 - lat1)
         delta_lambda = math.radians(lon2 - lon1)
         a = math.sin(delta_phi / 2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2)**2
-        return R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    def _compute_speed(self, points):
+        """
+        Calcule la vitesse (m/s) entre points consécutifs.
+
+        La vitesse au point i est estimée comme la distance 3D entre les points
+        i-1 et i+1 divisée par la différence de temps correspondante. Pour le premier et le dernier point, on utilise
+        des différences avant/arrière.
+
+        Paramètres:
+        - points : list[dict]
+
+        Retourne:
+        - list[dict] : Même liste avec clé 'velocity' (m/s) renseignée.
+        """
+
+        n = len(points)
+        for i, p in enumerate(points):
+            if n == 1:
+                p["velocity"] = 0.0
+                continue
+            if i == 0:
+                a, b = points[0], points[1]
+            elif i == n - 1:
+                a, b = points[- 2], points[-1]
+            else:
+                a, b = points[i - 1], points[i + 1]
+            dt = b["time"] - a["time"]
+            if dt == 0:
+                p["velocity"] = 0.0
+                continue
+            dx = self._haversine_distance_km(a["latitude"], a["longitude"], b["latitude"], b["longitude"]) * 1000
+            dz = abs(b["baro_altitude"] - a["baro_altitude"])
+            distance_3d = math.sqrt(dx**2 + dz**2)
+            p["velocity"] = distance_3d / abs(dt)
+        return points
+
+    def _map_aircraft_type(self, icao24):
+        """
+        Retourne le code OACI du type d'aéronef depuis son identifiant ICAO24.
+
+        Paramètres:
+        - icao24 : str (Code hexadécimal de l'avion ex: 'c07e32')
+
+        Retourne:
+        - Code OACI (ex: 'A320'). 'A320' si inconnu.
+        """
+
+        ICAO24_TO_TYPE = {
+            "c07e32": "A320",  # Air Canada A320
+            "c04b3a": "B738",  # WestJet 737-800
+            "c06184": "A321",  # Air Canada A321
+            "c05140": "DH8D",  # Jazz Aviation Q400
+            "c06c48": "B77W",  # Air Canada 777-300ER
+            "c07a97": "A220",  # Air Canada A220-300
+        }
+        aircraft_type = ICAO24_TO_TYPE.get(icao24.lower(), None)
+        if aircraft_type is None:
+            aircraft_type = "A320"
+        return aircraft_type
