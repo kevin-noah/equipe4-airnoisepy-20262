@@ -85,9 +85,9 @@ class ANPDatabase:
             self.source = "synthetic"
             self.load_synthetic()
 
-    # ------------------------------------------------------------------ #
-    #  Chargement des données                                              #
-    # ------------------------------------------------------------------ #
+# ------------------------------------------------------------------ #
+#  Chargement des données                                              #
+# ------------------------------------------------------------------ #
 
     def load_excel(self, filepath):
         #Charge le fichier Excel ANP Eurocontrol (onglet NPD_Data).
@@ -217,6 +217,7 @@ class ANPDatabase:
 
         df = df.reset_index(drop=True)
         return df
+
     #Validation
     def _validate_monotonicity(self, df):
         #Vérifie que chaque courbe NPD est décroissante avec la distance.
@@ -278,9 +279,9 @@ class ANPDatabase:
 
 
 
-    # ------------------------------------------------------------------ #
-    #  Construction du cache d'interpolateurs                              #
-    # ------------------------------------------------------------------ #
+# ------------------------------------------------------------------ #
+#  Construction du cache d'interpolateurs                              #
+# ------------------------------------------------------------------ #
 
     def _build_interpolators(self):
 
@@ -325,3 +326,94 @@ class ANPDatabase:
                 fill_value=None,
             )
             self._interpolators[key] = (interp, thrust_vals, dist_values)
+
+
+# ------------------------------------------------------------------ #
+#  Interface publique                                                  #
+# ------------------------------------------------------------------ #
+
+    def get_npd(self, aircraft_type, operation, metric="SEL"):
+        """
+        Retourne la courbe NPD complète pour un avion donné.
+
+        Paramètres
+        ----------
+        aircraft_type : str — code OACI (ex: 'A320')
+        operation     : str — 'departure' ou 'arrival'
+        metric        : str — 'SEL' (seule métrique chargée depuis Eurocontrol)
+
+        Retourne
+        --------
+        pd.DataFrame — lignes = niveaux de poussée,
+                        colonnes = distances en mètres
+        """
+        mask = (
+            (self._data["aircraft_id"] == aircraft_type) &
+            (self._data["operation"]   == operation)
+        )
+        if "metric" in self._data.columns:
+            mask &= (self._data["metric"] == metric)
+
+        result = self._data[mask].copy()
+        if result.empty:
+            raise KeyError(
+                f"Aucune donnée NPD pour aircraft='{aircraft_type}', "
+                f"operation='{operation}', metric='{metric}'. "
+                f"Avions disponibles : {self.list_aircraft()}"
+            )
+        return result
+
+    def interpolate(self, aircraft_type, operation, distance, thrust, metric="SEL"):
+
+        #Retourne le niveau sonore interpolé en dB(A) pour une distance et une puissance moteur données.
+
+        #Méthode : interpolation bilinéaire (distance × thrust) via
+        #scipy.interpolate.RegularGridInterpolator.
+        #Les valeurs hors bornes sont extrapolées par clipping.
+
+        #Paramètres
+        #aircraft_type : str   — code OACI (ex: 'A320')
+        #operation     : str   — 'departure' | 'arrival'
+        #distance      : float — slant-range en MÈTRES
+        #thrust        : float — puissance moteur en LBS de poussée
+        #metric        : str   — 'SEL' (défaut)
+
+        #Retourne
+        #float — niveau interpolé en dB(A)
+
+        group_cols = [c for c in ["aircraft_id", "operation", "metric"]
+                      if c in self._data.columns]
+        key_map = {
+            "aircraft_id": aircraft_type,
+            "operation":   operation,
+            "metric":      metric,
+        }
+        key = tuple(key_map[c] for c in group_cols)
+
+        if key not in self._interpolators:
+            # Fallback sans métrique
+            fallback = (aircraft_type, operation)
+            if fallback not in self._interpolators:
+                raise KeyError(
+                    f"Interpolateur non trouvé pour aircraft='{aircraft_type}', "
+                    f"operation='{operation}', metric='{metric}'. "
+                    f"Avions disponibles : {self.list_aircraft()}"
+                )
+            key = fallback
+
+        interp, thrust_vals, dist_values = self._interpolators[key]
+
+        thrust_clipped   = float(np.clip(thrust,   thrust_vals.min(), thrust_vals.max()))
+        distance_clipped = float(np.clip(distance, dist_values.min(), dist_values.max()))
+
+        result = interp([[thrust_clipped, distance_clipped]])
+        return float(result[0])
+
+    def list_aircraft(self):
+
+        #Retourne la liste triée des codes OACI disponibles dans la base.
+        #Retourne
+        #list[str]
+        if self._data is None or self._data.empty:
+            return []
+        return sorted(self._data["aircraft_id"].unique().tolist())
