@@ -25,7 +25,19 @@ jobs:
       - name: Installer les dépendances
         run: |
           python -m pip install --upgrade pip
-          pip install numpy pandas scipy matplotlib folium requests openpyxl rasterio pytest
+          pip install numpy pandas scipy matplotlib folium requests openpyxl rasterio pytest ruff
+
+      - name: Lint (ruff)
+        run: ruff check airnoisepy/ tests/
 
       - name: Lancer la suite de tests
         run: python -m pytest tests/ -v
+
+      # Vérifie que `pip install .` fonctionne — ce que fera le correcteur.
+      # Non bloquant tant que pyproject.toml (Laura) n'est pas rempli :
+      # retirer continue-on-error quand il le sera.
+      - name: Vérifier l'installation du package
+        continue-on-error: true
+        run: |
+          pip install .
+          python -c "import airnoisepy; print('airnoisepy importé depuis le package installé')"
