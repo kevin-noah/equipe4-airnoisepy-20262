@@ -321,7 +321,7 @@ class OpenSkyFetcher:
 #Méthodes privées
 #Méthodes de nettoyage
 
-    def _remove_outliers(self, points, window=5, z_thresh=3.0):
+    def _remove_outliers(self, points, window=15, z_thresh=2.0):
         """
         Supprime les points dont l'altitude barométrique est aberrante.
         Un point est supprimé si |z| > z_thresh.
