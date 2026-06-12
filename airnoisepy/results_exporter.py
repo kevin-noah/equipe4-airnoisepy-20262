@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pandas as pd
 import folium
+import imageio.v2 as imageio
 
 class ResultsExporter:
     """
@@ -206,7 +207,53 @@ class ResultsExporter:
         # Retourne le chemin du fichier sous forme de texte.
         return str(output_path)
 
-    
+    def export_animation_gif(self, frames, output_path=None, fps=2):
+        """
+        Exporte une animation GIF à partir d'une liste d'images.
+
+        Cette méthode reçoit une liste d'images représentant l'évolution du
+        bruit dans le temps. Chaque image correspond à un instant ou à une
+        période, par exemple une heure de la journée. Les images sont ensuite
+        assemblées dans un fichier GIF animé.
+
+        :param frames: Liste d'images à assembler dans l'animation.
+        :type frames: list
+        :param output_path: Chemin optionnel du fichier GIF à créer. Si aucune
+            valeur n'est fournie, le fichier est créé dans le dossier de sortie.
+        :type output_path: str or None
+        :param fps: Nombre d'images par seconde dans le GIF.
+        :type fps: int
+        :return: Chemin du fichier GIF généré.
+        :rtype: str
+        :raises ValueError: Si la liste d'images est vide.
+        :raises ValueError: Si fps est inférieur ou égal à zéro.
+        """
+
+        # Vérifie que la liste contient au moins une image.
+        if len(frames) == 0:
+            raise ValueError("La liste des images ne peut pas être vide.")
+
+        # Vérifie que la vitesse d'animation est valide.
+        if fps <= 0:
+            raise ValueError("Le nombre d'images par seconde doit être positif.")
+
+        # Si aucun chemin n'est fourni, on crée un nom de fichier par défaut.
+        if output_path is None:
+            output_path = self.output_dir / "noise_animation.gif"
+        else:
+            output_path = Path(output_path)
+
+        # Crée le dossier parent si nécessaire.
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Calcule la durée d'affichage de chaque image.
+        duration = 1 / fps
+
+        # Crée le fichier GIF animé à partir des images fournies.
+        imageio.mimsave(output_path, frames, duration=duration)
+
+        # Retourne le chemin du fichier sous forme de texte.
+        return str(output_path)
 
     def __str__(self):
         """
