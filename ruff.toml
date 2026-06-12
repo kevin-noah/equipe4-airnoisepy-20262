@@ -1,5 +1,10 @@
 # Configuration ruff (lint) — utilisée par le CI GitHub Actions
 
+# data/ contient des données et scripts d'exploration, pas du code du package
+exclude = ["data"]
+
 [lint.per-file-ignores]
 # Import conditionnel volontaire (try/except pour tester la disponibilité)
 "airnoisepy/flight/opensky.py" = ["F401"]
+# Imports de constantes gardés pour lisibilité (fichier de Syndia)
+"tests/test_opensky_fetcher.py" = ["F401"]
