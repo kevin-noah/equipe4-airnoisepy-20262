@@ -19,9 +19,17 @@ from airnoisepy.noise.calculator import NoiseCalculator
 # ---------------------------------------------------------------------------
 
 class MockANPDatabase:
-    """Stub minimal d'ANPDatabase pour tester NoiseCalculator indépendamment."""
+    """Stub minimal d'ANPDatabase pour tester NoiseCalculator indépendamment.
 
-    def interpolate(self, aircraft_type, operation, distance, thrust_pct, metric='SEL'):
+    Reçoit la poussée en lbs (comme la vraie base) et la reconvertit en
+    fraction N1 — inverse exact de NoiseCalculator._thrust_to_lbs — pour
+    appliquer la formule synthétique du doc de tâches.
+    """
+
+    def interpolate(self, aircraft_type, operation, distance, thrust_lbs, metric='SEL'):
+        thrust_pct = np.interp(thrust_lbs,
+                               [4500.0, 9000.0, 13000.0, 18000.0, 23000.0],
+                               [0.68, 0.74, 0.80, 0.86, 0.94])
         L0 = 55 + (thrust_pct * 100 - 68) * 0.45
         return L0 - 20 * math.log10(distance / 1000) - 0.005 * (distance - 1000) / 1000
 
