@@ -3,9 +3,7 @@
 
 import pytest
 from airnoisepy.flight.opensky import (OpenSkyFetcher,
-                                       DEFAULT_MAX_GAP_S,
                                        DEFAULT_RADIUS_KM,
-                                       MAX_ALTITUDE_AGL_M,
                                        YUL_LATITUDE_KM,
                                        YUL_LONGITUDE_KM)
 from unittest.mock import patch, MagicMock
@@ -506,3 +504,205 @@ class TestInterpolateGaps:
         points = [_make_point(0)]
         result = fetcher._interpolate_gaps(points)
         assert result == points
+
+#Tests _correct_altitude_agl
+
+class TestCorrectAltitudeAgl:
+
+    def test_sans_srtm_altitude_agl_egale_baro(self, fetcher):
+        points = [_make_point(0, altitude=500.0), _make_point(1, altitude=300.0)]
+        result = fetcher._correct_altitude_agl(points)
+        assert result[0]["altitude_agl"] == 500.0
+        assert result[1]["altitude_agl"] == 300.0
+
+    def test_cle_altitude_agl_ajoutee(self, fetcher):
+        points = [_make_point(0, altitude=500.0)]
+        result = fetcher._correct_altitude_agl(points)
+        assert "altitude_agl" in result[0]
+
+    def test_altitude_agl_jamais_negative(self, fetcher):
+        points = [_make_point(0, altitude=0.0)]
+        result = fetcher._correct_altitude_agl(points)
+        assert result[0]["altitude_agl"] >= 0.0
+
+    def test_altitude_agl_baro_zero(self, fetcher):
+        points = [_make_point(0, altitude=0.0)]
+        result = fetcher._correct_altitude_agl(points)
+        assert result[0]["altitude_agl"] == 0.0
+
+#Tests _filter_yul_zone
+
+class TestFilterYulZone:
+
+    def test_conserve_point_centre_yul(self, fetcher):
+        points = [{"latitude": YUL_LATITUDE_KM, "longitude": YUL_LONGITUDE_KM,
+                   "baro_altitude": 500.0, "altitude_agl": 500.0}]
+        result = fetcher._filter_yul_zone(points)
+        assert len(result) == 1
+
+    def test_supprime_point_trop_loin(self, fetcher):
+        points = [{"latitude": 46.35, "longitude": -72.55,
+                   "baro_altitude": 500.0, "altitude_agl": 500.0}]
+        result = fetcher._filter_yul_zone(points)
+        assert len(result) == 0
+
+    def test_supprime_point_trop_haut(self, fetcher):
+        points = [{"latitude": YUL_LATITUDE_KM, "longitude": YUL_LONGITUDE_KM,
+                   "baro_altitude": 5000.0, "altitude_agl": 5000.0}]
+        result = fetcher._filter_yul_zone(points)
+        assert len(result) == 0
+
+    def test_fallback_baro_si_altitude_agl_absente(self, fetcher):
+        points = [{"latitude": YUL_LATITUDE_KM, "longitude": YUL_LONGITUDE_KM,
+                   "baro_altitude": 500.0}]
+        result = fetcher._filter_yul_zone(points)
+        assert isinstance(result, list)
+
+    def test_rayon_personnalise(self, fetcher):
+        points = [{"latitude": 45.38, "longitude": -73.74,
+                   "baro_altitude": 500.0, "altitude_agl": 500.0}]
+        assert len(fetcher._filter_yul_zone(points, radius_km=5)) == 0
+        assert len(fetcher._filter_yul_zone(points, radius_km=15)) == 1
+
+#Tests _api_get
+
+class TestApiGet:
+
+    def test_retourne_json_decode(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = [{"icao24": "c07e32"}]
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock):
+            result = fetcher._api_get("/flights/arrival", {}, None)
+        assert result == [{"icao24": "c07e32"}]
+
+    def test_url_construite_correctement(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = []
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock) as mock_get:
+            fetcher._api_get("/flights/arrival", {}, None)
+            url = mock_get.call_args[0][0]
+        assert url == "https://opensky-network.org/api/flights/arrival"
+
+    def test_timeout_30_secondes(self, fetcher):
+        mock = MagicMock()
+        mock.json.return_value = []
+        mock.raise_for_status = MagicMock()
+        with patch("requests.get", return_value=mock) as mock_get:
+            fetcher._api_get("/flights/arrival", {}, None)
+            timeout = mock_get.call_args[1]["timeout"]
+        assert timeout == 30
+
+    def test_leve_exception_si_erreur_http(self, fetcher):
+        mock = MagicMock()
+        mock.raise_for_status.side_effect = Exception("404 Not Found")
+        with patch("requests.get", return_value=mock):
+            with pytest.raises(Exception, match="404"):
+                fetcher._api_get("/mauvais/endpoint", {}, None)
+
+#Tests _haversine_km
+
+class TestHaversineDistanceKm:
+
+    def test_distance_nulle_meme_point(self):
+        d = OpenSkyFetcher._haversine_distance_km(45.47, -73.74, 45.47, -73.74)
+        assert d == pytest.approx(0.0, abs=1e-6)
+
+    def test_distance_yul_toronto(self):
+        d = OpenSkyFetcher._haversine_distance_km(
+            45.4706, -73.7408, 43.6772, -79.6306
+        )
+        assert 500.0 < d < 510.0
+
+    def test_symetrie(self):
+        d1 = OpenSkyFetcher._haversine_distance_km(45.47, -73.74, 45.50, -73.70)
+        d2 = OpenSkyFetcher._haversine_distance_km(45.50, -73.70, 45.47, -73.74)
+        assert d1 == pytest.approx(d2, rel=1e-6)
+
+    def test_toujours_positive(self):
+        d = OpenSkyFetcher._haversine_distance_km(45.47, -73.74, 45.50, -73.70)
+        assert d > 0
+
+    def test_yul_dans_rayon_25km(self):
+        d = OpenSkyFetcher._haversine_distance_km(
+            45.4706, -73.7408,
+            45.29, -73.7408  # ~20 km au sud
+        )
+        assert d < 25.0
+
+#Tests _compute_speed
+
+class TestComputeSpeed:
+
+    def test_un_seul_point_vitesse_nulle(self, fetcher):
+        points = [_make_point(0, altitude=500.0)]
+        result = fetcher._compute_speed(points)
+        assert result[0]["velocity"] == 0.0
+
+    def test_vitesse_positive_pour_points_distincts(self, fetcher):
+        points = [
+            _make_point(0, latitude=45.47, longitude=-73.74, altitude=500.0),
+            _make_point(5, latitude=45.48, longitude=-73.73, altitude=480.0),
+            _make_point(10, latitude=45.49, longitude=-73.72, altitude=460.0),
+        ]
+        result = fetcher._compute_speed(points)
+        for p in result:
+            assert p["velocity"] >= 0.0
+
+    def test_dt_zero_vitesse_nulle(self, fetcher):
+        # Deux points au même timestamp → pas de division par zéro
+        points = [
+            _make_point(0, latitude=45.47, longitude=-73.74, altitude=500.0),
+            _make_point(0, latitude=45.47, longitude=-73.74, altitude=500.0),
+            _make_point(5, latitude=45.48, longitude=-73.73, altitude=480.0),
+        ]
+        result = fetcher._compute_speed(points)
+        assert result[0]["velocity"] == 0.0
+
+    def test_cle_velocity_ajoutee(self, fetcher):
+        points = [
+            _make_point(0, latitude=45.47, longitude=-73.74, altitude=500.0),
+            _make_point(5, latitude=45.48, longitude=-73.73, altitude=480.0),
+        ]
+        result = fetcher._compute_speed(points)
+        for p in result:
+            assert "velocity" in p
+
+#Tests _map_aircraft_type
+
+class TestMapAircraftType:
+
+    @pytest.mark.parametrize("icao24,expected", [
+        ("c07e32", "A320"),
+        ("c04b3a", "B738"),
+        ("c06184", "A321"),
+        ("c05140", "DH8D"),
+        ("c06c48", "B77W"),
+        ("c07a97", "A220"),
+    ])
+    def test_icao24_connus(self, fetcher, icao24, expected):
+        with patch("requests.get", side_effect=Exception("pas de réseau")):
+            assert fetcher._map_aircraft_type(icao24) == expected
+
+    def test_icao24_inconnu_retourne_a320(self, fetcher):
+        with patch("requests.get", side_effect=Exception("pas de réseau")):
+            assert fetcher._map_aircraft_type("aaaaaa") == "A320"
+
+    def test_insensible_a_la_casse(self, fetcher):
+        with patch("requests.get", side_effect=Exception("pas de réseau")):
+            assert fetcher._map_aircraft_type("C07E32") == \
+                   fetcher._map_aircraft_type("c07e32")
+
+    def test_api_opensky_utilisee_si_credentials(self, fetcher_auth):
+        mock = MagicMock()
+        mock.status_code = 200
+        mock.json.return_value = {"typecode": "B77W"}
+        with patch("requests.get", return_value=mock):
+            result = fetcher_auth._map_aircraft_type("c06c48")
+        assert result == "B77W"
+
+    def test_fallback_dict_si_api_echoue(self, fetcher_auth):
+        with patch("requests.get", side_effect=Exception("timeout")):
+            result = fetcher_auth._map_aircraft_type("c07e32")
+        assert result == "A320"

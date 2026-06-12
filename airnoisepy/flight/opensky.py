@@ -203,6 +203,7 @@ class OpenSkyFetcher:
                 "on_ground": state[8],
                 "velocity": state[9] if len(state) > 9 else None,
                 "true_track": state[10] if len(state) > 10 else None,
+                "vertical_rate": state[11] if len(state) > 11 else None,
             })
         return avions
 

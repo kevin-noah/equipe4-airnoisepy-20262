@@ -403,11 +403,19 @@ class ANPDatabase:
 
         interp, thrust_vals, dist_values = self._interpolators[key]
 
-        thrust_clipped   = float(np.clip(thrust,   thrust_vals.min(), thrust_vals.max()))
-        distance_clipped = float(np.clip(distance, dist_values.min(), dist_values.max()))
+        distance = np.asarray(distance, dtype=float)
+        scalaire = (distance.ndim == 0)
 
-        result = interp([[thrust_clipped, distance_clipped]])
-        return float(result[0])
+        thrust_clipped = np.clip(thrust, thrust_vals.min(), thrust_vals.max())
+        distance_clipped = np.atleast_1d(np.clip(distance, dist_values.min(), dist_values.max()))
+
+        points = np.column_stack([
+            np.full(distance_clipped.size, float(thrust_clipped)),
+            distance_clipped,
+        ])
+        result = interp(points)
+
+        return float(result[0]) if scalaire else result
 
     def list_aircraft(self):
 

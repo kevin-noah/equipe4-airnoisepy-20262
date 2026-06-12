@@ -33,7 +33,7 @@ jobs:
       - name: Lancer la suite de tests
         run: python -m pytest tests/ -v
 
-      # Vérifie que `pip install .` fonctionne — ce que fera le correcteur.
+      # Vérifie que `pip install.` fonctionne — ce que fera le prof.
       # Non bloquant tant que pyproject.toml (Laura) n'est pas rempli :
       # retirer continue-on-error quand il le sera.
       - name: Vérifier l'installation du package

@@ -23,6 +23,12 @@ class NoiseCalculator:
     _V_REF_MS = 82.3    # 160 nœuds — vitesse de référence des tables NPD
     _D_REF_M = 1000.0   # distance de référence des tables NPD (m)
 
+    # Conversion fraction N1 → poussée nette (lbs) attendue par ANPDatabase.
+    # Correspondance A320 (CFM56-5B) documentée dans database/anp.py :
+    # la table NPD est indexée en lbs, pas en % N1.
+    _N1_FRACTIONS = (0.68, 0.74, 0.80, 0.86, 0.94)
+    _THRUST_LBS = (4500.0, 9000.0, 13000.0, 18000.0, 23000.0)
+
     def __init__(self, anp_db, temperature=15.0, humidity=70.0):
         """
         Paramètres
@@ -60,7 +66,8 @@ class NoiseCalculator:
 
         for seg in flight_op.segments:
             d = max(self._slant_range(seg, receptor), 1.0)
-            sel_npd = self.anp_db.interpolate(aircraft_type, op, d, seg['thrust_pct'])
+            thrust_lbs = self._thrust_to_lbs(seg['thrust_pct'])
+            sel_npd = self.anp_db.interpolate(aircraft_type, op, d, thrust_lbs)
             sel_seg = (sel_npd
                        + self._correction_duration(seg)
                        + self._correction_lateral(seg, receptor)
@@ -213,6 +220,15 @@ class NoiseCalculator:
         """
         return 10 * math.log10(sum(10 ** (s / 10.0) for s in sel_list))
 
+    @classmethod
+    def _thrust_to_lbs(cls, thrust_pct):
+        """
+        Fraction N1 (0.68–0.94) → poussée nette en lbs pour la table NPD.
+        Interpolation linéaire entre les points documentés ; les valeurs
+        hors plage sont ramenées aux bornes (clipping de np.interp).
+        """
+        return float(np.interp(thrust_pct, cls._N1_FRACTIONS, cls._THRUST_LBS))
+
     @staticmethod
     def _utc_hour(unix_timestamp):
         """Heure UTC (0-23) depuis un timestamp Unix."""
@@ -234,11 +250,25 @@ class NoiseCalculator:
         for seg in flight_op.segments:
             d_vec = self._slant_range_vec(seg, lats, lons)
             np.maximum(d_vec, 1.0, out=d_vec)
+            thrust_lbs = self._thrust_to_lbs(seg['thrust_pct'])
 
-            sel_npd = np.array([
-                self.anp_db.interpolate(aircraft_type, op, float(d), seg['thrust_pct'])
-                for d in d_vec
-            ])
+            # ANPDatabase accepte un tableau de distances (un seul appel
+            # vectorisé pour toute la grille). Si la base ne gère que les
+            # scalaires (ex: MockANPDatabase), repli sur la boucle.
+            try:
+                sel_npd = np.asarray(
+                    self.anp_db.interpolate(aircraft_type, op, d_vec,
+                                            thrust_lbs),
+                    dtype=float,
+                )
+                if sel_npd.shape != d_vec.shape:
+                    raise TypeError('base NPD non vectorisée')
+            except TypeError:
+                sel_npd = np.array([
+                    self.anp_db.interpolate(aircraft_type, op, float(d),
+                                            thrust_lbs)
+                    for d in d_vec
+                ])
             delta_dur = self._correction_duration(seg)
             delta_lat = self._correction_lateral_vec(seg, lats, lons, d_vec)
             delta_atm = -self.alpha * (d_vec - self._D_REF_M)
