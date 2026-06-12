@@ -1,2 +1,87 @@
-# Responsable : Laura
-# Configuration du package Python (métadonnées, dépendances, build system)
+# ==========================================================
+# BUILD SYSTEM
+# ==========================================================
+# Cette section indique à Python quel outil utiliser
+# pour construire et installer le package.
+# setuptools est l'outil classique utilisé pour créer
+# des packages Python installables.
+
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+# ==========================================================
+# INFORMATIONS GÉNÉRALES DU PROJET
+# ==========================================================
+# Cette section décrit le package Python.
+# Ces informations seront utilisées lorsque quelqu'un installe
+# le projet avec la commande : pip install.
+
+[project]
+name = "airnoisepy"
+version = "0.1.0"
+description = "Bibliothèque Python pour modéliser et visualiser le bruit aérien autour des aéroports."
+readme = "README.md"
+requires-python = ">=3.10"
+
+
+# ==========================================================
+# LICENCE DU PROJET
+# ==========================================================
+# Cette ligne indique que le projet utilise la licence MIT.
+
+license = { text = "MIT" }
+
+
+# ==========================================================
+# AUTEURS
+# ==========================================================
+# Cette partie identifie l'équipe responsable du projet.
+
+authors = [
+    { name = "Équipe 4 - MGA802 ÉTS Montréal" }
+]
+
+
+# ==========================================================
+# DÉPENDANCES PYTHON
+# ==========================================================
+# Cette liste contient les bibliothèques nécessaires
+# au fonctionnement du projet.
+#
+# numpy : calcul numérique et tableaux
+# pandas : manipulation de données tabulaires
+# scipy : interpolation et calcul scientifique
+# matplotlib : graphiques
+# folium : cartes interactives HTML
+# requests : appels API, par exemple OpenSky
+
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+    "folium>=0.14",
+    "requests>=2.28",
+    "imageio>=2.34"
+]
+
+
+# ==========================================================
+# CONFIGURATION DE SETUPTOOLS
+# ==========================================================
+# Cette section indique explicitement quel dossier doit être
+# considéré comme le package Python.
+#
+# Sans cette ligne, setuptools voit aussi les dossiers data/
+# et notebooks/ et pense qu'ils sont peut-être des packages.
+# C'est ce qui causait l'erreur :
+# Multiple top-level packages discovered.
+#
+# Ici, on dit clairement :
+# seul le dossier airnoisepy/ est le package à installer.
+
+[tool.setuptools]
+packages = ["airnoisepy"]
