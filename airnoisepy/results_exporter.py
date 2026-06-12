@@ -206,6 +206,8 @@ class ResultsExporter:
         # Retourne le chemin du fichier sous forme de texte.
         return str(output_path)
 
+    
+
     def __str__(self):
         """
         Retourne une représentation lisible de l'objet ResultsExporter.
