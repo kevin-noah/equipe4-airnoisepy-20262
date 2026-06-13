@@ -20,6 +20,10 @@ import sys
 
 import streamlit as st
 import pandas as pd
+import numpy as np
+import math
+import folium
+from streamlit_folium import st_folium
 
 # app.py vit dans demo/ : streamlit run ajoute demo/ au sys.path, pas la
 # racine du dépôt — on l'ajoute pour importer airnoisepy sans pip install .
@@ -97,7 +101,38 @@ def calculer_grille(curfew_actif, grid_size):
     Lden sur la grille YUL, avec ou sans couvre-feu 23h–7h.
     Mis en cache : le calcul n'est fait qu'une fois par scénario.
     """
-    pass  # TODO
+    # ------------------------------------------------------------------
+    # Version de démonstration hors-ligne.
+    #
+    # L'objectif est de produire une grille de niveaux Lden plausible
+    # pour tester l'interface Streamlit, même si tous les modules de
+    # calcul ne sont pas encore intégrés.
+    #
+    # Hypothèse simplifiée :
+    #   - le bruit est plus élevé près de YUL ;
+    #   - il diminue progressivement avec la distance ;
+    #   - un couvre-feu 23h–7h réduit le niveau global.
+    # ------------------------------------------------------------------
+
+    grid = grille_recepteurs(grid_size)
+
+    niveaux = []
+
+    for lat, lon in grid:
+        distance_km = _haversine_m(YUL[0], YUL[1], lat, lon) / 1000
+
+        # Niveau simplifié : fort près de l'aéroport, plus faible loin.
+        lden = max(35, 70 - 1.15 * distance_km)
+
+        # Scénario de couvre-feu :
+        # on applique une réduction simplifiée de 4 dB pour illustrer
+        # l'effet d'une diminution des vols de nuit.
+        if curfew_actif:
+            lden -= 4
+
+        niveaux.append(lden)
+
+    return np.array(niveaux), grid
 
 
 # ---------------------------------------------------------------------------
@@ -105,17 +140,135 @@ def calculer_grille(curfew_actif, grid_size):
 # ---------------------------------------------------------------------------
 
 def _haversine_m(lat1, lon1, lat2, lon2):
-    """Distance grand cercle en mètres."""
-    pass  # TODO
+    """
+    Calcule la distance orthodromique (grand cercle) entre deux points
+    géographiques exprimés en latitude/longitude.
+
+    Paramètres
+    ----------
+    lat1, lon1 : float
+        Coordonnées du premier point en degrés décimaux.
+
+    lat2, lon2 : float
+        Coordonnées du second point en degrés décimaux.
+
+    Retour
+    -------
+    float
+        Distance entre les deux points en mètres.
+
+    Notes
+    -----
+    La formule de Haversine tient compte de la courbure de la Terre.
+    Elle est suffisamment précise pour les besoins de cette démonstration
+    autour de YUL (rayon d'étude de 25 km).
+    """
+
+    # ------------------------------------------------------------------
+    # Rayon moyen de la Terre (en mètres).
+    # ------------------------------------------------------------------
+
+    rayon_terre_m = 6_371_000
+
+    # ------------------------------------------------------------------
+    # Conversion des coordonnées de degrés vers radians.
+    #
+    # Les fonctions trigonométriques de Python utilisent les radians.
+    # ------------------------------------------------------------------
+
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+
+    # ------------------------------------------------------------------
+    # Formule de Haversine.
+    #
+    # a représente le carré de la moitié de la corde reliant les deux
+    # points à travers la sphère terrestre.
+    # ------------------------------------------------------------------
+
+    a = (
+        math.sin(delta_phi / 2) ** 2
+        + math.cos(phi1)
+        * math.cos(phi2)
+        * math.sin(delta_lambda / 2) ** 2
+    )
+
+    # ------------------------------------------------------------------
+    # Distance angulaire convertie en distance réelle.
+    # ------------------------------------------------------------------
+
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    return rayon_terre_m * c
 
 
 def _normaliser_avion(a):
     """
-    Sortie de OpenSkyFetcher.fetch_realtime() → clés courtes utilisées
-    par l'app : icao24, callsign, lat, lon, alt_baro, on_ground,
-    vertical_rate (m/s — sert à estimer la phase de vol).
+    Normalise la sortie de OpenSkyFetcher.fetch_realtime() afin de fournir
+    une structure homogène au reste de l'application Streamlit.
+
+    OpenSky peut renvoyer des clés absentes ou des valeurs nulles.
+    Cette fonction applique donc des valeurs par défaut afin d'éviter
+    les erreurs dans les traitements ultérieurs.
+
+    Retour :
+        {
+            "icao24": str,
+            "callsign": str,
+            "lat": float | None,
+            "lon": float | None,
+            "alt_baro": float,
+            "on_ground": bool,
+            "vertical_rate": float,
+        }
     """
-    pass  # TODO
+
+    # ------------------------------------------------------------------
+    # Protection contre les entrées invalides.
+    # Si l'objet reçu n'est pas un dictionnaire, on retourne une structure
+    # vide mais cohérente.
+    # ------------------------------------------------------------------
+
+    if not isinstance(a, dict):
+        return {
+            "icao24": "",
+            "callsign": "Inconnu",
+            "lat": None,
+            "lon": None,
+            "alt_baro": 0.0,
+            "on_ground": False,
+            "vertical_rate": 0.0,
+        }
+
+    # ------------------------------------------------------------------
+    # Nettoyage et harmonisation des données OpenSky.
+    #
+    # Les chaînes de caractères sont débarrassées des espaces inutiles.
+    # Les valeurs numériques manquantes sont remplacées par des valeurs
+    # neutres afin d'assurer la stabilité de l'application.
+    # ------------------------------------------------------------------
+
+    return {
+        "icao24": str(a.get("icao24", "")).strip(),
+
+        "callsign": (
+            str(a.get("callsign", "Inconnu")).strip()
+            or "Inconnu"
+        ),
+
+        "lat": a.get("lat"),
+
+        "lon": a.get("lon"),
+
+        "alt_baro": float(a.get("alt_baro") or 0.0),
+
+        "on_ground": bool(a.get("on_ground", False)),
+
+        "vertical_rate": float(a.get("vertical_rate") or 0.0),
+    }
 
 
 def niveau_instantane(avions, recepteur, anp):
