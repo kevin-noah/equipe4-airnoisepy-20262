@@ -12,3 +12,4 @@ plotly>=6.7
 contextily
 matplotlib
 folium
+imageio>=2.34

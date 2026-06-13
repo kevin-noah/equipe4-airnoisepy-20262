@@ -6,5 +6,7 @@ exclude = ["data"]
 [lint.per-file-ignores]
 # Import conditionnel volontaire (try/except pour tester la disponibilité)
 "airnoisepy/flight/opensky.py" = ["F401"]
+# Import conditionnel folium + variable contourf non utilisée (fichier de Syndia)
+"airnoisepy/noise/contour.py" = ["F401", "F841"]
 # Imports de constantes gardés pour lisibilité (fichier de Syndia)
 "tests/test_opensky_fetcher.py" = ["F401"]
