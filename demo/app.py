@@ -15,27 +15,60 @@ Fiabilité démo : tout doit fonctionner HORS-LIGNE avec les données locales
 est un bouton optionnel — la démo ne dépend jamais du wifi de la salle.
 """
 
+# ---------------------------------------------------------------------------
+# Bibliothèques standard Python
+# ---------------------------------------------------------------------------
+
 import os
 import sys
-
-import streamlit as st
-import pandas as pd
-import numpy as np
 import math
+
+# ---------------------------------------------------------------------------
+# Bibliothèques tierces utilisées par la démo Streamlit
+# ---------------------------------------------------------------------------
+
+import numpy as np
+import pandas as pd
 import folium
+import streamlit as st
 from streamlit_folium import st_folium
 
+# ---------------------------------------------------------------------------
 # app.py vit dans demo/ : streamlit run ajoute demo/ au sys.path, pas la
-# racine du dépôt — on l'ajoute pour importer airnoisepy sans pip install .
+# racine du dépôt. On ajoute donc explicitement la racine afin de pouvoir
+# importer airnoisepy sans avoir à faire pip install .
+# ---------------------------------------------------------------------------
+
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 if RACINE not in sys.path:
     sys.path.insert(0, RACINE)
 
-# TODO imports à ajouter au fur et à mesure : datetime, json, math,
-#      folium, numpy, st_folium (streamlit_folium), ANPDatabase,
-#      NoiseCalculator, OpenSkyFetcher (+ NoiseContour / ResultsExporter
-#      en try/except tant qu'ils ne sont pas sur main)
+# ---------------------------------------------------------------------------
+# Imports de la bibliothèque AirNoisePy
+#
+# La démo Streamlit est une couche de présentation au-dessus du package.
+# Certains modules peuvent encore être en intégration sur les branches des
+# autres membres. Pour éviter que l'application complète plante à cause
+# d'un seul module manquant, on protège ces imports avec try/except.
+# ---------------------------------------------------------------------------
 
+try:
+    from airnoisepy import ANPDatabase, NoiseCalculator, OpenSkyFetcher
+except (ImportError, AttributeError):
+    ANPDatabase = None
+    NoiseCalculator = None
+    OpenSkyFetcher = None
+
+try:
+    from airnoisepy import NoiseContour
+except (ImportError, AttributeError):
+    NoiseContour = None
+
+try:
+    from airnoisepy import ResultsExporter
+except (ImportError, AttributeError):
+    ResultsExporter = None
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -602,27 +635,30 @@ with tab_chez_vous:
         fill=False,
     ).add_to(carte)
 
-    resultat_carte = st_folium(carte, width=1100, height=550)
+    resultat_carte = st_folium(
+        carte,
+        width=1000,
+        height=380,
+        returned_objects=["last_clicked"],
+    )
 
-    # ------------------------------------------------------------------
-    # Si l'utilisateur clique sur la carte, Streamlit-Folium retourne
-    # les coordonnées du dernier point cliqué.
-    #
-    # On calcule ensuite une estimation simplifiée du Lden :
-    # plus le point est éloigné de YUL, plus le niveau diminue.
-    # Ce n'est pas encore le modèle scientifique final, mais cela permet
-    # de tester l'interface et le parcours utilisateur.
-    # ------------------------------------------------------------------
+    st.markdown("### Résultat du point choisi")
 
     if resultat_carte and resultat_carte.get("last_clicked"):
         lat = resultat_carte["last_clicked"]["lat"]
         lon = resultat_carte["last_clicked"]["lng"]
 
         distance_km = _haversine_m(YUL[0], YUL[1], lat, lon) / 1000
-
         lden_estime = max(35, 70 - 1.15 * distance_km)
 
-        st.metric("Lden estimé", f"{lden_estime:.1f} dB")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.metric("Lden estimé", f"{lden_estime:.1f} dB")
+
+        with col2:
+            st.metric("Distance à YUL", f"{distance_km:.1f} km")
+
         st.write(comparaison_parlante(lden_estime))
 
         if lden_estime >= 65:
@@ -631,6 +667,10 @@ with tab_chez_vous:
             st.warning("Seuil 55 dB dépassé : information des riverains.")
         else:
             st.success("Niveau inférieur aux principaux seuils réglementaires.")
+
+        st.caption(
+            f"Dernier point cliqué : latitude {lat:.5f}, longitude {lon:.5f}"
+        )
 
     else:
         st.info("Cliquez sur la carte pour estimer le bruit à un point donné.")
