@@ -636,15 +636,87 @@ with tab_chez_vous:
         st.info("Cliquez sur la carte pour estimer le bruit à un point donné.")
 
 with tab_anim:
-    # TODO : slider 0-23h → bruit accumulé heure par heure (imshow
-    #        matplotlib), pointes du matin et du soir visibles
-    st.info('À coder : animation de la journée 24h')
+    st.subheader("🕐 Journée 24h")
+
+    st.markdown(
+        """
+        Cette section illustre l'évolution du bruit aérien sur une journée complète.
+
+        Dans la version finale, le calcul utilisera les vols reconstruits autour de
+        YUL et affichera l'accumulation du bruit heure par heure.
+        """
+    )
+
+    # ------------------------------------------------------------------
+    # Démonstration hors-ligne :
+    # on utilise un profil horaire simplifié afin de montrer le principe
+    # sans dépendre des données OpenSky en temps réel.
+    # ------------------------------------------------------------------
+
+    heure = st.slider(
+        "Heure de la journée",
+        min_value=0,
+        max_value=23,
+        value=12,
+    )
+
+    profil_horaire_demo = {
+        0: 5, 1: 3, 2: 2, 3: 2, 4: 4, 5: 8,
+        6: 18, 7: 35, 8: 42, 9: 30, 10: 24, 11: 22,
+        12: 26, 13: 28, 14: 30, 15: 32, 16: 36, 17: 44,
+        18: 40, 19: 30, 20: 22, 21: 16, 22: 10, 23: 6,
+    }
+
+    mouvements = profil_horaire_demo[heure]
+
+    st.metric(
+        "Mouvements estimés à cette heure",
+        f"{mouvements} vols",
+    )
+
+    if 7 <= heure <= 9:
+        st.warning("Pointe du matin : trafic élevé autour de YUL.")
+    elif 17 <= heure <= 19:
+        st.warning("Pointe du soir : trafic élevé autour de YUL.")
+    elif 23 <= heure or heure < 6:
+        st.info("Période nocturne : trafic réduit.")
+    else:
+        st.success("Trafic modéré.")
+
+    st.caption(
+        "Cette visualisation est une démonstration simplifiée. "
+        "L'animation finale utilisera les niveaux Lden calculés sur la grille."
+    )
 
 with tab_live:
-    # TODO : bouton OpenSky fetch_realtime → carte des avions en vol
-    #        (monte/descend/palier via vertical_rate), clic → niveau
-    #        instantané + comparaison WebTrak ±3 dB
-    st.info('À coder : avions en direct + niveau instantané')
+    st.subheader("📡 Avions en direct")
+
+    st.markdown(
+        """
+        Cette section est prévue pour afficher les avions actuellement en vol
+        autour de Montréal à partir des données OpenSky.
+
+        Pour garantir une démonstration fiable hors-ligne, le mode temps réel
+        restera optionnel. L'application ne doit pas dépendre du Wi-Fi de la salle.
+        """
+    )
+
+    st.warning(
+        "Mode live non activé dans cette version : l'intégration OpenSky "
+        "sera branchée lorsque le module OpenSkyFetcher sera stabilisé."
+    )
+
+    st.markdown(
+        """
+        Fonctionnement prévu :
+
+        1. récupérer les avions autour de YUL avec `OpenSkyFetcher.fetch_realtime()`
+        2. afficher leur position sur une carte
+        3. estimer leur phase de vol avec `vertical_rate`
+        4. calculer un niveau sonore instantané au point choisi
+        5. comparer l'estimation avec une mesure WebTrak/ADM
+        """
+    )
 
 with tab_valid:
     st.subheader("✅ Validation WebTrak / ADM")
