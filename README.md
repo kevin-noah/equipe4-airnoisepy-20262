@@ -8,9 +8,9 @@
 selon la norme ECAC Doc 29**
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE_.md)
-[![Tests](https://img.shields.io/badge/tests-142%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
-[![Streamlit](https://img.shields.io/badge/demo-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](app.py)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+[![Tests](https://img.shields.io/badge/tests-280%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Streamlit](https://img.shields.io/badge/demo-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](demo/app.py)
 [![ECAC Doc 29](https://img.shields.io/badge/norme-ECAC%20Doc%2029-blueviolet)](https://www.ecac-ceac.org/)
 
 *Projet de session MGA802 — École de technologie supérieure, Été 2026*
@@ -62,7 +62,7 @@ flowchart LR
     NC --> CT --> RE
 ```
 
-Le **notebook**, les **142 tests** et la **démo Streamlit** consomment
+Le **notebook**, les **280 tests** et la **démo Streamlit** consomment
 exactement les mêmes classes — aucune n'a été modifiée pour les besoins de
 l'interface. `NoiseCalculator` reçoit sa base NPD par injection de
 dépendance : chaque membre a pu développer et tester sa classe
@@ -105,7 +105,7 @@ L'exemple complet (vol réel → grille Lden → carte interactive → animation
 
 ```bash
 pip install streamlit streamlit-folium
-streamlit run app.py
+streamlit run demo/app.py
 ```
 
 | Onglet | Ce qu'il montre |
@@ -114,7 +114,11 @@ streamlit run app.py
 | 🕐 **Journée 24 h** | l'accumulation du bruit heure par heure (566 mouvements, profil horaire réel de YUL) |
 | 📡 **Avions en direct** | les avions au-dessus de Montréal *maintenant* + niveau instantané estimé au clic |
 | ✅ **Validation WebTrak** | écart modèle/mesure avec la tolérance ECAC ±3 dB |
-| 🌙 **Couvre-feu 23h-7h** | scénario *what-if* : les contours se contractent en direct |
+| 💾 **Exports** | génération des fichiers de résultats (CSV, carte HTML) |
+
+La barre latérale ajoute la résolution de grille et un scénario *what-if*
+**couvre-feu 23h-7h** : les vols de nuit sont retirés du calcul et les
+contours se contractent en direct.
 
 ---
 
@@ -138,7 +142,7 @@ isolation acoustique obligatoire.
 ## ✅ Tests
 
 ```bash
-python -m pytest tests/ -q        # 142 tests
+python -m pytest tests/ -q        # 280 tests
 ```
 
 Chaque classe a sa suite : mécanique de calcul vérifiée contre des valeurs
@@ -152,7 +156,7 @@ distance, croît avec la poussée, départ > arrivée).
 
 | Membre | Classes | Infrastructure |
 |---|---|---|
-| **Kevin** | `FlightOperation` · `NoiseCalculator` | `app.py` (démo Streamlit) |
+| **Kevin** | `FlightOperation` · `NoiseCalculator` | `demo/app.py` (démo Streamlit) |
 | **Bouchra** | `ANPDatabase` | `LICENSE.md` · `Requirements.txt` |
 | **Syndia** | `OpenSkyFetcher` · `NoiseContour` | — |
 | **Laura** | `ResultsExporter` | `README.md` · `pyproject.toml` |
@@ -171,7 +175,7 @@ distance, croît avec la poussée, départ > arrivée).
 
 ## 📄 Licence
 
-Distribué sous licence MIT — voir [`LICENSE.md`](LICENSE_.md).
+Distribué sous licence MIT — voir [`LICENSE.md`](LICENSE.md).
 
 > *Please cite as:* Kevin, Bouchra, Syndia, Laura. **AirNoisePy: a Python
 > tool for aircraft noise modelling around Montréal-Trudeau airport
