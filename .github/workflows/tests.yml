@@ -33,11 +33,9 @@ jobs:
       - name: Lancer la suite de tests
         run: python -m pytest tests/ -v
 
-      # Vérifie que `pip install.` fonctionne — ce que fera le prof.
-      # Non bloquant tant que pyproject.toml (Laura) n'est pas rempli :
-      # retirer continue-on-error quand il le sera.
+      # Vérifie que `pip install .` fonctionne — ce que fera le prof.
+      # Étape bloquante depuis que pyproject.toml embarque tous les sous-packages.
       - name: Vérifier l'installation du package
-        continue-on-error: true
         run: |
           pip install .
           python -c "import airnoisepy; print('airnoisepy importé depuis le package installé')"
