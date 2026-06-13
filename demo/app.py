@@ -285,12 +285,153 @@ def niveau_instantane(avions, recepteur, anp):
     de dicts {callsign, distance_m, niveau_db} triée du plus bruyant au
     plus discret. niveau_total = 0.0 si aucun avion en vol.
     """
-    pass  # TODO
+    # ------------------------------------------------------------------
+    # Sécurité de démonstration :
+    # si aucun avion n'est fourni, on retourne immédiatement un niveau nul.
+    # Cela évite de faire planter l'interface lorsque le mode live OpenSky
+    # n'est pas activé ou lorsque l'API ne retourne aucun avion.
+    # ------------------------------------------------------------------
+
+    if not avions:
+        return 0.0, []
+
+    lat_rec, lon_rec = recepteur
+    contributions = []
+
+    # ------------------------------------------------------------------
+    # Modèle simplifié pour la démo Streamlit.
+    #
+    # L'objectif ici n'est pas de remplacer NoiseCalculator. Cette fonction
+    # donne seulement un ordre de grandeur instantané pour l'onglet live.
+    #
+    # Hypothèses :
+    #   - plus l'avion est proche du récepteur, plus il est bruyant ;
+    #   - un avion en montée est plus bruyant qu'un avion en descente ;
+    #   - les contributions sont combinées en énergie, pas en addition simple.
+    # ------------------------------------------------------------------
+
+    for avion in avions:
+        lat = avion.get("lat")
+        lon = avion.get("lon")
+
+        if lat is None or lon is None:
+            continue
+
+        altitude_m = avion.get("alt_baro") or 1000.0
+        vertical_rate = avion.get("vertical_rate") or 0.0
+
+        distance_sol_m = _haversine_m(lat_rec, lon_rec, lat, lon)
+        distance_3d_m = math.sqrt(distance_sol_m ** 2 + altitude_m ** 2)
+
+        # --------------------------------------------------------------
+        # Niveau de base simplifié.
+        #
+        # À 1 km, on part d'environ 75 dB(A), puis on applique une
+        # décroissance logarithmique avec la distance. On limite la
+        # distance minimale à 200 m pour éviter des valeurs irréalistes.
+        # --------------------------------------------------------------
+
+        distance_ref_m = max(distance_3d_m, 200.0)
+        niveau_db = 75 - 20 * math.log10(distance_ref_m / 1000)
+
+        # --------------------------------------------------------------
+        # Correction très simplifiée selon la phase de vol.
+        # Le taux vertical est utilisé comme proxy :
+        #   > 1 m/s  : montée
+        #   < -1 m/s : descente
+        #   sinon    : palier
+        # --------------------------------------------------------------
+
+        if vertical_rate > 1:
+            phase = "montée"
+            niveau_db += 3
+        elif vertical_rate < -1:
+            phase = "descente"
+            niveau_db -= 2
+        else:
+            phase = "palier"
+
+        contributions.append(
+            {
+                "callsign": avion.get("callsign", "Inconnu"),
+                "distance_m": distance_3d_m,
+                "niveau_db": niveau_db,
+                "phase": phase,
+            }
+        )
+
+    if not contributions:
+        return 0.0, []
+
+    # ------------------------------------------------------------------
+    # Addition logarithmique des contributions.
+    #
+    # Les décibels ne s'additionnent pas directement :
+    # on convertit chaque niveau en énergie, on additionne les énergies,
+    # puis on revient en dB.
+    # ------------------------------------------------------------------
+
+    energie_totale = sum(
+        10 ** (contribution["niveau_db"] / 10)
+        for contribution in contributions
+    )
+
+    niveau_total = 10 * math.log10(energie_totale)
+
+    contributions.sort(
+        key=lambda contribution: contribution["niveau_db"],
+        reverse=True,
+    )
+
+    return niveau_total, contributions
 
 
 def comparaison_parlante(lden):
-    """Équivalent du quotidien pour un niveau Lden donné."""
-    pass  # TODO
+    """
+    Retourne une comparaison du quotidien permettant à un utilisateur
+    non spécialiste de mieux interpréter un niveau Lden.
+
+    L'objectif n'est pas de fournir une équivalence scientifique exacte,
+    mais un ordre de grandeur parlant pour faciliter la compréhension
+    des résultats présentés dans la démo.
+    """
+
+    # ------------------------------------------------------------------
+    # Les seuils choisis correspondent à des ambiances sonores
+    # généralement reconnues dans la littérature grand public.
+    # ------------------------------------------------------------------
+
+    if lden < 40:
+        return (
+            "Très calme : comparable à une bibliothèque ou à un quartier "
+            "résidentiel paisible pendant la nuit."
+        )
+
+    elif lden < 55:
+        return (
+            "Calme à modéré : comparable à une conversation normale "
+            "à l'intérieur d'une maison."
+        )
+
+    elif lden < 65:
+        return (
+            "Bruit soutenu : comparable à une rue urbaine animée. "
+            "C'est le seuil à partir duquel l'information des riverains "
+            "est généralement recommandée."
+        )
+
+    elif lden < 75:
+        return (
+            "Bruit élevé : comparable à une circulation routière dense. "
+            "Une exposition prolongée peut devenir gênante."
+        )
+
+    else:
+        return (
+            "Très bruyant : comparable à une avenue très fréquentée "
+            "ou à la proximité immédiate d'une importante source de bruit. "
+            "Des mesures d'atténuation sont recommandées."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -305,9 +446,65 @@ def carte_contours(contours, center=YUL, zoom=10):
 def carte_heatmap(lden, grid, grid_size, center=YUL, zoom=10):
     """
     Repli sans NoiseContour : surface Lden en surimpression semi-
-    transparente (colormap inferno, transparent sous 40 dB).
+    transparente.
+
+    Cette fonction sert de solution de secours lorsque la classe
+    NoiseContour n'est pas encore disponible. Elle ne trace pas de
+    vrais contours isophoniques, mais elle permet quand même de
+    visualiser les zones les plus exposées sur une carte Folium.
     """
-    pass  # TODO
+
+    # ------------------------------------------------------------------
+    # Création de la carte centrée sur YUL.
+    # ------------------------------------------------------------------
+
+    carte = folium.Map(location=center, zoom_start=zoom)
+
+    folium.Marker(
+        location=center,
+        popup="Aéroport Montréal-Trudeau (YUL)",
+        tooltip="YUL",
+    ).add_to(carte)
+
+    # ------------------------------------------------------------------
+    # Affichage simplifié des niveaux de bruit.
+    #
+    # Chaque point de la grille est représenté par un petit cercle.
+    # La couleur dépend du niveau Lden estimé :
+    #   - < 55 dB  : exposition faible
+    #   - 55-65 dB : seuil d'information
+    #   - >= 65 dB : zone fortement exposée
+    # ------------------------------------------------------------------
+
+    for (lat, lon), niveau in zip(grid, lden):
+        if niveau >= 65:
+            couleur = "red"
+        elif niveau >= 55:
+            couleur = "orange"
+        else:
+            couleur = "green"
+
+        folium.CircleMarker(
+            location=[lat, lon],
+            radius=3,
+            color=couleur,
+            fill=True,
+            fill_opacity=0.45,
+            popup=f"Lden estimé : {niveau:.1f} dB",
+        ).add_to(carte)
+
+    # ------------------------------------------------------------------
+    # Cercle de référence : zone d'étude de 25 km autour de YUL.
+    # ------------------------------------------------------------------
+
+    folium.Circle(
+        location=center,
+        radius=RAYON_GRILLE_KM * 1000,
+        tooltip="Zone d'étude : 25 km",
+        fill=False,
+    ).add_to(carte)
+
+    return carte
 
 
 # ---------------------------------------------------------------------------
