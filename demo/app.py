@@ -515,8 +515,49 @@ st.title('✈️ AirNoisePy — le bruit des avions autour de YUL')
 st.caption('Modélisation ECAC Doc 29 · données ADS-B OpenSky · base EASA '
            'ANP v9 — MGA802 ÉTS Été 2026, Équipe 4')
 
-# TODO sidebar : résolution de grille (40/60/80) + toggle couvre-feu 23h–7h
-#      + rappel des seuils réglementaires (55 dB information, 65 dB isolation)
+# ---------------------------------------------------------------------------
+# Barre latérale
+#
+# Ces paramètres contrôlent la démonstration sans modifier le code source.
+# La résolution de grille permet de choisir entre rapidité et finesse
+# d'affichage. Le scénario de couvre-feu servira à comparer une journée
+# normale avec une journée où les vols nocturnes sont réduits.
+# ---------------------------------------------------------------------------
+
+st.sidebar.header("⚙️ Paramètres de démonstration")
+
+grid_size = st.sidebar.selectbox(
+    "Résolution de la grille",
+    options=[40, 60, 80],
+    index=1,
+    help=(
+        "40 = rapide, 80 = plus détaillé. "
+        "Cette valeur sera utilisée par les cartes et les calculs de grille."
+    ),
+)
+
+curfew_actif = st.sidebar.toggle(
+    "Scénario couvre-feu 23h–7h",
+    value=False,
+    help=(
+        "Active un scénario de démonstration où les vols nocturnes "
+        "sont réduits entre 23h et 7h."
+    ),
+)
+
+st.sidebar.markdown("---")
+
+st.sidebar.markdown("### Seuils réglementaires")
+
+st.sidebar.info(
+    "55 dB Lden : seuil d'information des riverains.\n\n"
+    "65 dB Lden : seuil associé à l'isolation acoustique."
+)
+
+st.sidebar.caption(
+    "Ces seuils servent de repères pour interpréter les cartes "
+    "et les résultats affichés dans la démo."
+)
 
 tab_chez_vous, tab_anim, tab_live, tab_valid, tab_export = st.tabs([
     '🏠 Le bruit chez vous', '🕐 Journée 24h', '📡 Avions en direct',
@@ -524,10 +565,75 @@ tab_chez_vous, tab_anim, tab_live, tab_valid, tab_export = st.tabs([
 ])
 
 with tab_chez_vous:
-    # TODO : carte cliquable (st_folium) → Lden au point cliqué,
-    #        comparaison parlante, alerte selon les seuils 55/65 dB,
-    #        SEL du survol le plus bruyant de la journée
-    st.info('À coder : carte cliquable + Lden au point choisi')
+    st.subheader("🏠 Le bruit chez vous")
+
+    st.markdown(
+        """
+        Cette section permet d'estimer le niveau sonore autour de YUL
+        à partir d'un point choisi sur la carte.
+
+        Pour cette première version Streamlit, le niveau affiché est une
+        estimation simplifiée basée sur la distance à l'aéroport. La version
+        finale utilisera les résultats calculés par `NoiseCalculator`.
+        """
+    )
+
+    # ------------------------------------------------------------------
+    # Carte interactive centrée sur Montréal-Trudeau.
+    #
+    # Le cercle de 25 km correspond à la zone d'étude définie dans le
+    # projet. L'utilisateur peut cliquer sur la carte pour choisir un
+    # récepteur au sol.
+    # ------------------------------------------------------------------
+
+    carte = folium.Map(location=YUL, zoom_start=10)
+
+    folium.Marker(
+        location=YUL,
+        popup="Aéroport Montréal-Trudeau (YUL)",
+        tooltip="YUL",
+    ).add_to(carte)
+
+    folium.Circle(
+        location=YUL,
+        radius=25000,
+        popup="Zone d'étude : 25 km",
+        tooltip="Rayon de 25 km",
+        fill=False,
+    ).add_to(carte)
+
+    resultat_carte = st_folium(carte, width=1100, height=550)
+
+    # ------------------------------------------------------------------
+    # Si l'utilisateur clique sur la carte, Streamlit-Folium retourne
+    # les coordonnées du dernier point cliqué.
+    #
+    # On calcule ensuite une estimation simplifiée du Lden :
+    # plus le point est éloigné de YUL, plus le niveau diminue.
+    # Ce n'est pas encore le modèle scientifique final, mais cela permet
+    # de tester l'interface et le parcours utilisateur.
+    # ------------------------------------------------------------------
+
+    if resultat_carte and resultat_carte.get("last_clicked"):
+        lat = resultat_carte["last_clicked"]["lat"]
+        lon = resultat_carte["last_clicked"]["lng"]
+
+        distance_km = _haversine_m(YUL[0], YUL[1], lat, lon) / 1000
+
+        lden_estime = max(35, 70 - 1.15 * distance_km)
+
+        st.metric("Lden estimé", f"{lden_estime:.1f} dB")
+        st.write(comparaison_parlante(lden_estime))
+
+        if lden_estime >= 65:
+            st.error("Seuil 65 dB dépassé : isolation acoustique recommandée.")
+        elif lden_estime >= 55:
+            st.warning("Seuil 55 dB dépassé : information des riverains.")
+        else:
+            st.success("Niveau inférieur aux principaux seuils réglementaires.")
+
+    else:
+        st.info("Cliquez sur la carte pour estimer le bruit à un point donné.")
 
 with tab_anim:
     # TODO : slider 0-23h → bruit accumulé heure par heure (imshow
