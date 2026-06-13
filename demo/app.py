@@ -835,5 +835,44 @@ with tab_export:
             "un exemple d'export CSV."
         )
 
-# TODO pied de page : licence MIT, citation, logos locaux (assets/ à la
-#      racine — hors-ligne, règle n°1 de la démo)
+# ---------------------------------------------------------------------
+# Pied de page
+#
+# La démonstration doit rester entièrement fonctionnelle hors-ligne.
+# Les logos sont donc chargés depuis le dossier local assets/
+# plutôt qu'à partir d'URLs externes.
+# ---------------------------------------------------------------------
+
+st.divider()
+
+st.markdown("### 📄 Licence")
+
+st.write(
+    "Distribué sous licence MIT. "
+    "Voir le fichier LICENSE.md pour plus de détails."
+)
+
+st.markdown("### 📚 Citation")
+
+st.caption(
+    "Kevin, Bouchra, Syndia, Laura. "
+    "AirNoisePy: a Python tool for aircraft noise modelling around "
+    "Montréal-Trudeau airport (ECAC Doc 29), "
+    "MGA802, École de technologie supérieure, Montréal, 2026."
+)
+
+st.markdown("### 🔧 Technologies utilisées")
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.image("assets/numpy.svg", width=80)
+
+with col2:
+    st.image("assets/pandas.svg", width=80)
+
+with col3:
+    st.image("assets/folium.png", width=80)
+
+with col4:
+    st.image("assets/github.png", width=80)
