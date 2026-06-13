@@ -22,6 +22,9 @@ est un bouton optionnel — la démo ne dépend jamais du wifi de la salle.
 import os
 import sys
 import math
+import json
+import inspect
+import datetime
 
 # ---------------------------------------------------------------------------
 # Bibliothèques tierces utilisées par la démo Streamlit
@@ -69,6 +72,11 @@ try:
     from airnoisepy import ResultsExporter
 except (ImportError, AttributeError):
     ResultsExporter = None
+
+# Modules optionnels : si une coéquipière n'a pas encore livré le sien, la
+# démo bascule sur un affichage de repli au lieu de planter.
+CONTOUR_DISPONIBLE = NoiseContour is not None
+EXPORTER_DISPONIBLE = ResultsExporter is not None
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -81,11 +89,47 @@ FLIGHTS_JSON = os.path.join(DATA_DIR, 'sample_flights.json')
 YUL = (45.4706, -73.7408)
 RAYON_GRILLE_KM = 25.0
 
-# TODO constantes à définir ensemble :
-#   - LAMAX_OFFSET_DB : passage SEL → LAmax estimé (la base ne charge que SEL)
-#   - poussée par phase de vol (lbs, table NPD A320 — voir database/anp.py)
-#   - PROFIL_HORAIRE_YUL : mouvements par heure (~565/jour, pointes 7h-9h
-#     et 17h-19h, creux nocturne — statistiques ADM ~240 000 mouvements/an)
+# La base ANP ne charge que la métrique SEL (choix ECAC Doc 29 d'ANPDatabase).
+# Pour un survol de jet commercial, LAmax ≈ SEL − 10·log10(durée effective),
+# durée typique ~8 s → écart ≈ 9 dB. Estimation, pas une mesure.
+LAMAX_OFFSET_DB = 9.0
+
+# Convention de poussée d'ANPDatabase.interpolate : l'ANPDatabase de Bouchra
+# (main) attend des LIVRES nettes (paramètre `thrust`), le prototype local_all
+# attendait une fraction N1 (paramètre `thrust_pct`). On détecte l'unité via
+# le nom du paramètre pour rester compatible avec les deux.
+if ANPDatabase is not None:
+    THRUST_EN_LBS = ('thrust_pct'
+                     not in inspect.signature(ANPDatabase.interpolate).parameters)
+else:
+    THRUST_EN_LBS = True
+
+# Poussée par phase de vol : (fraction N1, livres nettes) — table NPD A320
+# (CFM56-5B), correspondances documentées dans airnoisepy/database/anp.py
+_PHASES_POUSSEE = {
+    'decollage': (0.94, 23000.0),
+    'montee':    (0.86, 18000.0),
+    'palier':    (0.80, 13000.0),
+    'approche':  (0.68, 4500.0),
+}
+
+
+def _poussee(phase):
+    """Poussée de la phase dans l'unité attendue par ANPDatabase.interpolate."""
+    n1, lbs = _PHASES_POUSSEE[phase]
+    return lbs if THRUST_EN_LBS else n1
+
+
+# Profil horaire typique de YUL : nombre de mouvements (départs + arrivées)
+# par heure, calibré sur ~565 mouvements/jour (statistiques ADM ~240 000
+# mouvements/an). Pointes du matin (7h-9h) et du soir (17h-19h), creux
+# nocturne avec quelques vols cargo.
+PROFIL_HORAIRE_YUL = {
+    0: 3,  1: 2,  2: 1,  3: 1,  4: 2,  5: 6,
+    6: 18, 7: 35, 8: 40, 9: 38, 10: 30, 11: 28,
+    12: 30, 13: 30, 14: 32, 15: 34, 16: 38, 17: 42,
+    18: 44, 19: 38, 20: 30, 21: 22, 22: 14, 23: 8,
+}
 
 st.set_page_config(page_title='AirNoisePy — bruit aérien YUL',
                    page_icon='✈️', layout='wide')
@@ -97,8 +141,13 @@ st.set_page_config(page_title='AirNoisePy — bruit aérien YUL',
 
 @st.cache_resource
 def charger_bibliotheque():
-    """ANPDatabase (réelle si dispo, sinon synthétique) + NoiseCalculator."""
-    pass  # TODO
+    """ANPDatabase (réelle si le fichier NPD est là, sinon table synthétique
+    de secours) + NoiseCalculator prêt à l'emploi."""
+    if os.path.exists(NPD_XLSX):
+        anp = ANPDatabase(NPD_XLSX)
+    else:
+        anp = ANPDatabase()  # table synthétique : la démo marche quand même
+    return anp, NoiseCalculator(anp)
 
 
 @st.cache_resource
@@ -115,57 +164,108 @@ def charger_vols():
     IMPORTANT : on passe par OpenSkyFetcher.to_flight_operation() (pipeline
     de nettoyage complet), jamais FlightOperation.from_opensky() sur un track
     brut. Sans le filtre zone 25 km, un vol complet commence ET finit au sol
-    → classification départ/arrivée faussée.
+    → classification départ/arrivée faussée, et 115 segments au lieu de ~30.
     """
-    pass  # TODO
+    fetcher = OpenSkyFetcher()  # hors-ligne : seul le pipeline de nettoyage sert
+    # 'to_flight_operation' chez Syndia (main), pluriel sur le prototype local_all
+    convertir = getattr(fetcher, 'to_flight_operation',
+                        getattr(fetcher, 'to_flight_operations', None))
+
+    with open(TRACK_JSON) as f:
+        track = json.load(f)
+    with open(FLIGHTS_JSON) as f:
+        flights_meta = json.load(f)
+
+    base_path = track['path']
+    t0 = base_path[0][0]
+    # arrivée = même géométrie que le départ, mais parcourue à l'envers
+    path_arrivee = [
+        [p[0], q[1], q[2], q[3], q[4], q[5]]
+        for p, q in zip(base_path, reversed(base_path))
+    ]
+
+    vols = []
+    compteur = 0
+    for hour, n_mouvements in PROFIL_HORAIRE_YUL.items():
+        for k in range(n_mouvements):
+            meta = flights_meta[compteur % len(flights_meta)]
+            is_departure = compteur % 2 == 0
+            chemin = base_path if is_departure else path_arrivee
+            # timestamps répartis dans l'heure, cadence d'origine conservée
+            depart = datetime.datetime(
+                2026, 6, 10, hour, 0, tzinfo=datetime.timezone.utc
+            ).timestamp() + k * 3600 // max(n_mouvements, 1)
+            shift = int(depart) - t0
+            chemin = [[p[0] + shift] + p[1:] for p in chemin]
+            vols.append(convertir(meta['icao24'], {
+                'icao24':   meta['icao24'],
+                'callsign': (meta.get('callsign') or '').strip(),
+                'path':     chemin,
+            }))
+            compteur += 1
+    return vols
 
 
 def grille_recepteurs(grid_size):
     """
     Grille (N, 2) de récepteurs [lat, lon] dans un carré de ±25 km
-    autour de YUL — repli tant que NoiseContour n'est pas livré.
+    autour de YUL — repli utilisé tant que NoiseContour n'est pas livré
+    (sinon on prend la grille interne de NoiseContour).
     """
-    pass  # TODO
+
+    # ------------------------------------------------------------------
+    # Conversion du rayon (km) en degrés.
+    # 1° de latitude ≈ 111.32 km partout ; 1° de longitude se resserre
+    # vers les pôles, d'où le facteur cos(latitude).
+    # ------------------------------------------------------------------
+    dlat = RAYON_GRILLE_KM / 111.32
+    dlon = RAYON_GRILLE_KM / (111.32 * math.cos(math.radians(YUL[0])))
+
+    # Axes régulièrement espacés, puis produit cartésien (grid_size²) points.
+    lats = np.linspace(YUL[0] - dlat, YUL[0] + dlat, grid_size)
+    lons = np.linspace(YUL[1] - dlon, YUL[1] + dlon, grid_size)
+    return np.column_stack([np.repeat(lats, grid_size),
+                            np.tile(lons, grid_size)])
 
 
 @st.cache_data
 def calculer_grille(curfew_actif, grid_size):
     """
-    Lden sur la grille YUL, avec ou sans couvre-feu 23h–7h.
+    Lden réel sur la grille YUL, avec ou sans couvre-feu 23h–7h.
     Mis en cache : le calcul n'est fait qu'une fois par scénario.
+
+    Retourne (grid, lden, n_vols) : la grille (N, 2) des récepteurs, le
+    tableau Lden (N,) en dB(A), et le nombre de vols pris en compte.
     """
     # ------------------------------------------------------------------
-    # Version de démonstration hors-ligne.
+    # Vrai calcul ECAC Doc 29.
     #
-    # L'objectif est de produire une grille de niveaux Lden plausible
-    # pour tester l'interface Streamlit, même si tous les modules de
-    # calcul ne sont pas encore intégrés.
-    #
-    # Hypothèse simplifiée :
-    #   - le bruit est plus élevé près de YUL ;
-    #   - il diminue progressivement avec la distance ;
-    #   - un couvre-feu 23h–7h réduit le niveau global.
+    # On part de la journée type (~565 vols) et on agrège le bruit de
+    # chaque survol sur tous les récepteurs au sol via NoiseCalculator.
+    # Le résultat dépend donc réellement du trafic, plus d'une formule
+    # de distance simplifiée.
     # ------------------------------------------------------------------
 
-    grid = grille_recepteurs(grid_size)
+    _, calc = charger_bibliotheque()
+    vols = charger_vols()
 
-    niveaux = []
+    # Scénario de couvre-feu : au lieu d'un abattement forfaitaire, on
+    # RETIRE vraiment les vols dont le décollage tombe entre 23h et 7h.
+    # L'effet sur le Lden émerge alors du calcul, pas d'une constante.
+    if curfew_actif:
+        vols = [v for v in vols
+                if not (calc._utc_hour(v.waypoints[0]['time']) >= 23
+                        or calc._utc_hour(v.waypoints[0]['time']) < 7)]
 
-    for lat, lon in grid:
-        distance_km = _haversine_m(YUL[0], YUL[1], lat, lon) / 1000
+    # Grille de récepteurs : celle de NoiseContour si le module est livré
+    # (forme « os » alignée sur les pistes), sinon le repli carré local.
+    if CONTOUR_DISPONIBLE:
+        grid = NoiseContour(calc, grid_size=grid_size).get_receptor_grid()
+    else:
+        grid = grille_recepteurs(grid_size)
 
-        # Niveau simplifié : fort près de l'aéroport, plus faible loin.
-        lden = max(35, 70 - 1.15 * distance_km)
-
-        # Scénario de couvre-feu :
-        # on applique une réduction simplifiée de 4 dB pour illustrer
-        # l'effet d'une diminution des vols de nuit.
-        if curfew_actif:
-            lden -= 4
-
-        niveaux.append(lden)
-
-    return np.array(niveaux), grid
+    lden = calc.compute_grid(vols, grid)
+    return grid, lden, len(vols)
 
 
 # ---------------------------------------------------------------------------
@@ -292,11 +392,15 @@ def _normaliser_avion(a):
             or "Inconnu"
         ),
 
-        "lat": a.get("lat"),
+        # fetch_realtime() de Syndia renvoie des clés longues
+        # (latitude/longitude/baro_altitude) ; le prototype local_all
+        # utilisait des clés courtes (lat/lon/alt_baro). On accepte les deux,
+        # sinon lat=None → tous les avions filtrés (« 0 avion en vol »).
+        "lat": a.get("latitude", a.get("lat")),
 
-        "lon": a.get("lon"),
+        "lon": a.get("longitude", a.get("lon")),
 
-        "alt_baro": float(a.get("alt_baro") or 0.0),
+        "alt_baro": float(a.get("baro_altitude", a.get("alt_baro")) or 0.0),
 
         "on_ground": bool(a.get("on_ground", False)),
 
@@ -332,62 +436,60 @@ def niveau_instantane(avions, recepteur, anp):
     contributions = []
 
     # ------------------------------------------------------------------
-    # Modèle simplifié pour la démo Streamlit.
-    #
-    # L'objectif ici n'est pas de remplacer NoiseCalculator. Cette fonction
-    # donne seulement un ordre de grandeur instantané pour l'onglet live.
-    #
-    # Hypothèses :
-    #   - plus l'avion est proche du récepteur, plus il est bruyant ;
-    #   - un avion en montée est plus bruyant qu'un avion en descente ;
-    #   - les contributions sont combinées en énergie, pas en addition simple.
+    # Vrai modèle : on interroge la base NPD (ANPDatabase) pour CHAQUE
+    # avion, exactement comme NoiseCalculator. La phase de vol est estimée
+    # à partir du taux de montée ADS-B, qui détermine la poussée (donc la
+    # courbe SEL à utiliser). La distance employée est la distance oblique
+    # 3D (slant range) entre l'avion et le récepteur au sol.
     # ------------------------------------------------------------------
 
     for avion in avions:
         lat = avion.get("lat")
         lon = avion.get("lon")
 
-        if lat is None or lon is None:
+        # On ignore les avions au sol ou sans position : leur bruit de
+        # roulage n'est pas modélisé par les courbes NPD en survol.
+        if lat is None or lon is None or avion.get("on_ground"):
             continue
 
-        altitude_m = avion.get("alt_baro") or 1000.0
+        # Altitude AGL approximée : élévation de YUL ≈ 30 m, plancher 10 m
+        # pour éviter une distance oblique nulle juste au-dessus du point.
+        alt_agl = max((avion.get("alt_baro") or 0.0) - 30.0, 10.0)
         vertical_rate = avion.get("vertical_rate") or 0.0
 
         distance_sol_m = _haversine_m(lat_rec, lon_rec, lat, lon)
-        distance_3d_m = math.sqrt(distance_sol_m ** 2 + altitude_m ** 2)
+        distance_3d_m = math.sqrt(distance_sol_m ** 2 + alt_agl ** 2)
 
         # --------------------------------------------------------------
-        # Niveau de base simplifié.
-        #
-        # À 1 km, on part d'environ 75 dB(A), puis on applique une
-        # décroissance logarithmique avec la distance. On limite la
-        # distance minimale à 200 m pour éviter des valeurs irréalistes.
-        # --------------------------------------------------------------
-
-        distance_ref_m = max(distance_3d_m, 200.0)
-        niveau_db = 75 - 20 * math.log10(distance_ref_m / 1000)
-
-        # --------------------------------------------------------------
-        # Correction très simplifiée selon la phase de vol.
-        # Le taux vertical est utilisé comme proxy :
-        #   > 1 m/s  : montée
-        #   < -1 m/s : descente
+        # Phase de vol via le taux vertical (m/s), qui fixe la poussée :
+        #   > 2 m/s  : montée  → décollage (< 305 m AGL) ou montée
+        #   < -2 m/s : descente → approche
         #   sinon    : palier
+        # _poussee() renvoie la valeur dans l'unité attendue par la base
+        # (livres pour l'ANPDatabase de main, fraction N1 pour le prototype).
         # --------------------------------------------------------------
 
-        if vertical_rate > 1:
+        if vertical_rate > 2.0:
             phase = "montée"
-            niveau_db += 3
-        elif vertical_rate < -1:
+            op = "departure"
+            thrust = _poussee("decollage" if alt_agl < 305 else "montee")
+        elif vertical_rate < -2.0:
             phase = "descente"
-            niveau_db -= 2
+            op, thrust = "arrival", _poussee("approche")
         else:
             phase = "palier"
+            op, thrust = "departure", _poussee("palier")
+
+        # SEL de la base NPD à la distance oblique, ramené à un ordre de
+        # grandeur LAmax instantané (− LAMAX_OFFSET_DB).
+        sel = anp.interpolate("A320", op, distance_3d_m, thrust)
+        niveau_db = round(float(sel) - LAMAX_OFFSET_DB, 1)
 
         contributions.append(
             {
-                "callsign": avion.get("callsign", "Inconnu"),
-                "distance_m": distance_3d_m,
+                "callsign": avion.get("callsign") or avion.get("icao24")
+                or "Inconnu",
+                "distance_m": round(distance_3d_m),
                 "niveau_db": niveau_db,
                 "phase": phase,
             }
@@ -471,9 +573,16 @@ def comparaison_parlante(lden):
 # Cartes folium
 # ---------------------------------------------------------------------------
 
-def carte_contours(contours, center=YUL, zoom=10):
-    """Carte folium avec les polygones isophoniques (NoiseContour requis)."""
-    pass  # TODO
+def carte_contours(lden_values, grid_size, calc):
+    """
+    Carte folium avec les contours isophoniques 55/60/65/70 dB.
+
+    Délègue à NoiseContour.plot_interactive() (classe de Syndia), qui
+    interpole la surface Lden et trace les polygones réglementaires.
+    """
+    nc = NoiseContour(calc, grid_size=grid_size)
+    return nc.plot_interactive(
+        lden_values, title="Contours Lden — journée type YUL")
 
 
 def carte_heatmap(lden, grid, grid_size, center=YUL, zoom=10):
@@ -592,6 +701,34 @@ st.sidebar.caption(
     "et les résultats affichés dans la démo."
 )
 
+if not CONTOUR_DISPONIBLE:
+    st.sidebar.caption(
+        "⏳ NoiseContour en cours d'intégration : surface Lden affichée "
+        "en attendant les contours isophoniques."
+    )
+
+# ---------------------------------------------------------------------------
+# Calcul partagé par les onglets
+#
+# La bibliothèque et la grille Lden sont calculées UNE fois ici (mise en
+# cache Streamlit), puis réutilisées par tous les onglets. Les paramètres
+# grid_size et couvre-feu de la barre latérale pilotent réellement le calcul.
+# ---------------------------------------------------------------------------
+
+anp, calc = charger_bibliotheque()
+
+with st.spinner(f"Calcul du Lden sur {grid_size ** 2:,} récepteurs…"):
+    grid, lden, n_vols = calculer_grille(curfew_actif, grid_size)
+
+# Comparaison chiffrée quand le scénario couvre-feu est actif.
+if curfew_actif:
+    _, lden_ref, n_ref = calculer_grille(False, grid_size)
+    st.info(
+        f"🌙 Couvre-feu actif : {n_ref - n_vols} vols de nuit retirés "
+        f"({n_vols} vols restants). "
+        f"Lden max : {lden_ref.max():.1f} → {lden.max():.1f} dB(A)."
+    )
+
 tab_chez_vous, tab_anim, tab_live, tab_valid, tab_export = st.tabs([
     '🏠 Le bruit chez vous', '🕐 Journée 24h', '📡 Avions en direct',
     '✅ Validation WebTrak', '💾 Exports',
@@ -602,43 +739,32 @@ with tab_chez_vous:
 
     st.markdown(
         """
-        Cette section permet d'estimer le niveau sonore autour de YUL
-        à partir d'un point choisi sur la carte.
-
-        Pour cette première version Streamlit, le niveau affiché est une
-        estimation simplifiée basée sur la distance à l'aéroport. La version
-        finale utilisera les résultats calculés par `NoiseCalculator`.
+        Cliquez n'importe où sur la carte pour connaître le niveau de bruit
+        aérien (Lden) à cet endroit, calculé par `NoiseCalculator` sur la
+        journée type de YUL (~565 vols).
         """
     )
 
     # ------------------------------------------------------------------
     # Carte interactive centrée sur Montréal-Trudeau.
     #
-    # Le cercle de 25 km correspond à la zone d'étude définie dans le
-    # projet. L'utilisateur peut cliquer sur la carte pour choisir un
-    # récepteur au sol.
+    # Si NoiseContour est livré, on affiche les vrais contours isophoniques
+    # 55/60/65/70 dB ; sinon on retombe sur une surface Lden colorée. Dans
+    # les deux cas l'utilisateur peut cliquer pour choisir un récepteur.
     # ------------------------------------------------------------------
 
-    carte = folium.Map(location=YUL, zoom_start=10)
-
-    folium.Marker(
-        location=YUL,
-        popup="Aéroport Montréal-Trudeau (YUL)",
-        tooltip="YUL",
-    ).add_to(carte)
-
-    folium.Circle(
-        location=YUL,
-        radius=25000,
-        popup="Zone d'étude : 25 km",
-        tooltip="Rayon de 25 km",
-        fill=False,
-    ).add_to(carte)
+    if CONTOUR_DISPONIBLE:
+        try:
+            carte = carte_contours(lden, grid_size, calc)
+        except Exception:
+            carte = carte_heatmap(lden, grid, grid_size)
+    else:
+        carte = carte_heatmap(lden, grid, grid_size)
 
     resultat_carte = st_folium(
         carte,
         width=1000,
-        height=380,
+        height=420,
         returned_objects=["last_clicked"],
     )
 
@@ -648,28 +774,35 @@ with tab_chez_vous:
         lat = resultat_carte["last_clicked"]["lat"]
         lon = resultat_carte["last_clicked"]["lng"]
 
+        # Lden réel à ce point : agrégation de tous les survols de la journée.
+        recepteur = (lat, lon)
+        vols = charger_vols()
+        lden_point = calc.compute_lden(
+            vols, recepteur, datetime.date(2026, 6, 10))
         distance_km = _haversine_m(YUL[0], YUL[1], lat, lon) / 1000
-        lden_estime = max(35, 70 - 1.15 * distance_km)
 
         col1, col2 = st.columns(2)
 
         with col1:
-            st.metric("Lden estimé", f"{lden_estime:.1f} dB")
+            st.metric("Lden à cet endroit", f"{lden_point:.1f} dB(A)")
 
         with col2:
             st.metric("Distance à YUL", f"{distance_km:.1f} km")
 
-        st.write(comparaison_parlante(lden_estime))
+        st.write(comparaison_parlante(lden_point))
 
-        if lden_estime >= 65:
+        if lden_point >= 65:
             st.error("Seuil 65 dB dépassé : isolation acoustique recommandée.")
-        elif lden_estime >= 55:
+        elif lden_point >= 55:
             st.warning("Seuil 55 dB dépassé : information des riverains.")
         else:
             st.success("Niveau inférieur aux principaux seuils réglementaires.")
 
+        # Survol le plus bruyant de la journée à ce point (repère SEL).
+        sel_max = max(calc.compute_sel(v, recepteur) for v in vols)
         st.caption(
-            f"Dernier point cliqué : latitude {lat:.5f}, longitude {lon:.5f}"
+            f"Survol le plus bruyant de la journée : SEL {sel_max:.1f} dB(A) — "
+            f"point cliqué : latitude {lat:.5f}, longitude {lon:.5f}"
         )
 
     else:
@@ -680,37 +813,31 @@ with tab_anim:
 
     st.markdown(
         """
-        Cette section illustre l'évolution du bruit aérien sur une journée complète.
-
-        Dans la version finale, le calcul utilisera les vols reconstruits autour de
-        YUL et affichera l'accumulation du bruit heure par heure.
+        L'accumulation du bruit heure par heure : on voit les pointes du
+        matin (7h–9h) et du soir (17h–19h) dessiner les couloirs de trafic.
+        Le curseur ajoute les vols jusqu'à l'heure choisie et recalcule le
+        Lden cumulé sur la grille.
         """
     )
 
     # ------------------------------------------------------------------
-    # Démonstration hors-ligne :
-    # on utilise un profil horaire simplifié afin de montrer le principe
-    # sans dépendre des données OpenSky en temps réel.
+    # Le profil horaire réel de YUL (PROFIL_HORAIRE_YUL) sert à la fois à
+    # afficher le nombre de mouvements de l'heure et à filtrer les vols
+    # déjà partis pour le calcul cumulé.
     # ------------------------------------------------------------------
 
     heure = st.slider(
         "Heure de la journée",
         min_value=0,
         max_value=23,
-        value=12,
+        value=8,
+        format="%dh00",
     )
 
-    profil_horaire_demo = {
-        0: 5, 1: 3, 2: 2, 3: 2, 4: 4, 5: 8,
-        6: 18, 7: 35, 8: 42, 9: 30, 10: 24, 11: 22,
-        12: 26, 13: 28, 14: 30, 15: 32, 16: 36, 17: 44,
-        18: 40, 19: 30, 20: 22, 21: 16, 22: 10, 23: 6,
-    }
-
-    mouvements = profil_horaire_demo[heure]
+    mouvements = PROFIL_HORAIRE_YUL[heure]
 
     st.metric(
-        "Mouvements estimés à cette heure",
+        "Mouvements à cette heure",
         f"{mouvements} vols",
     )
 
@@ -723,40 +850,140 @@ with tab_anim:
     else:
         st.success("Trafic modéré.")
 
-    st.caption(
-        "Cette visualisation est une démonstration simplifiée. "
-        "L'animation finale utilisera les niveaux Lden calculés sur la grille."
-    )
+    # ------------------------------------------------------------------
+    # Bruit cumulé de 0h à l'heure choisie : on garde les vols dont le
+    # décollage a déjà eu lieu, puis on recalcule le Lden sur la grille.
+    # ------------------------------------------------------------------
+
+    vols = charger_vols()
+    vols_jusqua = [v for v in vols
+                   if calc._utc_hour(v.waypoints[0]['time']) <= heure]
+
+    if vols_jusqua:
+        import matplotlib.pyplot as plt
+
+        lden_h = calc.compute_grid(vols_jusqua, grid)
+        titre = f"Bruit accumulé de 0h00 à {heure}h59 — {len(vols_jusqua)} vols"
+
+        if CONTOUR_DISPONIBLE:
+            # plot() interpole la surface (griddata) → robuste à la grille
+            # circulaire de NoiseContour. basemap=False pour rester hors-ligne.
+            fig, _ = NoiseContour(calc, grid_size=grid_size).plot(
+                lden_h, title=titre, basemap=False)
+        else:
+            surf = lden_h.reshape(grid_size, grid_size)
+            fig, ax = plt.subplots(figsize=(7, 6))
+            im = ax.imshow(
+                surf, origin='lower', cmap='inferno',
+                vmin=40, vmax=max(float(lden.max()), 41),
+                extent=(grid[:, 1].min(), grid[:, 1].max(),
+                        grid[:, 0].min(), grid[:, 0].max()),
+                aspect='auto')
+            fig.colorbar(im, ax=ax, label='Lden dB(A)', shrink=0.8)
+            ax.plot(YUL[1], YUL[0], 'w*', markersize=12)
+            ax.set_title(titre)
+
+        st.pyplot(fig)
+        plt.close(fig)
+    else:
+        st.info("Aucun vol avant cette heure dans la journée simulée.")
 
 with tab_live:
     st.subheader("📡 Avions en direct")
 
     st.markdown(
         """
-        Cette section est prévue pour afficher les avions actuellement en vol
-        autour de Montréal à partir des données OpenSky.
+        **Le bruit en direct, n'importe où** : actualisez la position des
+        avions, puis cliquez sur la carte — le niveau instantané estimé au
+        point choisi est comparable à la lecture d'un sonomètre ADM sur
+        WebTrak au même moment.
 
-        Pour garantir une démonstration fiable hors-ligne, le mode temps réel
-        restera optionnel. L'application ne doit pas dépendre du Wi-Fi de la salle.
+        **Optionnel** : c'est le seul onglet qui a besoin d'internet ; le
+        reste de la démo fonctionne hors-ligne avec les données locales.
         """
     )
 
-    st.warning(
-        "Mode live non activé dans cette version : l'intégration OpenSky "
-        "sera branchée lorsque le module OpenSkyFetcher sera stabilisé."
-    )
+    # ------------------------------------------------------------------
+    # Récupération à la demande (bouton) : on ne contacte JAMAIS OpenSky
+    # au chargement de la page, et tout échec réseau est rattrapé pour ne
+    # pas casser la démo en salle.
+    # ------------------------------------------------------------------
 
-    st.markdown(
-        """
-        Fonctionnement prévu :
+    if st.button("📡 Actualiser les avions (OpenSky)"):
+        try:
+            from airnoisepy.flight.opensky import OpenSkyFetcher
+            bruts = OpenSkyFetcher().fetch_realtime()
+            st.session_state["avions_live"] = [_normaliser_avion(a)
+                                               for a in bruts]
+            st.session_state["avions_live_heure"] = \
+                datetime.datetime.now().strftime("%H:%M:%S")
+        except Exception as exc:
+            st.error(f"API OpenSky injoignable ({exc}) — "
+                     "la démo continue avec les données locales.")
 
-        1. récupérer les avions autour de YUL avec `OpenSkyFetcher.fetch_realtime()`
-        2. afficher leur position sur une carte
-        3. estimer leur phase de vol avec `vertical_rate`
-        4. calculer un niveau sonore instantané au point choisi
-        5. comparer l'estimation avec une mesure WebTrak/ADM
-        """
-    )
+    avions = st.session_state.get("avions_live")
+
+    if avions is not None:
+        en_vol = [a for a in avions
+                  if not a["on_ground"] and a["lat"] is not None]
+        st.success(
+            f"{len(en_vol)} avions en vol autour de YUL "
+            f"(snapshot de {st.session_state['avions_live_heure']} — "
+            "réactualisez à volonté)"
+        )
+
+        col_live_carte, col_live_info = st.columns([3, 2])
+
+        with col_live_carte:
+            # Carte des avions, colorée par phase estimée (vertical_rate).
+            m = folium.Map(location=YUL, zoom_start=10)
+            for a in en_vol:
+                vr = a.get("vertical_rate") or 0.0
+                etat = "↗ monte" if vr > 2 else ("↘ descend" if vr < -2
+                                                 else "→ palier")
+                folium.Marker(
+                    (a["lat"], a["lon"]),
+                    tooltip=(f"{a['callsign'] or a['icao24']} — "
+                             f"{(a['alt_baro'] or 0):.0f} m {etat}"),
+                    icon=folium.Icon(color="blue", icon="plane", prefix="fa"),
+                ).add_to(m)
+            retour_live = st_folium(m, height=480, use_container_width=True,
+                                    key="carte_live")
+
+        with col_live_info:
+            clic = (retour_live or {}).get("last_clicked")
+            if clic and en_vol:
+                total, contribs = niveau_instantane(
+                    en_vol, (clic["lat"], clic["lng"]), anp)
+                st.metric("Niveau instantané estimé (avions seulement)",
+                          f"{total:.1f} dB(A)")
+                st.dataframe(contribs[:5], use_container_width=True)
+                st.caption(
+                    "⚠️ Contribution des avions uniquement : un sonomètre "
+                    "mesure aussi le bruit de fond urbain (~45-55 dB). "
+                    "Estimation LAmax dérivée des courbes SEL (−9 dB). La "
+                    "comparaison n'a de sens que pendant un survol."
+                )
+                mesure_live = st.number_input(
+                    "Niveau lu sur WebTrak au même endroit (dB)",
+                    value=0.0, step=0.5, key="mesure_webtrak_live")
+                if mesure_live > 0:
+                    ecart = total - mesure_live
+                    if abs(ecart) <= 3.0:
+                        st.success(f"Écart modèle/mesure : {ecart:+.1f} dB "
+                                   "— dans la tolérance ECAC ±3 dB ✅")
+                    else:
+                        st.warning(f"Écart modèle/mesure : {ecart:+.1f} dB "
+                                   "— hors tolérance (bruit de fond ? "
+                                   "avion hors zone ?)")
+            elif not en_vol:
+                st.info("Aucun avion en vol dans la zone en ce moment.")
+            else:
+                st.markdown("👈 *Cliquez sur la carte pour estimer le "
+                            "bruit instantané à cet endroit.*")
+    else:
+        st.info("Cliquez sur **📡 Actualiser les avions** pour récupérer "
+                "les vols en direct autour de YUL (nécessite internet).")
 
 with tab_valid:
     st.subheader("✅ Validation WebTrak / ADM")
@@ -771,11 +998,25 @@ with tab_valid:
         """
     )
 
-    niveau_calcule = st.number_input(
-        "Niveau sonore calculé par AirNoisePy (dB)",
-        value=60.0,
-        step=0.5,
-    )
+    # ------------------------------------------------------------------
+    # Quelques points représentatifs autour de YUL (proches de capteurs
+    # ADM). Le Lden « calculé » n'est plus saisi à la main : il provient
+    # du vrai calcul NoiseCalculator à l'endroit choisi.
+    # ------------------------------------------------------------------
+
+    capteurs = {
+        "Centre YUL": (45.4706, -73.7408),
+        "Dorval": (45.450, -73.750),
+        "Pointe-Claire": (45.448, -73.800),
+        "Saint-Laurent": (45.500, -73.700),
+    }
+
+    nom_point = st.selectbox("Point de validation", list(capteurs.keys()))
+    recepteur_valid = capteurs[nom_point]
+
+    vols = charger_vols()
+    niveau_calcule = calc.compute_lden(
+        vols, recepteur_valid, datetime.date(2026, 6, 10))
 
     niveau_mesure = st.number_input(
         "Niveau mesuré par WebTrak / ADM (dB)",
@@ -783,9 +1024,14 @@ with tab_valid:
         step=0.5,
     )
 
-    ecart = abs(niveau_calcule - niveau_mesure)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Lden calculé par AirNoisePy", f"{niveau_calcule:.1f} dB")
+    with col2:
+        st.metric("Écart modèle / mesure",
+                  f"{abs(niveau_calcule - niveau_mesure):.1f} dB")
 
-    st.metric("Écart modèle / mesure", f"{ecart:.1f} dB")
+    ecart = abs(niveau_calcule - niveau_mesure)
 
     if ecart <= 3:
         st.success(
@@ -797,8 +1043,8 @@ with tab_valid:
         )
 
     st.caption(
-        "Cette validation simplifiée illustre le principe utilisé pour "
-        "évaluer la fidélité du modèle."
+        "Le Lden calculé est obtenu par NoiseCalculator à ce point ; "
+        "ajustez la mesure WebTrak/ADM pour comparer."
     )
 
 with tab_export:
