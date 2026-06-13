@@ -6,6 +6,8 @@ Référence :
 - Directive européenne 2002/49/CE — seuils réglementaires Lden
 - Transport Canada — cartes de bruit YUL (ADM)
 """
+import importlib.util
+
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.interpolate import griddata
@@ -17,12 +19,8 @@ try:
 except ImportError:
     CONTEXTILY_AVAILABLE = False
 
-# Importation conditionnelle de folium
-try:
-    import folium
-    FOLIUM_AVAILABLE = True
-except ImportError:
-    FOLIUM_AVAILABLE = False
+# Disponibilité de folium (importé localement au moment de l'usage, ligne ~252)
+FOLIUM_AVAILABLE = importlib.util.find_spec("folium") is not None
 
 #Données
 
@@ -195,7 +193,7 @@ class NoiseContour:
 
         for level in reversed(CONTOUR_LEVELS):
             upper = level + 5 if level < max(CONTOUR_LEVELS) else float(np.nanmax(lden_values)) + 1
-            cs = ax.contourf(longitude_lin, latitude_lin, z_grid, levels=[level, upper], colors=[CONTOUR_COLORS[level]], alpha=0.6)
+            ax.contourf(longitude_lin, latitude_lin, z_grid, levels=[level, upper], colors=[CONTOUR_COLORS[level]], alpha=0.6)
         if basemap and CONTEXTILY_AVAILABLE:
             try:
                 ctx.add_basemap(ax, crs="EPSG:4326", source="https://tile.openstreetmap.org/{z}/{x}/{y}.png", zoom=11)
