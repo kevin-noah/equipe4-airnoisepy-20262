@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from airnoisepy.results_exporter import ResultsExporter
+from airnoisepy.export.results import ResultsExporter
 
 
 def test_results_exporter_creates_output_directory(tmp_path):

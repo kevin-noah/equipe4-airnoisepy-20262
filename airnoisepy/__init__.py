@@ -10,7 +10,7 @@ from .flight.operation import FlightOperation
 from .flight.opensky import OpenSkyFetcher
 from .noise.calculator import NoiseCalculator
 from .noise.contour import NoiseContour
-from .results_exporter import ResultsExporter
+from .export.results import ResultsExporter
 
 __all__ = [
     "ANPDatabase",

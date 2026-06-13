@@ -75,16 +75,16 @@ dependencies = [
 # ==========================================================
 # CONFIGURATION DE SETUPTOOLS
 # ==========================================================
-# Cette section indique explicitement quel dossier doit être
-# considéré comme le package Python.
+# Cette section indique explicitement quels dossiers doivent être
+# considérés comme des packages Python.
 #
 # Sans cette ligne, setuptools voit aussi les dossiers data/
 # et notebooks/ et pense qu'ils sont peut-être des packages.
 # C'est ce qui causait l'erreur :
 # Multiple top-level packages discovered.
 #
-# Ici, on dit clairement :
-# seul le dossier airnoisepy/ est le package à installer.
+# include = ["airnoisepy*"] capture airnoisepy ET ses sous-packages
+# (flight, noise, database, export) ; data/ et notebooks/ sont exclus.
 
-[tool.setuptools]
-packages = ["airnoisepy"]
+[tool.setuptools.packages.find]
+include = ["airnoisepy*"]
