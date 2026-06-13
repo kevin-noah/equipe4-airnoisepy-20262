@@ -217,6 +217,90 @@ class TestPlot:
             fig, ax = noisecalculator.plot(lden_values_varies, basemap=False)
         assert fig is not None
 
+#Tests plot_interactive
+
+class TestPlotInteractive:
+
+    def test_leve_import_error_si_folium_absent(self, noisecalculator, lden_values):
+        with patch("airnoisepy.noise.contour.FOLIUM_AVAILABLE", False):
+            with pytest.raises(ImportError, match="folium"):
+                noisecalculator.plot_interactive(lden_values)
+
+    def test_retourne_folium_map_si_disponible(self, noisecalculator, lden_values):
+        with patch("airnoisepy.noise.contour.FOLIUM_AVAILABLE", True):
+            with patch("matplotlib.pyplot.show"):
+                with patch("matplotlib.pyplot.subplots",
+                           return_value=(MagicMock(), MagicMock())):
+                    with patch("matplotlib.pyplot.close"):
+                        result = noisecalculator.plot_interactive(lden_values)
+        assert result is not None
+
+    def test_sauvegarde_si_save_path(self, noisecalculator, lden_values, tmp_path):
+        save_path = str(tmp_path / "test_lden.html")
+        with patch("airnoisepy.noise.contour.FOLIUM_AVAILABLE", True):
+            with patch("matplotlib.pyplot.show"):
+                with patch("matplotlib.pyplot.subplots",
+                           return_value=(MagicMock(), MagicMock())):
+                    with patch("matplotlib.pyplot.close"):
+                        noisecalculator.plot_interactive(lden_values, save_path=save_path)
+        import os
+        assert os.path.isfile(save_path)
+
+
+#Tests valider_contre_adm
+
+class TestValiderContreAdm:
+
+    def test_retourne_liste(self, noisecalculator, lden_values):
+        resultats = noisecalculator.valider_contre_adm(lden_values, _make_capteurs_adm())
+        assert isinstance(resultats, list)
+
+    def test_un_resultat_par_capteur(self, noisecalculator, lden_values):
+        capteurs = _make_capteurs_adm()
+        resultats = noisecalculator.valider_contre_adm(lden_values, capteurs)
+        assert len(resultats) == len(capteurs)
+
+    def test_champs_obligatoires(self, noisecalculator, lden_values):
+        resultats = noisecalculator.valider_contre_adm(lden_values, _make_capteurs_adm())
+        for r in resultats:
+            assert 'nom' in r
+            assert 'lden_calcule' in r
+            assert 'lden_mesure' in r
+            assert 'erreur_db' in r
+
+    def test_erreur_db_calcul_correct(self, noisecalculator, lden_values):
+        resultats = noisecalculator.valider_contre_adm(lden_values, _make_capteurs_adm())
+        for r in resultats:
+            assert r['erreur_db'] == pytest.approx(
+                r['lden_calcule'] - r['lden_mesure'], abs=1e-6
+            )
+
+    def test_nom_capteur_conserve(self, noisecalculator, lden_values):
+        capteurs = _make_capteurs_adm()
+        resultats = noisecalculator.valider_contre_adm(lden_values, capteurs)
+        noms = [r['nom'] for r in resultats]
+        assert 'Dorval' in noms
+        assert 'Lachine' in noms
+
+    def test_liste_vide_retourne_liste_vide(self, noisecalculator, lden_values):
+        resultats = noisecalculator.valider_contre_adm(lden_values, [])
+        assert resultats == []
+
+    def test_lden_mesure_conserve(self, noisecalculator, lden_values):
+        capteurs = _make_capteurs_adm()
+        resultats = noisecalculator.valider_contre_adm(lden_values, capteurs)
+        for capteur, resultat in zip(capteurs, resultats):
+            assert resultat['lden_mesure'] == capteur['lden_mesure']
+
+    def test_capteur_proche_du_centre_yul(self, noisecalculator):
+        lden_values = _make_lden_values(noisecalculator, valeur=70.0)
+        capteur_centre = [{'nom': 'YUL_centre',
+                           'lat': YUL_LATITUDE,
+                           'lon': YUL_LONGITUDE,
+                           'lden_mesure': 68.0}]
+        resultats = noisecalculator.valider_contre_adm(lden_values, capteur_centre)
+        assert resultats[0]['lden_calcule'] == pytest.approx(70.0, abs=1.0)
+
 
 #Tests Méthodes privées
 
@@ -319,3 +403,21 @@ class TestInterpolerSurface:
         assert latitude_lin[0] < center_latitude < latitude_lin[-1]
         assert longitude_lin[0] < center_longitude < longitude_lin[-1]
 
+#Tests __repr__
+
+class TestRepr:
+
+    def test_contient_center(self, noisecalculator):
+        r = repr(noisecalculator)
+        assert "center" in r
+
+    def test_contient_radius_km(self, noisecalculator):
+        r = repr(noisecalculator)
+        assert "radius_km" in r
+
+    def test_contient_nb_recepteurs(self, noisecalculator):
+        r = repr(noisecalculator)
+        assert "nb_recepteurs" in r
+
+    def test_est_une_chaine(self, noisecalculator):
+        assert isinstance(repr(noisecalculator), str)
