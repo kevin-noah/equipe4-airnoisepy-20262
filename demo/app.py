@@ -141,11 +141,20 @@ st.set_page_config(page_title='AirNoisePy — bruit aérien YUL',
 
 @st.cache_resource
 def charger_bibliotheque():
-    """ANPDatabase (réelle si le fichier NPD est là, sinon table synthétique
-    de secours) + NoiseCalculator prêt à l'emploi."""
+    """ANPDatabase (réelle si le fichier NPD est lisible, sinon table
+    synthétique de secours) + NoiseCalculator prêt à l'emploi.
+
+    Le repli synthétique couvre aussi le cas où openpyxl n'est pas installé
+    (ex. déploiement Streamlit Cloud sans la dépendance) : la lecture du
+    .xlsx lève alors une erreur, rattrapée ici pour ne pas casser la démo.
+    """
+    anp = None
     if os.path.exists(NPD_XLSX):
-        anp = ANPDatabase(NPD_XLSX)
-    else:
+        try:
+            anp = ANPDatabase(NPD_XLSX)
+        except Exception:
+            anp = None  # openpyxl manquant / fichier illisible → synthétique
+    if anp is None:
         anp = ANPDatabase()  # table synthétique : la démo marche quand même
     return anp, NoiseCalculator(anp)
 
