@@ -226,6 +226,129 @@ class NoiseContour:
         plt.show()
         return fig, ax
 
+    def plot_interactive(self, lden_values, title="Contours Lden YUL",
+                         save_path=None):
+        """
+        Génère une carte interactive Folium avec les contours Lden.
+
+        Paramètres:
+        - lden_values : np.ndarray shape (N,) (Niveaux Lden pour chaque récepteur)
+        - title : str (Titre affiché dans la carte HTML)
+        - save_path : str ou None (Si fourni, sauvegarde la carte HTML à ce chemin)
+
+        Retourne:
+        - folium.Map ou None
+
+        Exemple:
+        - carte = nc.plot_interactive(lden_values, save_path='results/lden.html')
+        """
+
+        if not FOLIUM_AVAILABLE:
+            raise ImportError(
+                "folium est requis pour la carte interactive. Installez-le avec : pip install folium"
+            )
+
+        center_latitude, center_longitude = self.center
+        import folium as _folium
+        carte = _folium.Map(location=[center_latitude, center_longitude],
+                           zoom_start=11, tiles="OpenStreetMap")
+
+        z_grid, latitude_lin, longitude_lin = self._interpoler_surface(lden_values)
+
+        import matplotlib
+        matplotlib.use("Agg")
+        fig_tmp, ax_tmp = plt.subplots()
+
+        for level in CONTOUR_LEVELS:
+            upper = level + 5 if level < max(CONTOUR_LEVELS) else float(np.nanmax(lden_values)) + 1
+            cs = ax_tmp.contourf(longitude_lin, latitude_lin, z_grid,
+                                 levels=[level, upper])
+            for collection in cs.collections:
+                for path in collection.get_paths():
+                    coords = path.vertices
+                    if len(coords) < 3:
+                        continue
+                    polygon_coords = [[pt[1], pt[0]] for pt in coords]
+                    _folium.Polygon(
+                        locations=polygon_coords,
+                        color=CONTOUR_COLORS[level],
+                        fill=True,
+                        fill_color=CONTOUR_COLORS[level],
+                        fill_opacity=0.4,
+                        tooltip=CONTOUR_LABELS[level]
+                    ).add_to(carte)
+
+        plt.close(fig_tmp)
+
+        _folium.Marker(
+            location=[center_latitude, center_longitude],
+            popup="YUL — Montréal-Trudeau",
+            icon=_folium.Icon(color="black", icon="plane", prefix="fa")
+        ).add_to(carte)
+
+        # Titre HTML
+        titre_html = f"""
+        <h3 align="center" style="font-size:16px; font-family:Arial;">
+            {title}
+        </h3>
+        """
+        carte.get_root().html.add_child(_folium.Element(titre_html))
+
+        if save_path:
+            carte.save(save_path)
+            print(f"[NoiseContour] Carte interactive sauvegardée : {save_path}")
+
+        return carte
+
+    def valider_contre_adm(self, lden_values, recepteurs_adm):
+        """
+        Compare les Lden calculés aux mesures réelles des capteurs ADM WebTrak.
+
+        Paramètres:
+        - lden_values   : np.ndarray shape (N,)
+            Lden calculés sur la grille.
+        - recepteurs_adm : list[dict]
+            Liste de capteurs ADM, chaque dict contient :
+            {'nom': str, 'lat': float, 'long': float, 'lden_mesure': float}
+
+        Retourne:
+        list[dict]
+            Résultats de comparaison, chaque dict contient :
+            {'nom', 'lden_calcule', 'lden_mesure', 'erreur_db'}
+
+        Exemple:
+        - capteurs = [
+        ...     {'nom': 'Dorval',   'lat': 45.450, 'long': -73.750, 'lden_mesure': 62.5},
+        ...     {'nom': 'Lachine',  'lat': 45.430, 'long': -73.700, 'lden_mesure': 58.3},
+        ... ]
+        - resultats = nc.valider_contre_adm(lden_values, capteurs)
+        - for r in resultats:
+        ...     print(f"{r['nom']} : calculé={r['lden_calcule']:.1f} dB, "
+        ...           f"mesuré={r['lden_mesure']:.1f} dB, "
+        ...           f"erreur={r['erreur_db']:+.1f} dB")
+        """
+
+        resultats = []
+
+        for capteur in recepteurs_adm:
+            latitudes = self.receptor_grid[:, 0]
+            longitudes = self.receptor_grid[:, 1]
+            distances = np.sqrt(
+                ((latitudes - capteur['lat']) * KM_PAR_DEGRE_LATITUDE) ** 2 +
+                ((longitudes - capteur['lon']) * KM_PAR_DEGRE_LONGITUDE) ** 2
+            )
+            idx_proche = int(np.argmin(distances))
+            lden_calcule = float(lden_values[idx_proche])
+
+            resultats.append({
+                'nom': capteur['nom'],
+                'lden_calcule': lden_calcule,
+                'lden_mesure': capteur['lden_mesure'],
+                'erreur_db': lden_calcule - capteur['lden_mesure'],
+            })
+
+        return resultats
+
 
 #Méthodes privées
 
@@ -295,3 +418,12 @@ class NoiseContour:
         )
 
         return z_grid, latitude_lin, longitude_lin
+
+    def __repr__(self):
+        nb_recepteurs = len(self.receptor_grid)
+        return (
+            f"NoiseContour(center={self.center}, "
+            f"radius_km={self.radius_km}, "
+            f"grid_size={self.grid_size}, "
+            f"nb_recepteurs={nb_recepteurs})"
+        )
