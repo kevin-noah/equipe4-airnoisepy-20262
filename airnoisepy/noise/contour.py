@@ -192,7 +192,10 @@ class NoiseContour:
         fig, ax = plt.subplots(figsize=(10, 10))
 
         for level in reversed(CONTOUR_LEVELS):
-            upper = level + 5 if level < max(CONTOUR_LEVELS) else float(np.nanmax(lden_values)) + 1
+            # max(..., level + 1) garantit des niveaux croissants même quand
+            # le Lden maximal observé est inférieur au seuil (jour calme,
+            # données synthétiques) : sinon contourf lève "levels must be increasing".
+            upper = level + 5 if level < max(CONTOUR_LEVELS) else max(float(np.nanmax(lden_values)) + 1, level + 1)
             ax.contourf(longitude_lin, latitude_lin, z_grid, levels=[level, upper], colors=[CONTOUR_COLORS[level]], alpha=0.6)
         if basemap and CONTEXTILY_AVAILABLE:
             try:
@@ -258,23 +261,27 @@ class NoiseContour:
         fig_tmp, ax_tmp = plt.subplots()
 
         for level in CONTOUR_LEVELS:
-            upper = level + 5 if level < max(CONTOUR_LEVELS) else float(np.nanmax(lden_values)) + 1
+            # max(..., level + 1) garantit des niveaux croissants même quand
+            # le Lden maximal observé est inférieur au seuil (jour calme,
+            # données synthétiques) : sinon contourf lève "levels must be increasing".
+            upper = level + 5 if level < max(CONTOUR_LEVELS) else max(float(np.nanmax(lden_values)) + 1, level + 1)
             cs = ax_tmp.contourf(longitude_lin, latitude_lin, z_grid,
                                  levels=[level, upper])
-            for collection in cs.collections:
-                for path in collection.get_paths():
-                    coords = path.vertices
-                    if len(coords) < 3:
-                        continue
-                    polygon_coords = [[pt[1], pt[0]] for pt in coords]
-                    _folium.Polygon(
-                        locations=polygon_coords,
-                        color=CONTOUR_COLORS[level],
-                        fill=True,
-                        fill_color=CONTOUR_COLORS[level],
-                        fill_opacity=0.4,
-                        tooltip=CONTOUR_LABELS[level]
-                    ).add_to(carte)
+            # matplotlib ≥ 3.8 : ContourSet est une Collection unique, l'API
+            # cs.collections a disparu — on lit directement cs.get_paths().
+            for path in cs.get_paths():
+                coords = path.vertices
+                if len(coords) < 3:
+                    continue
+                polygon_coords = [[pt[1], pt[0]] for pt in coords]
+                _folium.Polygon(
+                    locations=polygon_coords,
+                    color=CONTOUR_COLORS[level],
+                    fill=True,
+                    fill_color=CONTOUR_COLORS[level],
+                    fill_opacity=0.4,
+                    tooltip=CONTOUR_LABELS[level]
+                ).add_to(carte)
 
         plt.close(fig_tmp)
 
