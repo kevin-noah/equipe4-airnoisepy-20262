@@ -23,6 +23,7 @@ import os
 import sys
 import math
 import json
+import base64
 import inspect
 import datetime
 
@@ -148,6 +149,49 @@ CAPTEURS_ADM = [
 
 st.set_page_config(page_title='AirNoisePy — bruit aérien YUL',
                    page_icon='✈️', layout='wide')
+
+
+# ---------------------------------------------------------------------------
+# Fond de la barre latérale : image (piste + anneaux isophoniques) encodée en
+# base64 pour fonctionner hors-ligne et sur Streamlit Cloud. Voile sombre
+# par-dessus + texte en blanc pour garder les réglages lisibles.
+# ---------------------------------------------------------------------------
+
+_FOND_SIDEBAR = os.path.join(RACINE, 'assets', 'fond_sidebar.jpg')
+if os.path.exists(_FOND_SIDEBAR):
+    with open(_FOND_SIDEBAR, 'rb') as _f:
+        _b64 = base64.b64encode(_f.read()).decode()
+    st.markdown(
+        f"""
+        <style>
+        section[data-testid="stSidebar"] > div:first-child {{
+            background-image:
+                linear-gradient(rgba(13,17,23,0.45), rgba(13,17,23,0.80)),
+                url("data:image/jpeg;base64,{_b64}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }}
+        /* texte des réglages en blanc pour la lisibilité sur fond sombre */
+        section[data-testid="stSidebar"] h1,
+        section[data-testid="stSidebar"] h2,
+        section[data-testid="stSidebar"] h3,
+        section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
+        section[data-testid="stSidebar"] label,
+        section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {{
+            color: #ffffff !important;
+        }}
+        /* encart « seuils » en verre sombre translucide */
+        section[data-testid="stSidebar"] [data-testid="stAlert"] {{
+            background: rgba(255,255,255,0.10) !important;
+        }}
+        section[data-testid="stSidebar"] [data-testid="stAlert"] * {{
+            color: #ffffff !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # ---------------------------------------------------------------------------
