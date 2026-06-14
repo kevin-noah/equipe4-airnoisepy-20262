@@ -62,9 +62,8 @@ flowchart LR
     NC --> CT --> RE
 ```
 
-Le **notebook**, les **280 tests** et la **démo Streamlit** consomment
-exactement les mêmes classes — aucune n'a été modifiée pour les besoins de
-l'interface. `NoiseCalculator` reçoit sa base NPD par injection de
+Les **280 tests** et la **démo Streamlit** consomment exactement les mêmes
+classes — aucune n'a été modifiée pour les besoins de l'interface. `NoiseCalculator` reçoit sa base NPD par injection de
 dépendance : chaque membre a pu développer et tester sa classe
 indépendamment des autres.
 
@@ -96,17 +95,16 @@ Sans le fichier Excel EASA, `ANPDatabase()` bascule automatiquement sur une
 table synthétique A320 intégrée : **tout fonctionne hors-ligne**, y compris
 pour un correcteur qui vient de cloner le dépôt.
 
-L'exemple complet (vol réel → grille Lden → carte interactive → animation
-24 h) est dans [`examples/yul_example.ipynb`](examples/yul_example.ipynb).
-
 ---
 
 ## 🖥️ Démo interactive
 
 ```bash
-pip install streamlit streamlit-folium
 streamlit run demo/app.py
 ```
+
+> Streamlit et ses dépendances sont déjà installés par `pip install .`
+> (étape Installation ci-dessus).
 
 | Onglet | Ce qu'il montre |
 |---|---|
@@ -149,17 +147,6 @@ Chaque classe a sa suite : mécanique de calcul vérifiée contre des valeurs
 analytiques exactes (mock), nettoyage de données, intégration bout-en-bout
 avec la vraie base EASA, plausibilité physique (le bruit décroît avec la
 distance, croît avec la poussée, départ > arrivée).
-
----
-
-## 👥 Équipe
-
-| Membre | Classes | Infrastructure |
-|---|---|---|
-| **Kevin** | `FlightOperation` · `NoiseCalculator` | `demo/app.py` (démo Streamlit) |
-| **Bouchra** | `ANPDatabase` | `LICENSE.md` · `Requirements.txt` |
-| **Syndia** | `OpenSkyFetcher` · `NoiseContour` | — |
-| **Laura** | `ResultsExporter` | `README.md` · `pyproject.toml` |
 
 ---
 
