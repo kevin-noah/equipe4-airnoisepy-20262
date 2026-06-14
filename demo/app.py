@@ -23,6 +23,7 @@ import os
 import sys
 import math
 import json
+import base64
 import inspect
 import datetime
 
@@ -317,6 +318,38 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Image de fond de la barre latérale (coucher de soleil depuis un hublot),
+# encodée base64 pour rester hors-ligne / sur Streamlit Cloud. Voile dégradé
+# léger en haut (l'image reste bien visible, opacité élevée) puis plus dense
+# vers le bas pour garder les réglages et les seuils lisibles.
+_FOND_SIDEBAR = os.path.join(RACINE, 'assets', 'fond_sidebar.jpg')
+if os.path.exists(_FOND_SIDEBAR):
+    with open(_FOND_SIDEBAR, 'rb') as _f:
+        _b64 = base64.b64encode(_f.read()).decode()
+    st.markdown(
+        f"""
+        <style>
+        section[data-testid="stSidebar"] > div:first-child {{
+            background-image:
+                linear-gradient(rgba(22, 25, 31, 0.18), rgba(22, 25, 31, 0.74)),
+                url("data:image/jpeg;base64,{_b64}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }}
+        /* cartes de seuils en verre dépoli translucide : on voit l'image
+           derrière tout en gardant le texte lisible */
+        section[data-testid="stSidebar"] .seuil-carte {{
+            background: rgba(20, 24, 30, 0.55);
+            border-color: rgba(255, 255, 255, 0.10);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # ---------------------------------------------------------------------------
