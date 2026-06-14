@@ -662,7 +662,79 @@ def carte_heatmap(lden, grid, grid_size, center=YUL, zoom=10):
 # Interface
 # ---------------------------------------------------------------------------
 
-st.title('✈️ AirNoisePy — le bruit des avions autour de YUL')
+# Le titre est enveloppé dans un conteneur identifié (key) que l'on rend
+# « collant » (sticky) en CSS : il reste visible en haut pendant le défilement.
+st.markdown(
+    """
+    <style>
+    /* Gutter horizontal connu sur le conteneur principal, pour pouvoir
+       étendre le panneau bord à bord (full-bleed) avec une marge négative
+       de la même valeur. */
+    div[data-testid="stMainBlockContainer"],
+    section[data-testid="stMain"] .block-container {
+        --gutter: 3rem;
+        padding-left: var(--gutter) !important;
+        padding-right: var(--gutter) !important;
+    }
+    /* on coupe le débordement horizontal : le panneau peut alors déborder
+       sous la barre de défilement à droite sans créer de scroll parasite */
+    section[data-testid="stMain"] {
+        overflow-x: hidden;
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+    /* Titre collant en « verre dépoli » (glassmorphism) : fond translucide
+       + backdrop-filter qui floute le contenu défilant derrière. On rend
+       sticky le wrapper parent direct généré par Streamlit (:has() le cible).
+       top = hauteur de la barre d'outils Streamlit, sinon le header
+       transparent recouvre le haut du titre. */
+    div[data-testid="stVerticalBlock"] > div:has(> .st-key-entete_fixe),
+    div[data-testid="stVerticalBlock"] > div:has(.st-key-entete_fixe) {
+        position: sticky;
+        top: 3.5rem;
+        z-index: 999;
+        /* full-bleed : on décale à gauche dans la gouttière et on donne une
+           largeur explicite très large (les éléments flex de Streamlit ne
+           s'étirent pas avec une marge négative). Le surplus à droite est
+           coupé net au bord de la zone principale par overflow-x: hidden. */
+        margin-left: calc(-1 * var(--gutter, 3rem));
+        margin-right: 0;
+        width: calc(100% + var(--gutter, 3rem) + 20rem);
+        /* dégradé de surbrillance pour l'effet « verre poli » */
+        background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.55),
+            rgba(255, 255, 255, 0.20));
+        -webkit-backdrop-filter: blur(12px) saturate(160%);
+        backdrop-filter: blur(12px) saturate(160%);
+        /* pas de bord net : liseré lumineux discret + le masque ci-dessous
+           fait fondre le panneau dans le fond vers le bas */
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+        /* le panneau contient tout le titre avec un petit peu de marge */
+        padding: 1.2rem 1.2rem;
+        -webkit-mask-image: linear-gradient(to bottom, #000 90%, transparent 100%);
+        mask-image: linear-gradient(to bottom, #000 90%, transparent 100%);
+    }
+    /* le conteneur lui-même reste transparent pour laisser voir le flou */
+    .st-key-entete_fixe {
+        background: transparent;
+    }
+    /* titre réduit, sur une seule ligne, occupant toute la largeur */
+    .st-key-entete_fixe h1 {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        font-size: 1.9rem !important;
+        line-height: 1.25;
+        white-space: nowrap;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+with st.container(key='entete_fixe'):
+    st.title('AirNoisePy — le bruit des avions autour de YUL')
+
 st.caption('Modélisation ECAC Doc 29 · données ADS-B OpenSky · base EASA '
            'ANP v9 — MGA802 ÉTS Été 2026, Équipe 4')
 
