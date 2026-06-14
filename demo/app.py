@@ -131,6 +131,21 @@ PROFIL_HORAIRE_YUL = {
     18: 44, 19: 38, 20: 30, 21: 22, 22: 14, 23: 8,
 }
 
+# Les 7 capteurs de bruit ADM / WebTrak autour de YUL (coordonnées relevées sur
+# les emplacements physiques des sonomètres). Servent de points de validation
+# (Lden calculé vs mesuré, tolérance ECAC ±3 dB) et sont affichés en petits
+# cercles gris sur les cartes de la démo. Ajouter 'lden_mesure' par capteur
+# quand les valeurs mesurées seront disponibles, pour automatiser le PASS/FAIL.
+CAPTEURS_ADM = [
+    {'nom': 'Dollard-des-Ormeaux',          'lat': 45.484016, 'lon': -73.808965},
+    {'nom': 'Dorval (Goldfinch)',           'lat': 45.454440, 'lon': -73.773712},
+    {'nom': 'Saint-Laurent (Marcel-Laurin)', 'lat': 45.507180, 'lon': -73.682075},
+    {'nom': 'Montréal (Chester)',           'lat': 45.466662, 'lon': -73.650561},
+    {'nom': 'Pointe-Claire (Winthrop)',     'lat': 45.464802, 'lon': -73.808135},
+    {'nom': 'Dorval (Dawson)',              'lat': 45.441824, 'lon': -73.758733},
+    {'nom': 'Saint-Laurent (H4R 1T4)',      'lat': 45.508961, 'lon': -73.703225},
+]
+
 st.set_page_config(page_title='AirNoisePy — bruit aérien YUL',
                    page_icon='✈️', layout='wide')
 
@@ -582,6 +597,23 @@ def comparaison_parlante(lden):
 # Cartes folium
 # ---------------------------------------------------------------------------
 
+def ajouter_capteurs_adm(carte):
+    """Ajoute les capteurs ADM/WebTrak en petits cercles gris sur une carte
+    folium (un marqueur par emplacement, nom en infobulle)."""
+    for capteur in CAPTEURS_ADM:
+        folium.CircleMarker(
+            location=(capteur['lat'], capteur['lon']),
+            radius=5,
+            color='gray',
+            weight=1,
+            fill=True,
+            fill_color='gray',
+            fill_opacity=0.8,
+            tooltip=f"Capteur ADM — {capteur['nom']}",
+        ).add_to(carte)
+    return carte
+
+
 def carte_contours(lden_values, grid_size, calc):
     """
     Carte folium avec les contours isophoniques 55/60/65/70 dB.
@@ -842,6 +874,9 @@ with tab_chez_vous:
     else:
         carte = carte_heatmap(lden, grid, grid_size)
 
+    # capteurs ADM/WebTrak en petits cercles gris
+    ajouter_capteurs_adm(carte)
+
     resultat_carte = st_folium(
         carte,
         width=1000,
@@ -1028,6 +1063,8 @@ with tab_live:
                              f"{(a['alt_baro'] or 0):.0f} m {etat}"),
                     icon=folium.Icon(color="blue", icon="plane", prefix="fa"),
                 ).add_to(m)
+            # capteurs ADM/WebTrak en petits cercles gris
+            ajouter_capteurs_adm(m)
             retour_live = st_folium(m, height=480, use_container_width=True,
                                     key="carte_live")
 
@@ -1085,14 +1122,9 @@ with tab_valid:
     # du vrai calcul NoiseCalculator à l'endroit choisi.
     # ------------------------------------------------------------------
 
-    capteurs = {
-        "Centre YUL": (45.4706, -73.7408),
-        "Dorval": (45.450, -73.750),
-        "Pointe-Claire": (45.448, -73.800),
-        "Saint-Laurent": (45.500, -73.700),
-    }
+    capteurs = {c['nom']: (c['lat'], c['lon']) for c in CAPTEURS_ADM}
 
-    nom_point = st.selectbox("Point de validation", list(capteurs.keys()))
+    nom_point = st.selectbox("Capteur ADM / WebTrak", list(capteurs.keys()))
     recepteur_valid = capteurs[nom_point]
 
     vols = charger_vols()
