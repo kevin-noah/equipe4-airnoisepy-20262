@@ -1,0 +1,26 @@
+# Thème de la démo AirNoisePy.
+#
+# Zone principale claire + barre latérale sombre, comme la maquette de
+# présentation. Streamlit >= 1.45 permet un thème dédié à la barre latérale
+# via [theme.sidebar] : plus besoin de surcharger les couleurs en CSS.
+# La police par défaut (embarquée) est conservée pour rester 100 % hors-ligne.
+
+[theme]
+base = "light"
+primaryColor = "#dc3a34"            # rouge accent unique : onglet actif, liens, boutons
+backgroundColor = "#f5f6f8"          # fond général (neutre froid très clair)
+secondaryBackgroundColor = "#ffffff" # cartes / panneaux blancs qui ressortent
+textColor = "#1b1e25"                # texte principal
+borderColor = "#e6e8ec"              # bordures neutres
+# Système typographique IBM Plex (chargé via @import dans le CSS de demo/app.py).
+# Sans pour l'UI, Mono pour les valeurs techniques/chiffrées. Repli sans-serif
+# si la police ne charge pas (hors-ligne) : l'app reste lisible.
+font = "IBM Plex Sans, sans-serif"
+headingFont = "IBM Plex Sans, sans-serif"
+codeFont = "IBM Plex Mono, monospace"
+
+[theme.sidebar]
+backgroundColor = "#16191f"          # ardoise foncée
+secondaryBackgroundColor = "#1e222a" # champs / cartes sur fond sombre
+textColor = "#e8eaef"
+borderColor = "#2b303a"

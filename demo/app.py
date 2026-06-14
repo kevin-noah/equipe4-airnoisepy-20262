@@ -23,7 +23,6 @@ import os
 import sys
 import math
 import json
-import base64
 import inspect
 import datetime
 
@@ -152,46 +151,172 @@ st.set_page_config(page_title='AirNoisePy — bruit aérien YUL',
 
 
 # ---------------------------------------------------------------------------
-# Fond de la barre latérale : image (piste + anneaux isophoniques) encodée en
-# base64 pour fonctionner hors-ligne et sur Streamlit Cloud. Voile sombre
-# par-dessus + texte en blanc pour garder les réglages lisibles.
+# Habillage visuel (maquette de présentation) : zone principale claire, barre
+# latérale sombre (voir .streamlit/config.toml). Le CSS ci-dessous stylise les
+# éléments sur mesure que Streamlit ne fournit pas tels quels : cartes de
+# mesures, sous-titre à puces, marque de la barre latérale, cartes de seuils.
 # ---------------------------------------------------------------------------
 
-_FOND_SIDEBAR = os.path.join(RACINE, 'assets', 'fond_sidebar.jpg')
-if os.path.exists(_FOND_SIDEBAR):
-    with open(_FOND_SIDEBAR, 'rb') as _f:
-        _b64 = base64.b64encode(_f.read()).decode()
-    st.markdown(
-        f"""
-        <style>
-        section[data-testid="stSidebar"] > div:first-child {{
-            background-image:
-                linear-gradient(rgba(13,17,23,0.45), rgba(13,17,23,0.80)),
-                url("data:image/jpeg;base64,{_b64}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }}
-        /* texte des réglages en blanc pour la lisibilité sur fond sombre */
-        section[data-testid="stSidebar"] h1,
-        section[data-testid="stSidebar"] h2,
-        section[data-testid="stSidebar"] h3,
-        section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
-        section[data-testid="stSidebar"] label,
-        section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {{
-            color: #ffffff !important;
-        }}
-        /* encart « seuils » en verre sombre translucide */
-        section[data-testid="stSidebar"] [data-testid="stAlert"] {{
-            background: rgba(255,255,255,0.10) !important;
-        }}
-        section[data-testid="stSidebar"] [data-testid="stAlert"] * {{
-            color: #ffffff !important;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+st.markdown(
+    """
+    <style>
+    /* Système typographique IBM Plex : Sans pour l'UI (config.toml), Mono pour
+       les valeurs chiffrées/techniques (règles ci-dessous). @import en premier. */
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+    /* ---- En-tête principal ---- */
+    .titre-app {
+        font-size: 2.15rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin: 0;
+        line-height: 1.1;
+    }
+    .sous-titre {
+        color: #6b7280;
+        font-size: 0.95rem;
+        margin: 0.15rem 0 0.4rem;
+    }
+    .sous-titre code {
+        background: #eceef1;
+        color: #3a3d42;
+        padding: 0.05rem 0.4rem;
+        border-radius: 6px;
+        font-size: 0.82em;
+        font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    }
+    /* intitulé de section en petites capitales grises */
+    .section-label {
+        text-transform: uppercase;
+        letter-spacing: 0.13em;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #9aa1ad;
+        margin: 1.5rem 0 0.85rem;
+    }
+    /* ---- Grille de cartes de mesures ---- */
+    .cartes-metriques {
+        display: grid;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .carte-metrique {
+        background: #ffffff;
+        border: 1px solid #e6e8ec;
+        border-radius: 14px;
+        padding: 1.1rem 1.2rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+    .carte-metrique .label {
+        color: #6b7280;
+        font-size: 0.85rem;
+        margin-bottom: 0.55rem;
+    }
+    .carte-metrique .valeur {
+        font-size: 2.4rem;
+        font-weight: 700;
+        line-height: 1;
+        display: flex;
+        align-items: baseline;
+        gap: 0.25rem;
+        font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    }
+    /* carte « texte » (ex. Classe d'exposition) : pas un nombre → reste en Sans,
+       un peu plus petite pour éviter les débordements (« Très élevée »). */
+    .carte-metrique .valeur.valeur--texte {
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-size: 1.75rem;
+        font-weight: 700;
+    }
+    .carte-metrique .unite {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #9aa1ad;
+        font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    }
+    .carte-metrique .sous {
+        color: #6b7280;
+        font-size: 0.82rem;
+        margin-top: 0.6rem;
+    }
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        padding: 0.3rem 0.65rem;
+        border-radius: 999px;
+        margin-top: 0.65rem;
+    }
+    .badge .point { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+    .badge--amber { background: #fbf0d5; color: #d98a00; }
+    .badge--red   { background: #fdecec; color: #dc3a34; }
+    .badge--green { background: #e3f5e9; color: #16a34a; }
+    /* ---- Puces de fichiers (onglet Exports) ---- */
+    .chip-fichier {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #eef0f3;
+        border: 1px solid #e6e8ec;
+        border-radius: 9px;
+        padding: 0.35rem 0.6rem;
+        margin: 0.25rem 0.4rem 0 0;
+        font-size: 0.85rem;
+    }
+    .chip-fichier code { background: #e6e8ec; border-radius: 5px; padding: 0 0.3rem; font-size: 0.8em; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    /* ---- Marque de la barre latérale ---- */
+    .marque { display: flex; align-items: center; gap: 0.7rem; padding: 0.1rem 0 0.4rem; }
+    .marque-logo {
+        width: 44px; height: 44px; border-radius: 13px;
+        background: linear-gradient(135deg, #e8554d, #c92f29);
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 6px 16px rgba(220, 58, 52, 0.40);
+    }
+    .marque-nom { font-weight: 800; font-size: 1.15rem; line-height: 1.1; }
+    .marque-sous { font-size: 0.78rem; color: #9098a6; }
+    /* ---- Cartes de seuils (barre latérale) ---- */
+    .seuils-titre {
+        text-transform: uppercase; letter-spacing: 0.12em;
+        font-size: 0.74rem; font-weight: 700; color: #9098a6;
+        margin: 0.4rem 0 0.6rem;
+    }
+    .seuil-carte {
+        background: #1e222a;
+        border: 1px solid #2b303a;
+        border-radius: 11px; padding: 0.6rem 0.75rem; margin-bottom: 0.55rem;
+        display: flex; gap: 0.6rem; align-items: flex-start;
+    }
+    .seuil-dot { width: 11px; height: 11px; border-radius: 50%; margin-top: 0.3rem; flex: none; }
+    .seuil-titre { font-weight: 600; font-size: 0.92rem; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .seuil-desc { font-size: 0.8rem; color: #9098a6; }
+    .seuil-note { font-size: 0.78rem; color: #9098a6; margin-top: 0.3rem; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Marque (logo + nom) tout en haut de la barre latérale.
+st.sidebar.markdown(
+    """
+    <div class="marque">
+      <div class="marque-logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff"
+             xmlns="http://www.w3.org/2000/svg">
+          <path d="M2.5 19h19v2h-19v-2zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92
+                   10l-6.9-6.43-1.93.51 4.14 7.17-4.97 1.33-1.97-1.54-1.45.39 2.59
+                   4.49 1.97-.53L8.99 16l-1.94.52 2.59 4.49 1.45-.39.39-1.45
+                   1.97-.53 8.55-2.29c.81-.23 1.28-1.05 1.07-1.86z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="marque-nom">AirNoisePy</div>
+        <div class="marque-sous">Bruit aérien · YUL</div>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -638,6 +763,64 @@ def comparaison_parlante(lden):
 
 
 # ---------------------------------------------------------------------------
+# Cartes de mesures (habillage maquette)
+# ---------------------------------------------------------------------------
+
+def _badge(texte, type_):
+    """Pastille colorée (amber/red/green) avec un point, pour les cartes."""
+    return (f'<div class="badge badge--{type_}">'
+            f'<span class="point"></span>{texte}</div>')
+
+
+def _svg_fichier(couleur):
+    """Petite icône « document » SVG inline (offline) de la couleur donnée,
+    pour les puces de fichiers de l'onglet Exports."""
+    return (
+        f'<svg width="15" height="15" viewBox="0 0 24 24" fill="{couleur}" '
+        f'style="vertical-align:-2px" xmlns="http://www.w3.org/2000/svg">'
+        f'<path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 '
+        f'0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>'
+        f'</svg>')
+
+
+def _carte_html(label, valeur, unite="", sous="", accent="#1b1e25", badge="",
+                mono=True):
+    """HTML d'une carte de mesure : intitulé, grande valeur + unité,
+    pastille optionnelle, sous-texte optionnel. mono=False pour une valeur
+    textuelle (mot) qui doit rester en IBM Plex Sans plutôt qu'en Mono."""
+    classe = "valeur" if mono else "valeur valeur--texte"
+    sous_html = f'<div class="sous">{sous}</div>' if sous else ""
+    return (f'<div class="carte-metrique">'
+            f'<div class="label">{label}</div>'
+            f'<div class="{classe}" style="color:{accent}">{valeur}'
+            f'<span class="unite">{unite}</span></div>'
+            f'{badge}{sous_html}</div>')
+
+
+def rendre_cartes(cartes):
+    """Affiche une rangée de cartes de mesures (1 colonne par carte)."""
+    cols = max(len(cartes), 1)
+    inner = "".join(_carte_html(**c) for c in cartes)
+    st.markdown(
+        f'<div class="cartes-metriques" '
+        f'style="grid-template-columns:repeat({cols},minmax(0,1fr))">'
+        f'{inner}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _classe_exposition(lden):
+    """(mot, couleur, sous-texte) décrivant la classe d'exposition Lden."""
+    if lden < 55:
+        return "Faible", "#16a34a", "Sous le seuil d'information (55 dB)"
+    if lden < 65:
+        return "Modérée", "#fb923c", "Entre information (55) et isolation (65)"
+    if lden < 75:
+        return "Élevée", "#f1592a", "Au-delà du seuil d'isolation (65 dB)"
+    return "Très élevée", "#c81e1e", "Exposition très forte, atténuation requise"
+
+
+# ---------------------------------------------------------------------------
 # Cartes folium
 # ---------------------------------------------------------------------------
 
@@ -738,81 +921,29 @@ def carte_heatmap(lden, grid, grid_size, center=YUL, zoom=10):
 # Interface
 # ---------------------------------------------------------------------------
 
-# Le titre est enveloppé dans un conteneur identifié (key) que l'on rend
-# « collant » (sticky) en CSS : il reste visible en haut pendant le défilement.
+# En-tête : titre + bouton « Partager », puis sous-titre à puces (chips).
+col_titre, col_partage = st.columns([8, 1.5], vertical_alignment="center")
+
+with col_titre:
+    st.markdown(
+        "<h1 class='titre-app'>Le bruit des avions autour de YUL</h1>",
+        unsafe_allow_html=True,
+    )
+
+with col_partage:
+    st.link_button(
+        "Partager",
+        "https://github.com/kevin-noah/equipe4-airnoisepy-20262",
+        icon=":material/share:",
+        use_container_width=True,
+    )
+
 st.markdown(
-    """
-    <style>
-    /* Gutter horizontal connu sur le conteneur principal, pour pouvoir
-       étendre le panneau bord à bord (full-bleed) avec une marge négative
-       de la même valeur. */
-    div[data-testid="stMainBlockContainer"],
-    section[data-testid="stMain"] .block-container {
-        --gutter: 3rem;
-        padding-left: var(--gutter) !important;
-        padding-right: var(--gutter) !important;
-    }
-    /* on coupe le débordement horizontal : le panneau peut alors déborder
-       sous la barre de défilement à droite sans créer de scroll parasite */
-    section[data-testid="stMain"] {
-        overflow-x: hidden;
-        padding-right: 0 !important;
-        padding-left: 0 !important;
-    }
-    /* Titre collant en « verre dépoli » (glassmorphism) : fond translucide
-       + backdrop-filter qui floute le contenu défilant derrière. On rend
-       sticky le wrapper parent direct généré par Streamlit (:has() le cible).
-       top = hauteur de la barre d'outils Streamlit, sinon le header
-       transparent recouvre le haut du titre. */
-    div[data-testid="stVerticalBlock"] > div:has(> .st-key-entete_fixe),
-    div[data-testid="stVerticalBlock"] > div:has(.st-key-entete_fixe) {
-        position: sticky;
-        top: 3.5rem;
-        z-index: 999;
-        /* full-bleed : on décale à gauche dans la gouttière et on donne une
-           largeur explicite très large (les éléments flex de Streamlit ne
-           s'étirent pas avec une marge négative). Le surplus à droite est
-           coupé net au bord de la zone principale par overflow-x: hidden. */
-        margin-left: calc(-1 * var(--gutter, 3rem));
-        margin-right: 0;
-        width: calc(100% + var(--gutter, 3rem) + 20rem);
-        /* dégradé de surbrillance pour l'effet « verre poli » */
-        background: linear-gradient(135deg,
-            rgba(255, 255, 255, 0.55),
-            rgba(255, 255, 255, 0.20));
-        -webkit-backdrop-filter: blur(12px) saturate(160%);
-        backdrop-filter: blur(12px) saturate(160%);
-        /* pas de bord net : liseré lumineux discret + le masque ci-dessous
-           fait fondre le panneau dans le fond vers le bas */
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-        /* le panneau contient tout le titre avec un petit peu de marge */
-        padding: 1.2rem 1.2rem;
-        -webkit-mask-image: linear-gradient(to bottom, #000 90%, transparent 100%);
-        mask-image: linear-gradient(to bottom, #000 90%, transparent 100%);
-    }
-    /* le conteneur lui-même reste transparent pour laisser voir le flou */
-    .st-key-entete_fixe {
-        background: transparent;
-    }
-    /* titre réduit, sur une seule ligne, occupant toute la largeur */
-    .st-key-entete_fixe h1 {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        font-size: 1.9rem !important;
-        line-height: 1.25;
-        white-space: nowrap;
-    }
-    </style>
-    """,
+    "<div class='sous-titre'>Modélisation <code>ECAC Doc 29</code> · "
+    "données <code>ADS-B OpenSky</code> · base <code>EASA ANP v9</code> "
+    "— MGA802 ÉTS Été 2026, Équipe 4</div>",
     unsafe_allow_html=True,
 )
-
-with st.container(key='entete_fixe'):
-    st.title('AirNoisePy — le bruit des avions autour de YUL')
-
-st.caption('Modélisation ECAC Doc 29 · données ADS-B OpenSky · base EASA '
-           'ANP v9 — MGA802 ÉTS Été 2026, Équipe 4')
 
 # ---------------------------------------------------------------------------
 # Barre latérale
@@ -823,12 +954,13 @@ st.caption('Modélisation ECAC Doc 29 · données ADS-B OpenSky · base EASA '
 # normale avec une journée où les vols nocturnes sont réduits.
 # ---------------------------------------------------------------------------
 
-st.sidebar.header("⚙️ Paramètres de démonstration")
+st.sidebar.header(":material/settings: Paramètres")
 
 grid_size = st.sidebar.selectbox(
     "Résolution de la grille",
     options=[40, 60, 80],
     index=1,
+    format_func=lambda n: f"{n} × {n} points",
     help=(
         "40 = rapide, 80 = plus détaillé. "
         "Cette valeur sera utilisée par les cartes et les calculs de grille."
@@ -846,16 +978,27 @@ curfew_actif = st.sidebar.toggle(
 
 st.sidebar.markdown("---")
 
-st.sidebar.markdown("### Seuils réglementaires")
-
-st.sidebar.info(
-    "55 dB Lden : seuil d'information des riverains.\n\n"
-    "65 dB Lden : seuil associé à l'isolation acoustique."
-)
-
-st.sidebar.caption(
-    "Ces seuils servent de repères pour interpréter les cartes "
-    "et les résultats affichés dans la démo."
+st.sidebar.markdown(
+    """
+    <div class="seuils-titre">Seuils réglementaires</div>
+    <div class="seuil-carte">
+      <span class="seuil-dot" style="background:#fbbf24"></span>
+      <div>
+        <div class="seuil-titre">55 dB Lden</div>
+        <div class="seuil-desc">Seuil d'information des riverains.</div>
+      </div>
+    </div>
+    <div class="seuil-carte">
+      <span class="seuil-dot" style="background:#f1592a"></span>
+      <div>
+        <div class="seuil-titre">65 dB Lden</div>
+        <div class="seuil-desc">Seuil associé à l'isolation acoustique.</div>
+      </div>
+    </div>
+    <div class="seuil-note">Ces seuils servent de repères pour interpréter
+    les cartes et les résultats affichés.</div>
+    """,
+    unsafe_allow_html=True,
 )
 
 if not CONTOUR_DISPONIBLE:
@@ -887,12 +1030,15 @@ if curfew_actif:
     )
 
 tab_chez_vous, tab_anim, tab_live, tab_valid, tab_export = st.tabs([
-    '🏠 Le bruit chez vous', '🕐 Journée 24h', '📡 Avions en direct',
-    '✅ Validation WebTrak', '💾 Exports',
+    ':material/home: Le bruit chez vous',
+    ':material/schedule: Journée 24h',
+    ':material/rss_feed: Avions en direct',
+    ':material/check: Validation WebTrak',
+    ':material/download: Exports',
 ])
 
 with tab_chez_vous:
-    st.subheader("🏠 Le bruit chez vous")
+    st.subheader(":material/home: Le bruit chez vous")
 
     st.markdown(
         """
@@ -928,7 +1074,8 @@ with tab_chez_vous:
         returned_objects=["last_clicked"],
     )
 
-    st.markdown("### Résultat du point choisi")
+    st.markdown("<div class='section-label'>Résultat du point choisi</div>",
+                unsafe_allow_html=True)
 
     if resultat_carte and resultat_carte.get("last_clicked"):
         lat = resultat_carte["last_clicked"]["lat"]
@@ -941,26 +1088,35 @@ with tab_chez_vous:
             vols, recepteur, datetime.date(2026, 6, 10))
         distance_km = _haversine_m(YUL[0], YUL[1], lat, lon) / 1000
 
-        col1, col2 = st.columns(2)
+        # SEL de chaque survol : sert au repère « plus bruyant » et au compte
+        # des vols qui contribuent réellement (SEL >= 45 dB(A)) à ce point.
+        sels = [calc.compute_sel(v, recepteur) for v in vols]
+        sel_max = max(sels)
+        contributeurs = sum(1 for s in sels if s >= 45)
 
-        with col1:
-            st.metric("Lden à cet endroit", f"{lden_point:.1f} dB(A)")
-
-        with col2:
-            st.metric("Distance à YUL", f"{distance_km:.1f} km")
-
-        st.write(comparaison_parlante(lden_point))
-
+        # Carte 1 : pastille de seuil selon le niveau Lden.
         if lden_point >= 65:
-            st.error("Seuil 65 dB dépassé : isolation acoustique recommandée.")
+            badge = _badge("Au-dessus du seuil 65 dB", "red")
         elif lden_point >= 55:
-            st.warning("Seuil 55 dB dépassé : information des riverains.")
+            badge = _badge("Au-dessus du seuil 55 dB", "amber")
         else:
-            st.success("Niveau inférieur aux principaux seuils réglementaires.")
+            badge = _badge("Sous les seuils réglementaires", "green")
 
-        # Survol le plus bruyant de la journée à ce point (repère SEL).
-        sel_max = max(calc.compute_sel(v, recepteur) for v in vols)
+        classe, couleur, classe_sous = _classe_exposition(lden_point)
+
+        rendre_cartes([
+            {"label": "Niveau Lden", "valeur": f"{lden_point:.0f}",
+             "unite": "dB", "badge": badge},
+            {"label": "Classe d'exposition", "valeur": classe,
+             "accent": couleur, "sous": classe_sous, "mono": False},
+            {"label": "Distance à YUL", "valeur": f"{distance_km:.1f}",
+             "unite": "km", "sous": "Centre de Montréal-Trudeau"},
+            {"label": "Vols contributeurs", "valeur": f"{contributeurs}",
+             "sous": f"sur ~{n_vols} mouvements / jour"},
+        ])
+
         st.caption(
+            f"{comparaison_parlante(lden_point)}  \n"
             f"Survol le plus bruyant de la journée : SEL {sel_max:.1f} dB(A) — "
             f"point cliqué : latitude {lat:.5f}, longitude {lon:.5f}"
         )
@@ -969,7 +1125,7 @@ with tab_chez_vous:
         st.info("Cliquez sur la carte pour estimer le bruit à un point donné.")
 
 with tab_anim:
-    st.subheader("🕐 Journée 24h")
+    st.subheader(":material/schedule: Journée 24h")
 
     st.markdown(
         """
@@ -996,20 +1152,6 @@ with tab_anim:
 
     mouvements = PROFIL_HORAIRE_YUL[heure]
 
-    st.metric(
-        "Mouvements à cette heure",
-        f"{mouvements} vols",
-    )
-
-    if 7 <= heure <= 9:
-        st.warning("Pointe du matin : trafic élevé autour de YUL.")
-    elif 17 <= heure <= 19:
-        st.warning("Pointe du soir : trafic élevé autour de YUL.")
-    elif 23 <= heure or heure < 6:
-        st.info("Période nocturne : trafic réduit.")
-    else:
-        st.success("Trafic modéré.")
-
     # ------------------------------------------------------------------
     # Bruit cumulé de 0h à l'heure choisie : on garde les vols dont le
     # décollage a déjà eu lieu, puis on recalcule le Lden sur la grille.
@@ -1019,10 +1161,32 @@ with tab_anim:
     vols_jusqua = [v for v in vols
                    if calc._utc_hour(v.waypoints[0]['time']) <= heure]
 
+    lden_h = calc.compute_grid(vols_jusqua, grid) if vols_jusqua else None
+    lden_max_h = f"{lden_h.max():.0f}" if lden_h is not None else "—"
+
+    # Contexte horaire : pastille de la première carte.
+    if 7 <= heure <= 9 or 17 <= heure <= 19:
+        contexte = _badge("pointe de trafic", "red")
+    elif heure >= 23 or heure < 6:
+        contexte = _badge("période nocturne", "amber")
+    else:
+        contexte = _badge("trafic modéré", "green")
+
+    rendre_cartes([
+        {"label": "Mouvements à cette heure", "valeur": f"{mouvements}",
+         "unite": "vols", "badge": contexte},
+        {"label": "Vols cumulés depuis 00h", "valeur": f"{len(vols_jusqua)}",
+         "sous": "sur la journée type"},
+        {"label": "Lden cumulé (max grille)", "valeur": lden_max_h,
+         "unite": "dB", "sous": "cellule la plus exposée"},
+    ])
+
+    # ------------------------------------------------------------------
+    # Carte (contour) inchangée — laissée pour la passe « cartes ».
+    # ------------------------------------------------------------------
     if vols_jusqua:
         import matplotlib.pyplot as plt
 
-        lden_h = calc.compute_grid(vols_jusqua, grid)
         titre = f"Bruit accumulé de 0h00 à {heure}h59 — {len(vols_jusqua)} vols"
 
         if CONTOUR_DISPONIBLE:
@@ -1049,7 +1213,7 @@ with tab_anim:
         st.info("Aucun vol avant cette heure dans la journée simulée.")
 
 with tab_live:
-    st.subheader("📡 Avions en direct")
+    st.subheader(":material/rss_feed: Avions en direct")
 
     st.markdown(
         """
@@ -1069,7 +1233,7 @@ with tab_live:
     # pas casser la démo en salle.
     # ------------------------------------------------------------------
 
-    if st.button("📡 Actualiser les avions (OpenSky)"):
+    if st.button("Actualiser les avions (OpenSky)", icon=":material/sync:"):
         try:
             from airnoisepy.flight.opensky import OpenSkyFetcher
             bruts = OpenSkyFetcher().fetch_realtime()
@@ -1144,11 +1308,11 @@ with tab_live:
                 st.markdown("👈 *Cliquez sur la carte pour estimer le "
                             "bruit instantané à cet endroit.*")
     else:
-        st.info("Cliquez sur **📡 Actualiser les avions** pour récupérer "
+        st.info("Cliquez sur **Actualiser les avions** pour récupérer "
                 "les vols en direct autour de YUL (nécessite internet).")
 
 with tab_valid:
-    st.subheader("✅ Validation WebTrak / ADM")
+    st.subheader(":material/check: Validation WebTrak / ADM")
 
     st.markdown(
         """
@@ -1181,23 +1345,24 @@ with tab_valid:
         step=0.5,
     )
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Lden calculé par AirNoisePy", f"{niveau_calcule:.1f} dB")
-    with col2:
-        st.metric("Écart modèle / mesure",
-                  f"{abs(niveau_calcule - niveau_mesure):.1f} dB")
-
     ecart = abs(niveau_calcule - niveau_mesure)
 
     if ecart <= 3:
-        st.success(
-            "PASS : l'écart respecte la tolérance ECAC Doc 29 (±3 dB)."
-        )
+        badge_valid = _badge("Dans la tolérance ±3 dB", "green")
+        accent_ecart = "#16a34a"
     else:
-        st.error(
-            "FAIL : l'écart dépasse la tolérance ECAC Doc 29 (±3 dB)."
-        )
+        badge_valid = _badge("Hors tolérance ±3 dB", "red")
+        accent_ecart = "#dc3a34"
+
+    rendre_cartes([
+        {"label": "Lden calculé (AirNoisePy)",
+         "valeur": f"{niveau_calcule:.1f}", "unite": "dB", "sous": nom_point},
+        {"label": "Lden mesuré (WebTrak / ADM)",
+         "valeur": f"{niveau_mesure:.1f}", "unite": "dB",
+         "sous": "valeur saisie ci-dessus"},
+        {"label": "Écart modèle / mesure", "valeur": f"{ecart:.1f}",
+         "unite": "dB", "accent": accent_ecart, "badge": badge_valid},
+    ])
 
     st.caption(
         "Le Lden calculé est obtenu par NoiseCalculator à ce point ; "
@@ -1205,20 +1370,28 @@ with tab_valid:
     )
 
 with tab_export:
-    st.subheader("💾 Export des résultats")
+    st.markdown("<div class='section-label'>Export des résultats</div>",
+                unsafe_allow_html=True)
 
     st.markdown(
-        """
-        Cette section illustre comment AirNoisePy permet de partager
-        les résultats obtenus après les calculs.
+        "Partagez les résultats obtenus après calcul. La classe "
+        "`ResultsExporter` produit les exports complets du projet — "
+        "grille Lden (CSV), carte interactive (HTML) et animation 24 h (GIF)."
+    )
 
-        Dans la version finale, cette fonctionnalité utilisera la classe
-        ResultsExporter pour produire automatiquement les exports
-        complets du projet.
-
-        En attendant l'intégration finale, nous utilisons un petit jeu
-        de données représentatif afin de démontrer le principe.
-        """
+    st.markdown(
+        f"""
+        <div class="carte-metrique" style="margin-top:0.6rem">
+          <div class="label">Exports de la session courante</div>
+          <div style="font-weight:700;font-size:1.05rem;margin:0.1rem 0 0.7rem">
+            Résolution {grid_size}×{grid_size} · journée type · ~{n_vols} vols
+          </div>
+          <span class="chip-fichier">{_svg_fichier('#6b7280')} lden_grid<code>.csv</code></span>
+          <span class="chip-fichier">{_svg_fichier('#6b7280')} carte<code>.html</code></span>
+          <span class="chip-fichier">{_svg_fichier('#6b7280')} animation<code>.gif</code></span>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     # ------------------------------------------------------------------
@@ -1230,7 +1403,7 @@ with tab_export:
     # chaque onglet reste indépendant des autres.
     # ------------------------------------------------------------------
 
-    if st.button("Générer les exports de démonstration"):
+    if st.button("Générer les exports", type="primary", icon=":material/download:"):
 
         # --------------------------------------------------------------
         # Jeu de données simplifié utilisé uniquement à des fins
@@ -1288,34 +1461,22 @@ with tab_export:
 
 st.divider()
 
-st.markdown("### 📄 Licence")
+col_lic, col_cit = st.columns(2)
 
-st.write(
-    "Distribué sous licence MIT. "
-    "Voir le fichier LICENSE.md pour plus de détails."
-)
+with col_lic:
+    st.markdown("<div class='section-label'>Licence</div>",
+                unsafe_allow_html=True)
+    st.write(
+        "Distribué sous licence MIT. "
+        "Voir le fichier `LICENSE.md` pour plus de détails."
+    )
 
-st.markdown("### 📚 Citation")
-
-st.caption(
-    "Kevin, Bouchra, Syndia, Laura. "
-    "AirNoisePy: a Python tool for aircraft noise modelling around "
-    "Montréal-Trudeau airport (ECAC Doc 29), "
-    "MGA802, École de technologie supérieure, Montréal, 2026."
-)
-
-st.markdown("### 🔧 Technologies utilisées")
-
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    st.image("assets/numpy.svg", width=80)
-
-with col2:
-    st.image("assets/pandas.svg", width=80)
-
-with col3:
-    st.image("assets/folium.png", width=80)
-
-with col4:
-    st.image("assets/github.png", width=80)
+with col_cit:
+    st.markdown("<div class='section-label'>Citation</div>",
+                unsafe_allow_html=True)
+    st.caption(
+        "Kevin, Bouchra, Syndia, Laura. "
+        "AirNoisePy: a Python tool for aircraft noise modelling around "
+        "Montréal-Trudeau airport (ECAC Doc 29), "
+        "MGA802, École de technologie supérieure, Montréal, 2026."
+    )
