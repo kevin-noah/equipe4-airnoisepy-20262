@@ -1100,10 +1100,18 @@ with tab_chez_vous:
     # capteurs ADM/WebTrak en petits cercles gris
     ajouter_capteurs_adm(carte)
 
+    # ------------------------------------------------------------------
+    # Affichage grand format pour la présentation orale.
+    #
+    # La carte utilise toute la largeur disponible du navigateur et une
+    # hauteur importante afin d'éviter de zoomer ou de déplacer la carte
+    # pendant la démo.
+    # ------------------------------------------------------------------
+
     resultat_carte = st_folium(
         carte,
-        width=1000,
-        height=420,
+        height=780,
+        use_container_width=True,
         returned_objects=["last_clicked"],
     )
 
@@ -1448,14 +1456,20 @@ with tab_export:
 
         donnees_demo = pd.DataFrame(
             {
-                "callsign": ["ACA750", "ACA751", "ACA752"],
-                "lden_db": [54.8, 61.2, 66.4],
-                "zone": [
-                    "Inférieure à 55 dB",
-                    "55–65 dB",
-                    "≥ 65 dB",
-                ],
+                "latitude": grid[:, 0],
+                "longitude": grid[:, 1],
+                "lden_db": lden,
             }
+        )
+
+        donnees_demo["zone"] = donnees_demo["lden_db"].apply(
+            lambda x: (
+                "Inférieure à 55 dB"
+                if x < 55
+                else "55–65 dB"
+                if x < 65
+                else "≥ 65 dB"
+            )
         )
 
         st.success("Export de démonstration généré avec succès.")
