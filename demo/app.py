@@ -1492,6 +1492,40 @@ with tab_export:
             mime="text/csv",
         )
 
+        # --------------------------------------------------------------
+        # Export HTML : carte interactive Folium.
+        #
+        # On régénère la même carte de contours que dans l'onglet
+        # "Le bruit chez vous", puis on la sauvegarde en HTML pour que
+        # l'utilisateur puisse l'ouvrir dans un navigateur sans Streamlit.
+        # --------------------------------------------------------------
+
+        try:
+            carte_export = (
+                carte_contours(lden, grid_size, calc)
+                if CONTOUR_DISPONIBLE
+                else carte_heatmap(lden, grid, grid_size)
+            )
+
+            ajouter_capteurs_adm(carte_export)
+
+            chemin_carte = os.path.join(RACINE, "results", "carte.html")
+            os.makedirs(os.path.dirname(chemin_carte), exist_ok=True)
+
+            carte_export.save(chemin_carte)
+
+            with open(chemin_carte, "rb") as fichier_html:
+                contenu_html = fichier_html.read()
+
+            st.download_button(
+                label="🗺️ Télécharger carte.html",
+                data=contenu_html,
+                file_name="carte.html",
+                mime="text/html",
+            )
+
+        except Exception as exc:
+            st.warning(f"La carte HTML n'a pas pu être générée : {exc}")
     else:
         st.info(
             "Cliquez sur le bouton ci-dessus pour générer "
