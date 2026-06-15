@@ -1627,7 +1627,7 @@ with tab_export:
             )
         )
 
-        st.success("Export de démonstration généré avec succès.")
+        st.success("Export généré avec succès.")
 
         st.dataframe(donnees_demo)
 
@@ -1683,8 +1683,8 @@ with tab_export:
             st.warning(f"La carte HTML n'a pas pu être générée : {exc}")
     else:
         st.info(
-            "Cliquez sur le bouton ci-dessus pour générer "
-            "un exemple d'export CSV."
+            "Cliquez sur le bouton ci-dessus pour générer les fichiers d'export "
+            "de la session courante."
         )
 
 # ---------------------------------------------------------------------
