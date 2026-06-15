@@ -34,6 +34,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import folium
+import requests
 import streamlit as st
 from streamlit_folium import st_folium
 
@@ -564,6 +565,68 @@ def _haversine_m(lat1, lon1, lat2, lon2):
     return rayon_terre_m * c
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def geocoder_adresse(adresse):
+    """
+    Convertit une adresse saisie librement en coordonnées géographiques.
+
+    On interroge le service public Nominatim (OpenStreetMap). La recherche
+    est biaisée sur la grande région de Montréal (countrycodes=ca + cadre
+    géographique autour de YUL) afin qu'une adresse partielle (« 100 rue
+    Sainte-Catherine ») tombe au bon endroit plutôt qu'ailleurs au Canada.
+
+    Paramètres
+    ----------
+    adresse : str
+        Adresse, intersection ou lieu saisi par l'utilisateur.
+
+    Retour
+    -------
+    tuple(float, float, str) ou None
+        (latitude, longitude, nom complet retourné) si une correspondance
+        est trouvée, sinon None (adresse vide, introuvable ou réseau
+        injoignable — la démo continue alors sans planter).
+
+    Notes
+    -----
+    Le géocodage nécessite internet, comme l'onglet « Avions en direct ».
+    Le résultat est mis en cache 1 h (st.cache_data) pour éviter de
+    re-solliciter Nominatim à chaque interaction Streamlit.
+    """
+
+    adresse = (adresse or "").strip()
+    if not adresse:
+        return None
+
+    try:
+        reponse = requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={
+                "q": adresse,
+                "format": "json",
+                "limit": 1,
+                "countrycodes": "ca",
+                # Cadre (viewbox) autour de YUL pour prioriser le Grand
+                # Montréal : (lon_min, lat_max, lon_max, lat_min).
+                "viewbox": "-74.10,45.75,-73.30,45.30",
+                "bounded": 0,
+            },
+            headers={"User-Agent": "AirNoisePy/0.1 (projet MGA802 ETS)"},
+            timeout=8,
+        )
+        reponse.raise_for_status()
+        resultats = reponse.json()
+    except Exception:
+        return None
+
+    if not resultats:
+        return None
+
+    premier = resultats[0]
+    return (float(premier["lat"]), float(premier["lon"]),
+            premier.get("display_name", adresse))
+
+
 def _normaliser_avion(a):
     """
     Normalise la sortie de OpenSkyFetcher.fetch_realtime() afin de fournir
@@ -1075,11 +1138,38 @@ with tab_chez_vous:
 
     st.markdown(
         """
-        Cliquez n'importe où sur la carte pour connaître le niveau de bruit
-        aérien (Lden) à cet endroit, calculé par `NoiseCalculator` sur la
-        journée type de YUL (~565 vols).
+        Saisissez votre adresse **ou** cliquez n'importe où sur la carte pour
+        connaître le niveau de bruit aérien (Lden) à cet endroit, calculé par
+        `NoiseCalculator` sur la journée type de YUL (~565 vols).
         """
     )
+
+    # ------------------------------------------------------------------
+    # Saisie d'adresse : géocodage Nominatim -> récepteur.
+    #
+    # Le point retenu (adresse géocodée OU dernier clic carte) est mémorisé
+    # dans st.session_state['pt_chez_vous'] = (lat, lon, libellé source).
+    # ------------------------------------------------------------------
+
+    col_adr, col_btn = st.columns([5, 1], vertical_alignment="bottom")
+    with col_adr:
+        adresse_saisie = st.text_input(
+            "Votre adresse",
+            placeholder="ex. 975 boulevard de la Côte-Vertu, Saint-Laurent",
+            key="adr_chez_vous",
+        )
+    with col_btn:
+        localiser = st.button("Localiser", icon=":material/search:",
+                              key="btn_adr_chez_vous",
+                              use_container_width=True)
+
+    if localiser:
+        geo = geocoder_adresse(adresse_saisie)
+        if geo is not None:
+            st.session_state["pt_chez_vous"] = (geo[0], geo[1], geo[2])
+        else:
+            st.warning("Adresse introuvable (ou réseau injoignable). "
+                       "Réessayez ou cliquez directement sur la carte.")
 
     # ------------------------------------------------------------------
     # Carte interactive centrée sur Montréal-Trudeau.
@@ -1100,6 +1190,15 @@ with tab_chez_vous:
     # capteurs ADM/WebTrak en petits cercles gris
     ajouter_capteurs_adm(carte)
 
+    # Marqueur sur le point déjà choisi (adresse géocodée ou clic précédent).
+    pt_courant = st.session_state.get("pt_chez_vous")
+    if pt_courant is not None:
+        folium.Marker(
+            (pt_courant[0], pt_courant[1]),
+            tooltip="Votre point",
+            icon=folium.Icon(color="red", icon="home", prefix="fa"),
+        ).add_to(carte)
+
     # ------------------------------------------------------------------
     # Affichage grand format pour la présentation orale.
     #
@@ -1115,12 +1214,21 @@ with tab_chez_vous:
         returned_objects=["last_clicked"],
     )
 
+    # Un clic sur la carte remplace le point courant (s'il a changé).
+    clic_chez_vous = (resultat_carte or {}).get("last_clicked")
+    if clic_chez_vous:
+        cle_clic = (clic_chez_vous["lat"], clic_chez_vous["lng"])
+        if st.session_state.get("dernier_clic_chez_vous") != cle_clic:
+            st.session_state["dernier_clic_chez_vous"] = cle_clic
+            st.session_state["pt_chez_vous"] = (
+                cle_clic[0], cle_clic[1], "Point cliqué sur la carte")
+
     st.markdown("<div class='section-label'>Résultat du point choisi</div>",
                 unsafe_allow_html=True)
 
-    if resultat_carte and resultat_carte.get("last_clicked"):
-        lat = resultat_carte["last_clicked"]["lat"]
-        lon = resultat_carte["last_clicked"]["lng"]
+    pt_chez_vous = st.session_state.get("pt_chez_vous")
+    if pt_chez_vous is not None:
+        lat, lon, source_pt = pt_chez_vous
 
         # Lden réel à ce point : agrégation de tous les survols de la journée.
         recepteur = (lat, lon)
@@ -1159,11 +1267,12 @@ with tab_chez_vous:
         st.caption(
             f"{comparaison_parlante(lden_point)}  \n"
             f"Survol le plus bruyant de la journée : SEL {sel_max:.1f} dB(A) — "
-            f"point cliqué : latitude {lat:.5f}, longitude {lon:.5f}"
+            f"{source_pt} (latitude {lat:.5f}, longitude {lon:.5f})"
         )
 
     else:
-        st.info("Cliquez sur la carte pour estimer le bruit à un point donné.")
+        st.info("Saisissez votre adresse ou cliquez sur la carte pour "
+                "estimer le bruit à un point donné.")
 
 with tab_anim:
     st.subheader(":material/schedule: Journée 24h")
@@ -1259,9 +1368,9 @@ with tab_live:
     st.markdown(
         """
         **Le bruit en direct, n'importe où** : actualisez la position des
-        avions, puis cliquez sur la carte — le niveau instantané estimé au
-        point choisi est comparable à la lecture d'un sonomètre ADM sur
-        WebTrak au même moment.
+        avions, puis saisissez votre adresse ou cliquez sur la carte — le
+        niveau instantané estimé au point choisi est comparable à la lecture
+        d'un sonomètre ADM sur WebTrak au même moment.
 
         **Optionnel** : c'est le seul onglet qui a besoin d'internet ; le
         reste de la démo fonctionne hors-ligne avec les données locales.
@@ -1285,6 +1394,30 @@ with tab_live:
         except Exception as exc:
             st.error(f"API OpenSky injoignable ({exc}) — "
                      "la démo continue avec les données locales.")
+
+    # Saisie d'adresse : point retenu dans st.session_state['pt_live']
+    # = (lat, lon, libellé), partagé avec le clic carte ci-dessous.
+    col_adr_live, col_btn_live = st.columns([5, 1],
+                                            vertical_alignment="bottom")
+    with col_adr_live:
+        adresse_live = st.text_input(
+            "Votre adresse",
+            placeholder="ex. 975 boulevard de la Côte-Vertu, Saint-Laurent",
+            key="adr_live",
+        )
+    with col_btn_live:
+        localiser_live = st.button("Localiser", icon=":material/search:",
+                                   key="btn_adr_live",
+                                   use_container_width=True)
+
+    if localiser_live:
+        geo_live = geocoder_adresse(adresse_live)
+        if geo_live is not None:
+            st.session_state["pt_live"] = (geo_live[0], geo_live[1],
+                                           geo_live[2])
+        else:
+            st.warning("Adresse introuvable (ou réseau injoignable). "
+                       "Réessayez ou cliquez directement sur la carte.")
 
     avions = st.session_state.get("avions_live")
 
@@ -1314,16 +1447,37 @@ with tab_live:
                 ).add_to(m)
             # capteurs ADM/WebTrak en petits cercles gris
             ajouter_capteurs_adm(m)
+            # Marqueur sur le point choisi (adresse géocodée ou clic).
+            pt_live_courant = st.session_state.get("pt_live")
+            if pt_live_courant is not None:
+                folium.Marker(
+                    (pt_live_courant[0], pt_live_courant[1]),
+                    tooltip="Votre point",
+                    icon=folium.Icon(color="red", icon="home", prefix="fa"),
+                ).add_to(m)
             retour_live = st_folium(m, height=480, use_container_width=True,
                                     key="carte_live")
 
+        # Un clic sur la carte remplace le point courant (s'il a changé).
+        clic = (retour_live or {}).get("last_clicked")
+        if clic:
+            cle_clic_live = (clic["lat"], clic["lng"])
+            if st.session_state.get("dernier_clic_live") != cle_clic_live:
+                st.session_state["dernier_clic_live"] = cle_clic_live
+                st.session_state["pt_live"] = (
+                    cle_clic_live[0], cle_clic_live[1],
+                    "Point cliqué sur la carte")
+
         with col_live_info:
-            clic = (retour_live or {}).get("last_clicked")
-            if clic and en_vol:
+            pt_live = st.session_state.get("pt_live")
+            if pt_live and en_vol:
+                lat_live, lon_live, source_live = pt_live
                 total, contribs = niveau_instantane(
-                    en_vol, (clic["lat"], clic["lng"]), anp)
+                    en_vol, (lat_live, lon_live), anp)
                 st.metric("Niveau instantané estimé (avions seulement)",
                           f"{total:.1f} dB(A)")
+                st.caption(f"{source_live} — latitude {lat_live:.5f}, "
+                           f"longitude {lon_live:.5f}")
                 st.dataframe(contribs[:5], use_container_width=True)
                 st.caption(
                     "⚠️ Contribution des avions uniquement : un sonomètre "
@@ -1346,8 +1500,9 @@ with tab_live:
             elif not en_vol:
                 st.info("Aucun avion en vol dans la zone en ce moment.")
             else:
-                st.markdown("👈 *Cliquez sur la carte pour estimer le "
-                            "bruit instantané à cet endroit.*")
+                st.markdown("👈 *Saisissez votre adresse ou cliquez sur la "
+                            "carte pour estimer le bruit instantané à cet "
+                            "endroit.*")
     else:
         st.info("Cliquez sur **Actualiser les avions** pour récupérer "
                 "les vols en direct autour de YUL (nécessite internet).")
