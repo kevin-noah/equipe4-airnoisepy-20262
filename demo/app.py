@@ -495,6 +495,196 @@ def calculer_grille(curfew_actif, grid_size):
     return grid, lden, len(vols)
 
 
+@st.cache_data(show_spinner="Construction de l'animation 24h…")
+def construire_gif_24h(grid_size, duree_s):
+    """
+    Construit une animation GIF de l'accumulation du bruit sur 24 h.
+
+    Une image par heure (0h → 23h) : pour chaque heure on agrège le Lden
+    de TOUS les vols partis jusque-là, puis on rend une carte de chaleur.
+    L'échelle de couleur est FIXÉE sur le maximum de la journée complète,
+    de sorte que les couleurs soient comparables d'une image à l'autre et
+    que l'on VOIE réellement le bruit monter aux heures de pointe.
+
+    Paramètres
+    ----------
+    grid_size : int
+        Côté de la grille carrée de récepteurs (grid_size² points).
+    duree_s : float
+        Durée totale souhaitée de l'animation, en secondes. Les 24 images
+        sont réparties uniformément (durée par image = duree_s / 24).
+
+    Retour
+    -------
+    bytes
+        Le GIF animé prêt à être affiché par st.image (boucle infinie).
+
+    Notes
+    -----
+    Pour la fluidité et la robustesse, l'animation utilise une grille
+    CARRÉE dédiée (grille_recepteurs) affichée en imshow, indépendamment
+    de NoiseContour : 24 images se calculent en quelques secondes et le
+    résultat est mis en cache (une seule construction par scénario).
+    """
+
+    import io
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import imageio.v2 as imageio
+
+    _, calc_local = charger_bibliotheque()
+    vols = charger_vols()
+    grille = grille_recepteurs(grid_size)
+
+    # Étendue géographique pour l'axe de la carte.
+    etendue = (grille[:, 1].min(), grille[:, 1].max(),
+               grille[:, 0].min(), grille[:, 0].max())
+
+    # Étape 1 : 24 surfaces de Lden cumulé, calculées de façon ADDITIVE.
+    # Le Lden est une agrégation d'énergie en log (calculator.py:149-152) :
+    # on calcule donc CHAQUE heure une seule fois (vols de cette heure-là),
+    # puis on cumule les énergies. C'est ~10× plus rapide que de recalculer
+    # tous les vols à chaque heure, et le résultat est identique au dB près.
+    surfaces = []
+    compteurs = []
+    energie = np.zeros(len(grille))
+    total_vols = 0
+    for h in range(24):
+        vols_h = [v for v in vols
+                  if calc_local._utc_hour(v.waypoints[0]['time']) == h]
+        total_vols += len(vols_h)
+        if vols_h:
+            lden_h = calc_local.compute_grid(vols_h, grille)
+            # Lden == 0 (np.zeros) = cellule sans énergie → on n'ajoute rien ;
+            # cellule valide (Lden éventuellement négatif) → 10^(Lden/10).
+            energie += np.where(lden_h != 0.0, 10 ** (lden_h / 10.0), 0.0)
+        lden_cumule = np.where(energie > 0, 10 * np.log10(energie), np.nan)
+        surfaces.append(lden_cumule.reshape(grid_size, grid_size))
+        compteurs.append(total_vols)
+
+    # Échelle de couleur fixe : la dernière image (= journée complète) donne
+    # la borne haute commune, pour que les couleurs soient comparables.
+    vmax = max(float(np.nanmax(surfaces[-1])), 41.0)
+
+    # Étape 2 : une SEULE figure (et une seule colorbar) réutilisée pour
+    # les 24 images — on ne met à jour que les données et le titre. C'est
+    # bien plus rapide que de recréer une figure par image.
+    fig, ax = plt.subplots(figsize=(7, 6))
+    im = ax.imshow(
+        surfaces[0], origin='lower', cmap='inferno',
+        vmin=40, vmax=vmax, extent=etendue, aspect='auto')
+    fig.colorbar(im, ax=ax, label='Lden dB(A)', shrink=0.8)
+    ax.plot(YUL[1], YUL[0], 'w*', markersize=12)
+    ax.set_xlabel("Longitude")
+    ax.set_ylabel("Latitude")
+
+    images = []
+    for h in range(24):
+        im.set_data(surfaces[h])
+        ax.set_title(f"Bruit accumulé 0h00 → {h:02d}h59 — "
+                     f"{compteurs[h]} vols")
+        fig.canvas.draw()
+        largeur, hauteur = fig.canvas.get_width_height()
+        image = np.frombuffer(
+            fig.canvas.buffer_rgba(), dtype=np.uint8
+        ).reshape(hauteur, largeur, 4)[:, :, :3].copy()
+        images.append(image)
+    plt.close(fig)
+
+    sortie = io.BytesIO()
+    # imageio >= 2.34 : duration = MILLISECONDES par image ; loop=0 = boucle
+    # infinie. 24 images réparties sur duree_s → duree_s/24*1000 ms par image.
+    imageio.mimsave(sortie, images, format="GIF",
+                    duration=duree_s / 24.0 * 1000.0, loop=0)
+    return sortie.getvalue()
+
+
+def explorer_journee(grid_size):
+    """Vue interactive à l'heure choisie (curseur + cartes + carte de bruit).
+
+    Utilise les variables globales calc / grid / lden calculées une fois
+    pour toute l'application (résolues à l'appel, pendant le rendu des
+    onglets).
+    """
+
+    # ------------------------------------------------------------------
+    # Le profil horaire réel de YUL (PROFIL_HORAIRE_YUL) sert à la fois à
+    # afficher le nombre de mouvements de l'heure et à filtrer les vols
+    # déjà partis pour le calcul cumulé.
+    # ------------------------------------------------------------------
+
+    heure = st.slider(
+        "Heure de la journée",
+        min_value=0,
+        max_value=23,
+        value=8,
+        format="%dh00",
+    )
+
+    mouvements = PROFIL_HORAIRE_YUL[heure]
+
+    # ------------------------------------------------------------------
+    # Bruit cumulé de 0h à l'heure choisie : on garde les vols dont le
+    # décollage a déjà eu lieu, puis on recalcule le Lden sur la grille.
+    # ------------------------------------------------------------------
+
+    vols = charger_vols()
+    vols_jusqua = [v for v in vols
+                   if calc._utc_hour(v.waypoints[0]['time']) <= heure]
+
+    lden_h = calc.compute_grid(vols_jusqua, grid) if vols_jusqua else None
+    lden_max_h = f"{lden_h.max():.0f}" if lden_h is not None else "—"
+
+    # Contexte horaire : pastille de la première carte.
+    if 7 <= heure <= 9 or 17 <= heure <= 19:
+        contexte = _badge("pointe de trafic", "red")
+    elif heure >= 23 or heure < 6:
+        contexte = _badge("période nocturne", "amber")
+    else:
+        contexte = _badge("trafic modéré", "green")
+
+    rendre_cartes([
+        {"label": "Mouvements à cette heure", "valeur": f"{mouvements}",
+         "unite": "vols", "badge": contexte},
+        {"label": "Vols cumulés depuis 00h", "valeur": f"{len(vols_jusqua)}",
+         "sous": "sur la journée type"},
+        {"label": "Lden cumulé (max grille)", "valeur": lden_max_h,
+         "unite": "dB", "sous": "cellule la plus exposée"},
+    ])
+
+    # ------------------------------------------------------------------
+    # Carte (contour) inchangée — laissée pour la passe « cartes ».
+    # ------------------------------------------------------------------
+    if vols_jusqua:
+        import matplotlib.pyplot as plt
+
+        titre = f"Bruit accumulé de 0h00 à {heure}h59 — {len(vols_jusqua)} vols"
+
+        if CONTOUR_DISPONIBLE:
+            # plot() interpole la surface (griddata) → robuste à la grille
+            # circulaire de NoiseContour. basemap=False pour rester hors-ligne.
+            fig, _ = NoiseContour(calc, grid_size=grid_size).plot(
+                lden_h, title=titre, basemap=False)
+        else:
+            surf = lden_h.reshape(grid_size, grid_size)
+            fig, ax = plt.subplots(figsize=(7, 6))
+            im = ax.imshow(
+                surf, origin='lower', cmap='inferno',
+                vmin=40, vmax=max(float(lden.max()), 41),
+                extent=(grid[:, 1].min(), grid[:, 1].max(),
+                        grid[:, 0].min(), grid[:, 0].max()),
+                aspect='auto')
+            fig.colorbar(im, ax=ax, label='Lden dB(A)', shrink=0.8)
+            ax.plot(YUL[1], YUL[0], 'w*', markersize=12)
+            ax.set_title(titre)
+
+        st.pyplot(fig)
+        plt.close(fig)
+    else:
+        st.info("Aucun vol avant cette heure dans la journée simulée.")
+
+
 # ---------------------------------------------------------------------------
 # Bruit instantané (onglet live)
 # ---------------------------------------------------------------------------
@@ -1281,86 +1471,36 @@ with tab_anim:
         """
         L'accumulation du bruit heure par heure : on voit les pointes du
         matin (7h–9h) et du soir (17h–19h) dessiner les couloirs de trafic.
-        Le curseur ajoute les vols jusqu'à l'heure choisie et recalcule le
-        Lden cumulé sur la grille.
+        Lancez l'**animation** pour voir la journée se dérouler d'un coup,
+        ou utilisez le **curseur** pour explorer une heure précise.
         """
     )
 
-    # ------------------------------------------------------------------
-    # Le profil horaire réel de YUL (PROFIL_HORAIRE_YUL) sert à la fois à
-    # afficher le nombre de mouvements de l'heure et à filtrer les vols
-    # déjà partis pour le calcul cumulé.
-    # ------------------------------------------------------------------
-
-    heure = st.slider(
-        "Heure de la journée",
-        min_value=0,
-        max_value=23,
-        value=8,
-        format="%dh00",
+    mode_anim = st.radio(
+        "Affichage",
+        ["▶ Animation 24h", "Curseur (exploration)"],
+        horizontal=True,
+        key="mode_journee",
     )
 
-    mouvements = PROFIL_HORAIRE_YUL[heure]
+    if mode_anim == "▶ Animation 24h":
+        # --------------------------------------------------------------
+        # Animation : un GIF de 24 images (une par heure) joué en boucle.
+        # La durée totale est réglable (10–15 s). Le GIF est mis en cache,
+        # donc seul le premier rendu prend quelques secondes.
+        # --------------------------------------------------------------
+        duree = st.slider("Durée de l'animation (s)", 10, 15, 12)
+        gif = construire_gif_24h(grid_size, duree)
+        st.image(gif, use_container_width=True)
+        st.caption(
+            "Lecture en boucle : le bruit cumulé s'étend aux heures de "
+            f"pointe puis sature. Échelle de couleur fixée sur le maximum "
+            f"de la journée ({grid_size} × {grid_size} récepteurs)."
+        )
 
-    # ------------------------------------------------------------------
-    # Bruit cumulé de 0h à l'heure choisie : on garde les vols dont le
-    # décollage a déjà eu lieu, puis on recalcule le Lden sur la grille.
-    # ------------------------------------------------------------------
-
-    vols = charger_vols()
-    vols_jusqua = [v for v in vols
-                   if calc._utc_hour(v.waypoints[0]['time']) <= heure]
-
-    lden_h = calc.compute_grid(vols_jusqua, grid) if vols_jusqua else None
-    lden_max_h = f"{lden_h.max():.0f}" if lden_h is not None else "—"
-
-    # Contexte horaire : pastille de la première carte.
-    if 7 <= heure <= 9 or 17 <= heure <= 19:
-        contexte = _badge("pointe de trafic", "red")
-    elif heure >= 23 or heure < 6:
-        contexte = _badge("période nocturne", "amber")
     else:
-        contexte = _badge("trafic modéré", "green")
+        explorer_journee(grid_size)
 
-    rendre_cartes([
-        {"label": "Mouvements à cette heure", "valeur": f"{mouvements}",
-         "unite": "vols", "badge": contexte},
-        {"label": "Vols cumulés depuis 00h", "valeur": f"{len(vols_jusqua)}",
-         "sous": "sur la journée type"},
-        {"label": "Lden cumulé (max grille)", "valeur": lden_max_h,
-         "unite": "dB", "sous": "cellule la plus exposée"},
-    ])
-
-    # ------------------------------------------------------------------
-    # Carte (contour) inchangée — laissée pour la passe « cartes ».
-    # ------------------------------------------------------------------
-    if vols_jusqua:
-        import matplotlib.pyplot as plt
-
-        titre = f"Bruit accumulé de 0h00 à {heure}h59 — {len(vols_jusqua)} vols"
-
-        if CONTOUR_DISPONIBLE:
-            # plot() interpole la surface (griddata) → robuste à la grille
-            # circulaire de NoiseContour. basemap=False pour rester hors-ligne.
-            fig, _ = NoiseContour(calc, grid_size=grid_size).plot(
-                lden_h, title=titre, basemap=False)
-        else:
-            surf = lden_h.reshape(grid_size, grid_size)
-            fig, ax = plt.subplots(figsize=(7, 6))
-            im = ax.imshow(
-                surf, origin='lower', cmap='inferno',
-                vmin=40, vmax=max(float(lden.max()), 41),
-                extent=(grid[:, 1].min(), grid[:, 1].max(),
-                        grid[:, 0].min(), grid[:, 0].max()),
-                aspect='auto')
-            fig.colorbar(im, ax=ax, label='Lden dB(A)', shrink=0.8)
-            ax.plot(YUL[1], YUL[0], 'w*', markersize=12)
-            ax.set_title(titre)
-
-        st.pyplot(fig)
-        plt.close(fig)
-    else:
-        st.info("Aucun vol avant cette heure dans la journée simulée.")
 
 with tab_live:
     st.subheader(":material/rss_feed: Avions en direct")
@@ -1372,8 +1512,11 @@ with tab_live:
         niveau instantané estimé au point choisi est comparable à la lecture
         d'un sonomètre ADM sur WebTrak au même moment.
 
-        **Optionnel** : c'est le seul onglet qui a besoin d'internet ; le
-        reste de la démo fonctionne hors-ligne avec les données locales.
+        Vous pouvez aussi **ajouter un avion virtuel** (position, altitude,
+        phase) pour voir son effet sonore combiné aux avions réels.
+
+        **Optionnel** : seul l'ajout des avions réels a besoin d'internet ;
+        l'avion virtuel et le reste de la démo fonctionnent hors-ligne.
         """
     )
 
@@ -1419,31 +1562,107 @@ with tab_live:
             st.warning("Adresse introuvable (ou réseau injoignable). "
                        "Réessayez ou cliquez directement sur la carte.")
 
+    # ------------------------------------------------------------------
+    # Avion virtuel : l'utilisateur place un appareil fictif (position,
+    # altitude, phase) pour voir son effet sonore COMBINÉ aux avions réels.
+    # Les avions virtuels sont stockés dans st.session_state['avions_virtuels']
+    # et passent par le même modèle (niveau_instantane). Avantage : ça marche
+    # MÊME sans OpenSky → l'onglet reste démontrable hors-ligne.
+    # ------------------------------------------------------------------
+    pt_live_defaut = st.session_state.get("pt_live")
+    lat_defaut = pt_live_defaut[0] if pt_live_defaut else YUL[0]
+    lon_defaut = pt_live_defaut[1] if pt_live_defaut else YUL[1]
+
+    with st.expander("Ajouter un avion virtuel (simulation A320)",
+                     icon=":material/add_circle:"):
+        st.caption(
+            "Placez un avion fictif et observez son effet sur le niveau au "
+            "point choisi, additionné aux avions réels. Position par défaut : "
+            "au-dessus de votre point. Type A320 supposé (comme le modèle live)."
+        )
+        with st.form("form_avion_virtuel"):
+            cva, cvb = st.columns(2)
+            with cva:
+                v_lat = st.number_input("Latitude", value=float(lat_defaut),
+                                        format="%.5f", step=0.001)
+                v_alt = st.slider("Altitude au-dessus du sol (m)",
+                                  100, 4000, 500, step=50)
+            with cvb:
+                v_lon = st.number_input("Longitude", value=float(lon_defaut),
+                                        format="%.5f", step=0.001)
+                v_phase = st.selectbox(
+                    "Phase de vol",
+                    ["Montée (décollage)", "Palier", "Descente (approche)"])
+            v_nom = st.text_input("Indicatif", value="VIRTUEL")
+            ajouter_avion = st.form_submit_button(
+                "Ajouter l'avion", icon=":material/flight:")
+
+        if ajouter_avion:
+            # La phase fixe le taux vertical, dont niveau_instantane déduit
+            # l'opération et la poussée (donc la courbe SEL).
+            vr_phase = {"Montée (décollage)": 5.0, "Palier": 0.0,
+                        "Descente (approche)": -5.0}[v_phase]
+            virtuels = st.session_state.setdefault("avions_virtuels", [])
+            virtuels.append({
+                "icao24": "VIRT",
+                "callsign": (v_nom or "VIRTUEL").strip(),
+                "lat": float(v_lat),
+                "lon": float(v_lon),
+                "alt_baro": float(v_alt),
+                "on_ground": False,
+                "vertical_rate": vr_phase,
+                "virtuel": True,
+            })
+
+        if st.session_state.get("avions_virtuels"):
+            st.write(f"**{len(st.session_state['avions_virtuels'])}** "
+                     "avion(s) virtuel(s) actif(s).")
+            if st.button("Effacer les avions virtuels",
+                         icon=":material/delete:"):
+                st.session_state["avions_virtuels"] = []
+
+    # ------------------------------------------------------------------
+    # Fusion avions réels (OpenSky) + avions virtuels pour la carte et le
+    # calcul. L'onglet fonctionne dès qu'il y a AU MOINS un avion (réel ou
+    # virtuel), même si OpenSky n'a pas été sollicité.
+    # ------------------------------------------------------------------
     avions = st.session_state.get("avions_live")
+    en_vol_reels = [a for a in (avions or [])
+                    if not a["on_ground"] and a["lat"] is not None]
+    avions_virtuels = st.session_state.get("avions_virtuels", [])
+    en_vol = en_vol_reels + avions_virtuels
 
     if avions is not None:
-        en_vol = [a for a in avions
-                  if not a["on_ground"] and a["lat"] is not None]
         st.success(
-            f"{len(en_vol)} avions en vol autour de YUL "
-            f"(snapshot de {st.session_state['avions_live_heure']} — "
-            "réactualisez à volonté)"
+            f"{len(en_vol_reels)} avions réels en vol autour de YUL "
+            f"(snapshot de {st.session_state['avions_live_heure']})"
+            + (f" + {len(avions_virtuels)} virtuel(s)"
+               if avions_virtuels else "")
         )
+    elif avions_virtuels:
+        st.info(f"{len(avions_virtuels)} avion(s) virtuel(s) — mode hors-ligne "
+                "(OpenSky non sollicité). Actualisez pour ajouter les réels.")
 
+    if en_vol:
         col_live_carte, col_live_info = st.columns([3, 2])
 
         with col_live_carte:
             # Carte des avions, colorée par phase estimée (vertical_rate).
+            # Les avions virtuels sont en orange pour les distinguer.
             m = folium.Map(location=YUL, zoom_start=10)
             for a in en_vol:
                 vr = a.get("vertical_rate") or 0.0
                 etat = "↗ monte" if vr > 2 else ("↘ descend" if vr < -2
                                                  else "→ palier")
+                est_virtuel = a.get("virtuel")
                 folium.Marker(
                     (a["lat"], a["lon"]),
-                    tooltip=(f"{a['callsign'] or a['icao24']} — "
+                    tooltip=(("VIRTUEL · " if est_virtuel else "")
+                             + f"{a['callsign'] or a['icao24']} — "
                              f"{(a['alt_baro'] or 0):.0f} m {etat}"),
-                    icon=folium.Icon(color="blue", icon="plane", prefix="fa"),
+                    icon=folium.Icon(
+                        color="orange" if est_virtuel else "blue",
+                        icon="plane", prefix="fa"),
                 ).add_to(m)
             # capteurs ADM/WebTrak en petits cercles gris
             ajouter_capteurs_adm(m)
@@ -1470,7 +1689,7 @@ with tab_live:
 
         with col_live_info:
             pt_live = st.session_state.get("pt_live")
-            if pt_live and en_vol:
+            if pt_live:
                 lat_live, lon_live, source_live = pt_live
                 total, contribs = niveau_instantane(
                     en_vol, (lat_live, lon_live), anp)
@@ -1478,6 +1697,21 @@ with tab_live:
                           f"{total:.1f} dB(A)")
                 st.caption(f"{source_live} — latitude {lat_live:.5f}, "
                            f"longitude {lon_live:.5f}")
+
+                # Effet propre de l'avion virtuel : écart avec / sans.
+                if avions_virtuels:
+                    total_sans, _ = niveau_instantane(
+                        en_vol_reels, (lat_live, lon_live), anp)
+                    if total_sans > 0:
+                        st.caption(
+                            f"Sans le(s) avion(s) virtuel(s) : "
+                            f"{total_sans:.1f} dB(A) → effet : "
+                            f"**{total - total_sans:+.1f} dB**")
+                    else:
+                        st.caption(
+                            "Aucun autre avion ne contribue ici : le niveau "
+                            "provient du seul avion virtuel.")
+
                 st.dataframe(contribs[:5], use_container_width=True)
                 st.caption(
                     "⚠️ Contribution des avions uniquement : un sonomètre "
@@ -1497,15 +1731,13 @@ with tab_live:
                         st.warning(f"Écart modèle/mesure : {ecart:+.1f} dB "
                                    "— hors tolérance (bruit de fond ? "
                                    "avion hors zone ?)")
-            elif not en_vol:
-                st.info("Aucun avion en vol dans la zone en ce moment.")
             else:
                 st.markdown("👈 *Saisissez votre adresse ou cliquez sur la "
                             "carte pour estimer le bruit instantané à cet "
                             "endroit.*")
     else:
-        st.info("Cliquez sur **Actualiser les avions** pour récupérer "
-                "les vols en direct autour de YUL (nécessite internet).")
+        st.info("Cliquez sur **Actualiser les avions** (internet) ou ajoutez "
+                "un **avion virtuel** ci-dessus pour estimer le bruit.")
 
 with tab_valid:
     st.subheader(":material/check: Validation WebTrak / ADM")
