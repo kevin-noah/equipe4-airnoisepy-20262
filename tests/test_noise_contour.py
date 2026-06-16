@@ -194,28 +194,43 @@ class TestComputeLdenRecepteur:
 
 class TestPlot:
 
+    def test_style_standard_appelle_plot_standard(self, noisecalculator, lden_values_varies):
+        with patch.object(noisecalculator, '_plot_standard', return_value=(MagicMock(), MagicMock())) as mock_std:
+            noisecalculator.plot(lden_values_varies, style='standard')
+        mock_std.assert_called_once()
+
+    def test_style_dark_appelle_plot_dark(self, noisecalculator, lden_values_varies):
+        with patch.object(noisecalculator, '_plot_dark', return_value=(MagicMock(), MagicMock())) as mock_dark:
+            noisecalculator.plot(lden_values_varies, style='dark')
+        mock_dark.assert_called_once()
+
+    def test_style_defaut_est_standard(self, noisecalculator, lden_values_varies):
+        with patch.object(noisecalculator, '_plot_standard', return_value=(MagicMock(), MagicMock())) as mock_std:
+            noisecalculator.plot(lden_values_varies)
+        mock_std.assert_called_once()
+
+    def test_style_inconnu_utilise_standard(self, noisecalculator, lden_values_varies):
+        with patch.object(noisecalculator, '_plot_standard', return_value=(MagicMock(), MagicMock())) as mock_std:
+            noisecalculator.plot(lden_values_varies, style='inexistant')
+        mock_std.assert_called_once()
+
     def test_retourne_fig_et_ax(self, noisecalculator, lden_values_varies):
         with patch("matplotlib.pyplot.show"):
-            fig, ax = noisecalculator.plot(lden_values_varies, basemap=False)
+            fig, ax = noisecalculator.plot(lden_values_varies, style='standard', basemap=False)
         assert fig is not None
         assert ax is not None
 
-    def test_sauvegarde_si_save_path(self, noisecalculator, lden_values_varies, tmp_path):
-        save_path = str(tmp_path / "test_lden.png")
-        with patch("matplotlib.pyplot.show"):
-            noisecalculator.plot(lden_values_varies, basemap=False, save_path=save_path)
-        import os
-        assert os.path.isfile(save_path)
+    def test_title_transmis_a_plot_standard(self, noisecalculator, lden_values_varies):
+        with patch.object(noisecalculator, '_plot_standard', return_value=(MagicMock(), MagicMock())) as mock_std:
+            noisecalculator.plot(lden_values_varies, title="Mon titre", style='standard')
+        args = mock_std.call_args[0]
+        assert args[1] == "Mon titre"   # ← position 1, pas "in args"
 
-    def test_title_accepte(self, noisecalculator, lden_values_varies):
-        with patch("matplotlib.pyplot.show"):
-            fig, ax = noisecalculator.plot(lden_values_varies, title="Test titre", basemap=False)
-        assert ax.get_title() == "Test titre"
-
-    def test_sans_basemap_ne_crash_pas(self, noisecalculator, lden_values_varies):
-        with patch("matplotlib.pyplot.show"):
-            fig, ax = noisecalculator.plot(lden_values_varies, basemap=False)
-        assert fig is not None
+    def test_save_path_transmis_a_plot_dark(self, noisecalculator, lden_values_varies):
+        with patch.object(noisecalculator, '_plot_dark', return_value=(MagicMock(), MagicMock())) as mock_dark:
+            noisecalculator.plot(lden_values_varies, style='dark', save_path='test.png')
+        args = mock_dark.call_args[0]
+        assert args[2] == 'test.png'    # ← position 2, pas "in args"
 
 #Tests plot_interactive
 

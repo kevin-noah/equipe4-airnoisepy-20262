@@ -167,7 +167,8 @@ class NoiseContour:
 
         return self.calculator.compute_lden(flights, recepteur, date, aircraft_type)
 
-    def plot(self, lden_values, title="Contours Lden YUL", basemap=True, save_path=None):
+    def plot(self, lden_values, title="Contours Lden YUL",
+             basemap=True, save_path=None, style='standard'):
         """
         Trace la carte de bruit avec contours isophoniques sur fond de carte.
 
@@ -180,6 +181,7 @@ class NoiseContour:
             Si True et contextily disponible, ajoute un fond de carte OSM.
         - save_path : str ou None
             Si fourni, sauvegarde la figure en PNG à ce chemin.
+        - style : str (Standard ou dark).
 
         Retourne:
         - tuple (fig, ax) — figure matplotlib
@@ -187,31 +189,41 @@ class NoiseContour:
         Exemple
        - fig, ax = nc.plot(lden_values, title='Lden YUL 31 mai 2026', save_path='results/lden_yul.png')
         """
+        if style == 'dark':
+            return self._plot_dark(lden_values, title, save_path)
+        else:
+            return self._plot_standard(lden_values, title, basemap, save_path)
 
+    def _plot_standard(self, lden_values, title, basemap, save_path):
+        """Carte standard — fond blanc, couleurs réglementaires ADM."""
         z_grid, latitude_lin, longitude_lin = self._interpoler_surface(lden_values)
         fig, ax = plt.subplots(figsize=(10, 10))
 
         for level in reversed(CONTOUR_LEVELS):
-            # max(..., level + 1) garantit des niveaux croissants même quand
-            # le Lden maximal observé est inférieur au seuil (jour calme,
-            # données synthétiques) : sinon contourf lève "levels must be increasing".
-            upper = level + 5 if level < max(CONTOUR_LEVELS) else max(float(np.nanmax(lden_values)) + 1, level + 1)
-            ax.contourf(longitude_lin, latitude_lin, z_grid, levels=[level, upper], colors=[CONTOUR_COLORS[level]], alpha=0.6)
+            upper = level + 5 if level < max(CONTOUR_LEVELS) else float(np.nanmax(lden_values)) + 1
+            ax.contourf(longitude_lin, latitude_lin, z_grid,
+                        levels=[level, upper],
+                        colors=[CONTOUR_COLORS[level]], alpha=0.6)
+
         if basemap and CONTEXTILY_AVAILABLE:
             try:
-                ctx.add_basemap(ax, crs="EPSG:4326", source="https://tile.openstreetmap.org/{z}/{x}/{y}.png", zoom=11)
+                ctx.add_basemap(ax, crs="EPSG:4326",
+                                source="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                                zoom=11)
             except Exception as e:
                 print(f"[NoiseContour] Fond de carte non disponible : {e}")
 
         center_latitude, center_longitude = self.center
-        ax.plot(center_longitude, center_latitude, "k^", markersize=10, label="YUL - Montréal - Trudeau", zorder=5)
+        ax.plot(center_longitude, center_latitude, "k^", markersize=10,
+                label="YUL - Montréal-Trudeau", zorder=5)
 
-        legend_patches = [plt.Rectangle((0,0),1, 1, fc=CONTOUR_COLORS[lvl], alpha=0.6, label=CONTOUR_LABELS[lvl]) for lvl in CONTOUR_LEVELS]
+        legend_patches = [plt.Rectangle((0, 0), 1, 1,
+                                        fc=CONTOUR_COLORS[lvl], alpha=0.6,
+                                        label=CONTOUR_LABELS[lvl]) for lvl in CONTOUR_LEVELS]
         ax.legend(handles=legend_patches, loc="lower left", fontsize=9, framealpha=0.85)
-
         ax.set_title(title, fontsize=14, fontweight="bold", pad=12)
-        ax.set_xlabel("longitude")
-        ax.set_ylabel("latitude")
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
         ax.set_xlim(center_longitude - self.radius_km / KM_PAR_DEGRE_LONGITUDE,
                     center_longitude + self.radius_km / KM_PAR_DEGRE_LONGITUDE)
         ax.set_ylim(center_latitude - self.radius_km / KM_PAR_DEGRE_LATITUDE,
@@ -223,6 +235,80 @@ class NoiseContour:
         if save_path:
             fig.savefig(save_path, dpi=150, bbox_inches="tight")
             print(f"[NoiseContour] Carte sauvegardée : {save_path}")
+
+        plt.show()
+        return fig, ax
+
+    def _plot_dark(self, lden_values, title, save_path):
+        """Carte style présentation — fond sombre, heatmap inferno continue."""
+        from matplotlib.colors import LinearSegmentedColormap
+
+        z_grid, latitude_lin, longitude_lin = self._interpoler_surface(lden_values)
+        lon_mesh, lat_mesh = np.meshgrid(longitude_lin, latitude_lin)
+
+        # Colormap inferno avec transparence sur les bas niveaux
+        couleurs_alpha = [
+            (0, 0, 0, 0),  # transparent
+            (0.1, 0, 0.2, 0.4),  # violet très transparent
+            (0.5, 0, 0.5, 0.8),  # violet
+            (1, 0, 0, 0.95),  # rouge
+            (1, 0.5, 0, 1.0),  # orange
+            (1, 1, 0, 1.0),  # jaune
+            (1, 1, 1, 1.0),  # blanc au centre
+        ]
+        cmap_dark = LinearSegmentedColormap.from_list(
+            'inferno_alpha', couleurs_alpha, N=256
+        )
+
+        fig, ax = plt.subplots(figsize=(14, 10))
+        fig.patch.set_facecolor('#0a0a1a')
+        ax.set_facecolor('#0a0a1a')
+
+        # Heatmap continue
+        im = ax.contourf(
+            lon_mesh, lat_mesh, z_grid,
+            levels=np.linspace(np.nanmin(z_grid), np.nanmax(z_grid), 60),
+            cmap=cmap_dark,
+            extend='both'
+        )
+
+        # Contours étiquetés aux seuils réglementaires
+        niveaux = [45, 55, 60, 65, 70, 75]
+        cs = ax.contour(lon_mesh, lat_mesh, z_grid,
+                        levels=niveaux, colors='white',
+                        linewidths=0.8, alpha=0.6)
+        ax.clabel(cs, fmt='%d dB', fontsize=8, colors='white', inline=True)
+
+        # Barre de couleur
+        cbar = fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02)
+        cbar.set_label('Lden (dB(A))', color='white', fontsize=11)
+        cbar.ax.yaxis.set_tick_params(color='white')
+        plt.setp(cbar.ax.yaxis.get_ticklabels(), color='white')
+
+        # Marqueur YUL
+        center_latitude, center_longitude = self.center
+        ax.plot(center_longitude, center_latitude, 'o', color='cyan',
+                markersize=8, zorder=5)
+        ax.annotate('YUL\nMontréal-Trudeau',
+                    xy=(center_longitude, center_latitude),
+                    xytext=(center_longitude + 0.03, center_latitude + 0.01),
+                    color='cyan', fontsize=9,
+                    arrowprops=dict(arrowstyle='->', color='cyan', lw=1))
+
+        # Mise en forme sombre
+        ax.set_xlabel('Longitude', color='white', fontsize=11)
+        ax.set_ylabel('Latitude', color='white', fontsize=11)
+        ax.tick_params(colors='white')
+        for spine in ax.spines.values():
+            spine.set_edgecolor('white')
+        ax.grid(True, linestyle='--', alpha=0.2, color='white')
+        ax.set_title(title, color='white', fontsize=13, fontweight='bold', pad=15)
+
+        plt.tight_layout()
+        if save_path:
+            fig.savefig(save_path, dpi=150, bbox_inches='tight',
+                        facecolor=fig.get_facecolor())
+            print(f"[NoiseContour] Carte sombre sauvegardée : {save_path}")
 
         plt.show()
         return fig, ax
