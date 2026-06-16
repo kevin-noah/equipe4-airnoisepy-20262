@@ -79,6 +79,7 @@ except (ImportError, AttributeError):
 # démo bascule sur un affichage de repli au lieu de planter.
 CONTOUR_DISPONIBLE = NoiseContour is not None
 EXPORTER_DISPONIBLE = ResultsExporter is not None
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -1012,6 +1013,76 @@ def carte_heatmap(lden, grid, grid_size, center=YUL, zoom=10):
 
     return carte
 
+def generer_frames_animation_gif(calc, grid, grid_size):
+    """
+    Génère les images de l'animation GIF 24 h.
+
+    Chaque frame représente le bruit cumulé jusqu'à une heure donnée.
+    On réutilise la même logique que l'onglet "Journée 24h", mais au lieu
+    d'afficher la figure avec st.pyplot(), on la convertit en image numpy
+    pour pouvoir créer un GIF avec ResultsExporter.
+    """
+
+    import matplotlib.pyplot as plt
+
+    vols = charger_vols()
+    heures_animation = [0, 6, 8, 12, 18, 23]
+    frames = []
+
+    for heure in heures_animation:
+        vols_jusqua = [
+            v for v in vols
+            if calc._utc_hour(v.waypoints[0]["time"]) <= heure
+        ]
+
+        if not vols_jusqua:
+            continue
+
+        lden_h = calc.compute_grid(vols_jusqua, grid)
+
+        titre = (
+            f"Bruit accumulé de 0h00 à {heure}h59 — "
+            f"{len(vols_jusqua)} vols"
+        )
+
+        if CONTOUR_DISPONIBLE:
+            fig, _ = NoiseContour(calc, grid_size=grid_size).plot(
+                lden_h,
+                title=titre,
+                basemap=False,
+            )
+        else:
+            surf = lden_h.reshape(grid_size, grid_size)
+
+            fig, ax = plt.subplots(figsize=(7, 6))
+
+            im = ax.imshow(
+                surf,
+                origin="lower",
+                cmap="inferno",
+                vmin=40,
+                vmax=max(float(lden_h.max()), 41),
+                extent=(
+                    grid[:, 1].min(),
+                    grid[:, 1].max(),
+                    grid[:, 0].min(),
+                    grid[:, 0].max(),
+                ),
+                aspect="auto",
+            )
+
+            fig.colorbar(im, ax=ax, label="Lden dB(A)", shrink=0.8)
+            ax.plot(YUL[1], YUL[0], "w*", markersize=12)
+            ax.set_title(titre)
+
+        fig.canvas.draw()
+
+        frame = np.asarray(fig.canvas.buffer_rgba())
+        frames.append(frame[:, :, :3].copy())
+
+        plt.close(fig)
+
+    return frames
 
 # ---------------------------------------------------------------------------
 # Interface
@@ -1681,6 +1752,37 @@ with tab_export:
 
         except Exception as exc:
             st.warning(f"La carte HTML n'a pas pu être générée : {exc}")
+
+        # --------------------------------------------------------------
+        # Export GIF : animation 24 h.
+        #
+        # On génère plusieurs images représentant l'accumulation du bruit
+        # au fil de la journée, puis ResultsExporter les assemble en GIF.
+        # --------------------------------------------------------------
+
+        try:
+            exporter = ResultsExporter(output_dir=os.path.join(RACINE, "results"))
+
+            frames = generer_frames_animation_gif(calc, grid, grid_size)
+
+            chemin_gif = exporter.export_animation_gif(
+                frames,
+                output_path=os.path.join(RACINE, "results", "animation.gif"),
+                fps=1,
+            )
+
+            with open(chemin_gif, "rb") as fichier_gif:
+                contenu_gif = fichier_gif.read()
+
+            st.download_button(
+                label="🎞️ Télécharger animation.gif",
+                data=contenu_gif,
+                file_name="animation.gif",
+                mime="image/gif",
+            )
+
+        except Exception as exc:
+            st.warning(f"L'animation GIF n'a pas pu être générée : {exc}")
     else:
         st.info(
             "Cliquez sur le bouton ci-dessus pour générer les fichiers d'export "
