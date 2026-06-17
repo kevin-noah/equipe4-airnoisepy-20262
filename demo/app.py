@@ -1274,6 +1274,74 @@ def generer_frames_animation_gif(calc, grid, grid_size):
 
     return frames
 
+
+def carte_plein_ecran(carte, cle, *, hauteur=780, hauteur_plein=1000,
+                      returned_objects=None):
+    """Affiche une carte folium avec un bouton « Plein écran » / « Revenir ».
+
+    `cle` est un identifiant unique de la carte (ex. "chez_vous", "live") :
+    il sert à la fois aux clés des widgets Streamlit et aux sélecteurs CSS.
+
+    En mode plein écran, le conteneur de la carte est fixé sur toute la
+    fenêtre du navigateur et la carte est agrandie (`hauteur_plein`). Un
+    bouton flottant en haut à droite rétablit la vue normale. L'état est
+    mémorisé dans st.session_state pour survivre aux reruns.
+
+    Renvoie le dictionnaire produit par st_folium (clics, etc.), comme un
+    appel direct à st_folium.
+    """
+    etat = f"plein_ecran_{cle}"
+    st.session_state.setdefault(etat, False)
+    actif = st.session_state[etat]
+
+    # Bouton bascule, isolé dans un conteneur identifiable pour pouvoir le
+    # faire flotter au-dessus de la carte en CSS lorsqu'on est en plein écran.
+    with st.container(key=f"barre_carte_{cle}"):
+        if actif:
+            if st.button("Revenir", icon=":material/fullscreen_exit:",
+                         key=f"btn_quitter_{cle}"):
+                st.session_state[etat] = False
+                st.rerun()
+        else:
+            if st.button("Plein écran", icon=":material/fullscreen:",
+                         key=f"btn_plein_{cle}"):
+                st.session_state[etat] = True
+                st.rerun()
+
+    # En plein écran : on fixe le conteneur de la carte sur toute la fenêtre,
+    # on masque le reste de l'interface (en-tête + barre latérale) et on garde
+    # le bouton « Revenir » au-dessus de la carte.
+    if actif:
+        st.markdown(
+            f"""
+            <style>
+            .st-key-conteneur_carte_{cle} {{
+                position: fixed; inset: 0; z-index: 9990;
+                background: #fff; padding: 0 !important; margin: 0;
+                overflow: hidden;
+            }}
+            .st-key-barre_carte_{cle} {{
+                position: fixed; top: 14px; right: 22px; z-index: 10000;
+                width: auto !important;
+            }}
+            header[data-testid="stHeader"],
+            section[data-testid="stSidebar"] {{ display: none !important; }}
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # La carte Leaflet ne se redimensionne pas via le seul CSS de l'iframe :
+    # on passe donc une hauteur concrète plus grande en plein écran.
+    with st.container(key=f"conteneur_carte_{cle}"):
+        return st_folium(
+            carte,
+            height=hauteur_plein if actif else hauteur,
+            use_container_width=True,
+            returned_objects=returned_objects,
+            key=f"stfolium_{cle}",
+        )
+
 # ---------------------------------------------------------------------------
 # Interface
 # ---------------------------------------------------------------------------
@@ -1468,10 +1536,10 @@ with tab_chez_vous:
     # pendant la démo.
     # ------------------------------------------------------------------
 
-    resultat_carte = st_folium(
+    resultat_carte = carte_plein_ecran(
         carte,
-        height=780,
-        use_container_width=True,
+        "chez_vous",
+        hauteur=780,
         returned_objects=["last_clicked"],
     )
 
@@ -1745,8 +1813,7 @@ with tab_live:
                     tooltip="Votre point",
                     icon=folium.Icon(color="red", icon="home", prefix="fa"),
                 ).add_to(m)
-            retour_live = st_folium(m, height=480, use_container_width=True,
-                                    key="carte_live")
+            retour_live = carte_plein_ecran(m, "live", hauteur=480)
 
         # Un clic sur la carte remplace le point courant (s'il a changé).
         clic = (retour_live or {}).get("last_clicked")
