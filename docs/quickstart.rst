@@ -1,0 +1,85 @@
+Démarrage rapide
+================
+
+Cet exemple montre le pipeline complet : charger la base acoustique, décrire un
+vol, puis calculer le niveau de bruit ressenti par un riverain.
+
+1. Charger la base NPD
+----------------------
+
+La classe :class:`~airnoisepy.database.anp.ANPDatabase` lit les courbes
+Noise-Power-Distance de la base EASA ANP v9.
+
+.. code-block:: python
+
+   from airnoisepy import ANPDatabase
+
+   anp = ANPDatabase()           # chemin par défaut interne vers la base v9
+   print(anp.source)             # 'eurocontrol' (ou 'synthetic' en repli)
+
+2. Décrire un vol
+-----------------
+
+Un :class:`~airnoisepy.flight.operation.FlightOperation` représente une
+trajectoire 3D découpée en segments à vitesse et poussée constantes.
+
+.. code-block:: python
+
+   from airnoisepy import FlightOperation
+
+   waypoints = [
+       {"time": 0,  "lat": 45.470, "lon": -73.740, "alt_baro": 100,  "speed": 80},
+       {"time": 20, "lat": 45.490, "lon": -73.760, "alt_baro": 600,  "speed": 95},
+       {"time": 40, "lat": 45.510, "lon": -73.780, "alt_baro": 1500, "speed": 110},
+   ]
+   vol = FlightOperation("c07e32", "ACA750", "departure", waypoints)
+
+En conditions réelles, on construit plutôt le vol à partir des données ADS-B
+OpenSky via :meth:`~airnoisepy.flight.opensky.OpenSkyFetcher.to_flight_operation`.
+
+3. Calculer le bruit pour un riverain
+-------------------------------------
+
+:class:`~airnoisepy.noise.calculator.NoiseCalculator` applique le modèle
+ECAC Doc 29 (slant-range 3D, corrections durée / latérale / atmosphérique,
+agrégation logarithmique).
+
+.. code-block:: python
+
+   from airnoisepy import NoiseCalculator
+
+   calc = NoiseCalculator(anp, temperature=15.0, humidity=70.0)
+   recepteur = (45.50, -73.77)            # (latitude, longitude) au sol
+
+   sel = calc.compute_sel(vol, recepteur)
+   print(f"SEL = {sel:.1f} dB(A)")
+
+Pour un indicateur réglementaire **Lden** (pondéré jour / soir / nuit), il faut
+une liste de vols et une date :
+
+.. code-block:: python
+
+   import datetime
+
+   vols = [vol]                            # une journée complète en pratique
+   date = datetime.datetime(2026, 6, 17, tzinfo=datetime.timezone.utc)
+   lden = calc.compute_lden(vols, recepteur, date)
+   print(f"Lden = {lden:.1f} dB(A)")
+
+4. Cartographier les contours
+-----------------------------
+
+:class:`~airnoisepy.noise.contour.NoiseContour` calcule le Lden sur une grille
+de récepteurs et trace les contours isophoniques 55 / 60 / 65 / 70 dB.
+
+.. code-block:: python
+
+   from airnoisepy import NoiseContour
+
+   contour = NoiseContour(calc, grid_size=60)   # grille légère pour l'exemple
+   grille = contour.get_receptor_grid()
+   lden_grille = contour.compute_lden_grid(vols, date)
+   fig, ax = contour.plot(lden_grille)
+   fig.savefig("contours_yul.png")
+
+Voir la référence :doc:`api` pour le détail de toutes les classes et méthodes.

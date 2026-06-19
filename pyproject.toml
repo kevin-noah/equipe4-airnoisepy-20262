@@ -89,3 +89,17 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 include = ["airnoisepy*"]
+
+
+# ==========================================================
+# DÉPENDANCES OPTIONNELLES
+# ==========================================================
+# Outils nécessaires uniquement pour construire la documentation.
+# Installation : pip install .[docs]
+# Construction : cd docs && make html
+
+[project.optional-dependencies]
+docs = [
+    "sphinx>=7.0",
+    "furo>=2024.1",
+]

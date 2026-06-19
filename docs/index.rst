@@ -1,0 +1,45 @@
+AirNoisePy — documentation
+===========================
+
+**AirNoisePy** est une bibliothèque Python qui modélise le bruit aérien autour
+de l'aéroport Montréal-Trudeau (YUL) selon la norme **ECAC Doc 29**.
+
+Pour chaque avion qui décolle ou atterrit, la bibliothèque calcule le niveau
+sonore ressenti au sol par les riverains en croisant trois sources de données
+indépendantes :
+
+* 🛰️ **OpenSky Network** (ADS-B) — la géométrie : trajectoires 3D réelles ;
+* 📊 **EASA ANP v9** — l'acoustique : courbes Noise-Power-Distance certifiées ;
+* 🎙️ **WebTrak / ADM** — la validation : mesures des sonomètres physiques.
+
+Le résultat : des cartes de contours isophoniques **Lden**, l'indicateur
+officiel de la directive européenne 2002/49/CE.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Sommaire
+
+   installation
+   quickstart
+   api
+
+
+Démarrage rapide
+----------------
+
+.. code-block:: python
+
+   from airnoisepy import ANPDatabase, NoiseCalculator
+
+   anp = ANPDatabase()                       # base NPD EASA v9
+   calc = NoiseCalculator(anp)               # calculateur ECAC Doc 29
+
+Voir :doc:`quickstart` pour un exemple complet de bout en bout.
+
+
+Index et recherche
+-------------------
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

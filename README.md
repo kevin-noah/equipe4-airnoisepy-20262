@@ -150,6 +150,20 @@ distance, croît avec la poussée, départ > arrivée).
 
 ---
 
+## 📖 Documentation
+
+La référence complète de l'API est générée automatiquement par **Sphinx** à
+partir des docstrings du code.
+
+```bash
+pip install .[docs]      # installe sphinx + furo
+cd docs && make html     # génère docs/_build/html/index.html
+```
+
+Ouvrez ensuite `docs/_build/html/index.html` dans un navigateur.
+
+---
+
 ## 📚 Références
 
 - ECAC Doc 29, 4ᵉ éd. — *Report on Standard Method of Computing Noise
