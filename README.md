@@ -129,8 +129,10 @@ contours se contractent en direct.
 - **Corrections ECAC Doc 29** : durée (vitesse), latérale (directivité),
   atmosphérique (ISO 9613-1, température + humidité).
 - **Interpolation NPD** bilinéaire en poussée × log₁₀(distance) — vectorisée
-  numpy : la grille complète se calcule en **0.04 s** (vs 4 min 38 en boucle
-  Python : facteur ~7000).
+  numpy : la grille complète (160 000 récepteurs × 566 vols) se calcule en
+  **~2 min**, contre ~22 h en boucle Python pure — facteur **~700**. La démo
+  tourne sur une grille plus légère (~2 700 récepteurs) en quelques secondes
+  pour rester interactive.
 
 Seuils réglementaires : **55 dB** information des riverains · **65 dB**
 isolation acoustique obligatoire.
