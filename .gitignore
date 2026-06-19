@@ -21,5 +21,6 @@ __pycache__/
 # Dossier de résultats générés automatiquement.
 results/
 
-# Documentation HTML générée par Sphinx.
-docs/_build/
+# Fichiers intermédiaires de Sphinx (le HTML final, lui, est versionné
+# car il fait partie du livrable de remise).
+docs/_build/doctrees/

@@ -1,0 +1,858 @@
+<!doctype html>
+<html class="no-js" lang="fr" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Recherche" href="../../../search.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>airnoisepy.flight.opensky - AirNoisePy</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">AirNoisePy</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">AirNoisePy</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Recherche" name="q" aria-label="Recherche">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Sommaire</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Démarrage rapide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">Référence de l’API</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Code source de airnoisepy.flight.opensky</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">airnoisepy.flight.opensky : Récupération et nettoyage des trajectoires ADS-B depuis OpenSky Network</span>
+<span class="sd">Responsable : Syndia Jean</span>
+<span class="sd">Référence :</span>
+<span class="sd">- https://openskynetwork.github.io/opensky-api/python.html</span>
+<span class="sd">- https://openskynetwork.github.io/opensky-api/python.html#opensky_api.FlightData</span>
+<span class="sd">- opensky-network.org et ECAC Doc 29, vol 2 - segmentation de trajectoire</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+
+<span class="c1"># Import conditionnel de rasterio (utile pour la lecture du MNT SRTM)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">rasterio</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">rasterio.transform</span><span class="w"> </span><span class="kn">import</span> <span class="n">rowcol</span>
+    <span class="n">RASTERIO_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">RASTERIO_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="c1">#Import conditionnel de FlightOperation (utile pour éviter un import circulaire)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">airnoisepy.flight.operation</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlightOperation</span>
+    <span class="n">FLIGHT_OPERATION_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">FLIGHT_OPERATION_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="c1">#Variable globale</span>
+
+<span class="c1">#Seuil de gap temporel pour l&#39;interpolation en seconde</span>
+<span class="n">DEFAULT_MAX_GAP_S</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="c1">#Centre de l&#39;aéroport YUL en km</span>
+<span class="n">YUL_LATITUDE_KM</span><span class="p">,</span> <span class="n">YUL_LONGITUDE_KM</span> <span class="o">=</span> <span class="mf">45.4706</span><span class="p">,</span> <span class="o">-</span><span class="mf">73.7408</span>
+
+<span class="c1">#Altitude maximale au dessus du sol en ft et en m</span>
+<span class="n">MAX_ALTITUDE_AGL_FT</span> <span class="o">=</span> <span class="mi">10000</span>
+<span class="n">MAX_ALTITUDE_AGL_M</span> <span class="o">=</span> <span class="n">MAX_ALTITUDE_AGL_FT</span> <span class="o">*</span> <span class="mf">0.3048</span>
+
+<span class="c1">#Rayon de filtrage par défaut autour de YUL en km</span>
+<span class="n">DEFAULT_RADIUS_KM</span> <span class="o">=</span> <span class="mi">25</span>
+
+<span class="n">BASE_URL</span> <span class="o">=</span> <span class="s1">&#39;https://opensky-network.org/api&#39;</span>
+
+
+<span class="c1">#Classe principale</span>
+
+<div class="viewcode-block" id="OpenSkyFetcher">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.flight.opensky.OpenSkyFetcher">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpenSkyFetcher</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Récupère les trajectoires ADS-B depuis OpenSky Network et les nettoie</span>
+<span class="sd">    pour les rendre exploitables par FlightOperation et NoiseCalculator.</span>
+
+<span class="sd">    OpenSky collecte les signaux ADS-B émis par les avions en vol (comme un</span>
+<span class="sd">    radar civil ouvert). Les données brutes contiennent des erreurs (sauts</span>
+<span class="sd">    d&#39;altitude, trous, altitude barométrique ≠ altitude réelle au-dessus du</span>
+<span class="sd">    sol). Cette classe prend en charge tout le pipeline de nettoyage.</span>
+
+<span class="sd">    Paramètres:</span>
+<span class="sd">    - username : str (Identifiant openSky Network) ou None (accès public = limité aux dernières 1h seulement)</span>
+<span class="sd">                 Recommandé : os.environ.get(&#39;OPENSKY_USER&#39;).</span>
+<span class="sd">    - password : str (Mot de passe OpenSky Network) ou None</span>
+<span class="sd">                 IMPORTANT : ne jamais mettre les identifiants en dur dans le code.</span>
+<span class="sd">    - dem_path : str ou None</span>
+<span class="sd">                 Chemin vers le fichier SRTM 30m (yul_dem.tif).  Si fourni, le modèle</span>
+<span class="sd">                 numérique de terrain est chargé pour la correction altitude AGL.</span>
+
+<span class="sd">    Attributs publics:</span>
+<span class="sd">    - username  : str ou None</span>
+<span class="sd">    - password  : str ou None</span>
+<span class="sd">    - dem       : rasterio.DatasetReader ou None — fichier SRTM ouvert</span>
+<span class="sd">    - BASE_URL  : str — &#39;https://opensky-network.org/api&#39;</span>
+
+<span class="sd">    Exemple:</span>
+<span class="sd">    - fetcher = OpenSkyFetcher(</span>
+<span class="sd">                  username=os.environ.get(&#39;OPENSKY_USER&#39;),</span>
+<span class="sd">                  password=os.environ.get(&#39;OPENSKY_PASS&#39;),</span>
+<span class="sd">                  dem_path=&#39;data/srtm/yul_dem.tif&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">BASE_URL</span> <span class="o">=</span> <span class="n">BASE_URL</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dem_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dem</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">dem_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">RASTERIO_AVAILABLE</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;rasterio est requis pour la correction d&#39;altitude AGL. Installez-le avec pip.install rasterio&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">dem_path</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Fichier SRTM introuvable : </span><span class="si">{</span><span class="n">dem_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dem</span> <span class="o">=</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">dem_path</span><span class="p">)</span>
+
+<span class="c1">#Méthodes publiques</span>
+
+<div class="viewcode-block" id="OpenSkyFetcher.fetch_flights">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.flight.opensky.OpenSkyFetcher.fetch_flights">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fetch_flights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">airport</span><span class="p">,</span> <span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Récupère la liste des vols (arrivées + départs) pour un aéroport</span>
+<span class="sd">        sur une période donnée (période fourni par l&#39;utilisateur).</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - airport : str (Code OACI de l&#39;aéroport ex: &#39;CYUL&#39;)</span>
+<span class="sd">        - begin : int (Timestamp UNIX de début de la période)</span>
+<span class="sd">        - end : int (Timestamp UNIX de fin de la période)</span>
+<span class="sd">                Fenêtre maximale autorisée par OpenSky : 7 jours.</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - list[dict] : Liste de vols fusionnant arrivées et départs.</span>
+<span class="sd">                     Chaque dict contient au minimum : &#39;icao24&#39;, &#39;callsign&#39;, &#39;firstSeen&#39;, &#39;lastSeen&#39;, &#39;estDepartureAirport&#39;, &#39;estArrivalAirport&#39;.</span>
+<span class="sd">        Exemple:</span>
+<span class="sd">        - import time</span>
+<span class="sd">        - now   = int(time.time())</span>
+<span class="sd">        - begin = now - 86_400   # il y a 24h</span>
+<span class="sd">        - fetcher = OpenSkyFetcher(username=&#39;...&#39;, password=&#39;...&#39;, dem_path=&#39;...&#39;)</span>
+<span class="sd">        - flights = fetcher.fetch_flights(&#39;CYUL&#39;, begin, now)</span>
+<span class="sd">        - print(f&quot;{len(flights)} vols trouvés&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1">#Validation de la fenêtre temporelle en prenant en compte la limite d&#39;OpenSky</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">begin</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">7</span> <span class="o">*</span> <span class="mi">86400</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;La fenêtre temporelle est trop grande et dépasse les 7 jours limite d&#39;OpenSky&quot;</span><span class="p">)</span>
+        <span class="n">authentification</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">parametres</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;airport&quot;</span><span class="p">:</span> <span class="n">airport</span><span class="p">,</span> <span class="s2">&quot;begin&quot;</span><span class="p">:</span> <span class="n">begin</span><span class="p">,</span> <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">end</span><span class="p">}</span>
+        <span class="n">arrivals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api_get</span><span class="p">(</span><span class="s2">&quot;/flights/arrival&quot;</span><span class="p">,</span> <span class="n">parametres</span><span class="p">,</span> <span class="n">authentification</span><span class="p">)</span>
+        <span class="n">departures</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api_get</span><span class="p">(</span><span class="s2">&quot;/flights/departure&quot;</span><span class="p">,</span> <span class="n">parametres</span><span class="p">,</span> <span class="n">authentification</span><span class="p">)</span>
+
+        <span class="n">all_flights</span> <span class="o">=</span> <span class="n">arrivals</span> <span class="o">+</span> <span class="n">departures</span>
+        <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">unique</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">flight</span> <span class="ow">in</span> <span class="n">all_flights</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">flight</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icao24&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="n">flight</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;firstSeen&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="n">unique</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flight</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">unique</span></div>
+
+
+<div class="viewcode-block" id="OpenSkyFetcher.fetch_track">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.flight.opensky.OpenSkyFetcher.fetch_track">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fetch_track</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">icao24</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Récupère la trajectoire complète d&#39;un avion pour un vol donné.</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - icao24 : str (Identifiant hexadécimal de l&#39;avion ex: &#39;c07e32&#39; pour Air Canada)</span>
+<span class="sd">        - time : int (Timestamp UNIX du vol - dans la fenêtre du vol, pas nécessairement exactement à firstSeen)</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - dict: Trajectoire brute au format OpenSky :</span>
+<span class="sd">                {&#39;icao24&#39;: ..., &#39;callsign&#39;: ..., &#39;path&#39;: [[time, latitude, longitude, baro_altitude, true_track, on_ground], ...]}</span>
+<span class="sd">            où :</span>
+<span class="sd">              time   = timestamp UNIX</span>
+<span class="sd">              latitude = latitude (degrés)</span>
+<span class="sd">              longitude = longitude (degrés)</span>
+<span class="sd">              baro_altitude = altitude barométrique (mètres)</span>
+<span class="sd">              true_track = cap magnétique (degrés)</span>
+<span class="sd">              on_ground = True si l&#39;avion est au sol</span>
+
+<span class="sd">        Exemple:</span>
+<span class="sd">        - track = fetcher.fetch_track(&#39;c07e32&#39;, 1748649600)</span>
+<span class="sd">        - print(f&quot;{len(track[&#39;path&#39;])} points de trajectoire&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">authentification</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">parametres</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;icao24&quot;</span><span class="p">:</span> <span class="n">icao24</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">time</span><span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api_get</span><span class="p">(</span><span class="s2">&quot;/tracks/all&quot;</span><span class="p">,</span> <span class="n">parametres</span><span class="p">,</span> <span class="n">authentification</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OpenSkyFetcher.fetch_realtime">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.flight.opensky.OpenSkyFetcher.fetch_realtime">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fetch_realtime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="p">(</span><span class="mf">45.30</span><span class="p">,</span> <span class="mf">45.65</span><span class="p">,</span> <span class="o">-</span><span class="mf">74.05</span><span class="p">,</span> <span class="o">-</span><span class="mf">73.40</span><span class="p">)):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Récupère les avions en vol en temps réel dans la zone YUL.</span>
+
+<span class="sd">        Ne nécessite pas de compte OpenSky (données publiques).</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        bbox : tuple de 4 float</span>
+<span class="sd">            Boîte englobante (lat_min, lat_max, lon_min, lon_max).</span>
+<span class="sd">            Valeur par défaut centrée sur YUL, rayon ~25 km.</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        list[dict] : Liste d&#39;avions en vol, chaque dict contient :</span>
+<span class="sd">                    {&#39;icao24&#39;: ..., &#39;callsign&#39;: ..., &#39;path&#39;: [[time, latitude, longitude, baro_altitude, true_track, on_ground], ...]}</span>
+
+<span class="sd">        Exemple:</span>
+<span class="sd">        - avions = fetcher.fetch_realtime()</span>
+<span class="sd">        - print(f&quot;{len(avions)} avions en vol autour de YUL&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">latitude_min</span><span class="p">,</span> <span class="n">latitude_max</span><span class="p">,</span> <span class="n">longitude_min</span><span class="p">,</span> <span class="n">longitude_max</span> <span class="o">=</span> <span class="n">bbox</span>
+        <span class="n">parametres</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lamin&quot;</span><span class="p">:</span> <span class="n">latitude_min</span><span class="p">,</span> <span class="s2">&quot;lamax&quot;</span><span class="p">:</span> <span class="n">latitude_max</span><span class="p">,</span>
+                      <span class="s2">&quot;lomin&quot;</span><span class="p">:</span> <span class="n">longitude_min</span><span class="p">,</span> <span class="s2">&quot;lomax&quot;</span><span class="p">:</span> <span class="n">longitude_max</span><span class="p">}</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api_get</span><span class="p">(</span><span class="s2">&quot;/states/all&quot;</span><span class="p">,</span> <span class="n">parametres</span><span class="p">,</span> <span class="n">authentification</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">states</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;states&quot;</span><span class="p">,</span> <span class="p">[])</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">avions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">9</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">avions</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s2">&quot;icao24&quot;</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="s2">&quot;callsign&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
+                <span class="s2">&quot;longitude&quot;</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
+                <span class="s2">&quot;latitude&quot;</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span>
+                <span class="s2">&quot;baro_altitude&quot;</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="mi">13</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">13</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;on_ground&quot;</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span>
+                <span class="s2">&quot;velocity&quot;</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">9</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;true_track&quot;</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">&quot;vertical_rate&quot;</span><span class="p">:</span> <span class="n">state</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">11</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">})</span>
+        <span class="k">return</span> <span class="n">avions</span></div>
+
+
+<div class="viewcode-block" id="OpenSkyFetcher.clean_track">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.flight.opensky.OpenSkyFetcher.clean_track">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean_track</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">track_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Nettoie une trajectoire brute OpenSky et ajoute l&#39;altitude AGL.</span>
+
+<span class="sd">        Pipeline appliqué dans l&#39;ordre :</span>
+<span class="sd">          1. _remove_outliers() — supprimer les sauts d&#39;altitude aberrants</span>
+<span class="sd">          2. _interpolate_gaps() — combler les trous temporels &lt; max_gap_s</span>
+<span class="sd">          3. _correct_altitude_agl() — corriger l&#39;altitude (barométrique → AGL)</span>
+<span class="sd">          4. _filter_yul_zone() — garder seulement la zone YUL</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - track_data : dict</span>
+<span class="sd">            Trajectoire brute OpenSky (sortie de fetch_track()).</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        list[dict] : Points nettoyés, chaque dict contient :</span>
+<span class="sd">            &#39;time&#39;, &#39;latitude&#39;, &#39;longitude&#39;, &#39;baro_altitude&#39;, &#39;altitude_agl&#39;, &#39;velocity&#39;, &#39;on_ground&#39;.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        L&#39;altitude barométrique (baro_altitude) est relative au niveau de la mer</span>
+<span class="sd">        (QNH). Pour le calcul acoustique ECAC Doc 29, on a besoin de l&#39;altitude</span>
+<span class="sd">        AGL (Above Ground Level). La différence est l&#39;élévation du terrain</span>
+<span class="sd">        sous l&#39;avion, lue dans le fichier SRTM.</span>
+
+<span class="sd">        Exemple:</span>
+<span class="sd">        - track  = fetcher.fetch_track(&#39;c07e32&#39;, 1748649600)</span>
+<span class="sd">        - points = fetcher.clean_track(track)</span>
+<span class="sd">        - print(f&quot;{len(points)} points après nettoyage&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">raw_path</span> <span class="o">=</span> <span class="n">track_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">raw_path</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">points</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">raw_path</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">entry</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">6</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">time</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">,</span> <span class="n">baro_altitude</span><span class="p">,</span> <span class="n">true_track</span><span class="p">,</span> <span class="n">on_ground</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[:</span><span class="mi">6</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">latitude</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">longitude</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">points</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">time</span><span class="p">,</span>
+                <span class="s2">&quot;latitude&quot;</span><span class="p">:</span> <span class="n">latitude</span><span class="p">,</span>
+                <span class="s2">&quot;longitude&quot;</span><span class="p">:</span> <span class="n">longitude</span><span class="p">,</span>
+                <span class="s2">&quot;baro_altitude&quot;</span><span class="p">:</span> <span class="n">baro_altitude</span> <span class="k">if</span> <span class="n">baro_altitude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">&quot;true_track&quot;</span><span class="p">:</span> <span class="n">true_track</span> <span class="k">if</span> <span class="n">true_track</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">&quot;on_ground&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">on_ground</span><span class="p">),</span>
+                <span class="s2">&quot;velocity&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">})</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">points</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_speed</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+
+        <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remove_outliers</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interpolate_gaps</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_correct_altitude_agl</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_yul_zone</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">points</span></div>
+
+
+<div class="viewcode-block" id="OpenSkyFetcher.to_flight_operation">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.flight.opensky.OpenSkyFetcher.to_flight_operation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_flight_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">icao24</span><span class="p">,</span> <span class="n">track_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convertit une trajectoire brute OpenSky en objet FlightOperation.</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - icao24 : str (Identifiant hexadécimal de l&#39;avion)</span>
+<span class="sd">        - track_data : dict (Trajectoire brute OpenSky - sortie de fetch_track())</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - FlightOperation : Objet prêt à être passé à NoiseCalculator.</span>
+
+<span class="sd">        Exemple:</span>
+<span class="sd">        - track = fetcher.fetch_track(&#39;c07e32&#39;, 1748649600)</span>
+<span class="sd">        - fo    = fetcher.to_flight_operations(&#39;c07e32&#39;, track)</span>
+<span class="sd">        - print(fo.operation_type)   # &#39;departure&#39; ou &#39;arrival&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">FLIGHT_OPERATION_AVAILABLE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;FlightOperation n&#39;est pas disponible. Assurez-vous que airnoisepy/flight/operation.py est présent.&quot;</span><span class="p">)</span>
+        <span class="n">clean_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean_track</span><span class="p">(</span><span class="n">track_data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">clean_points</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Trajectoire vide après nettoyage pour l&#39;avion </span><span class="si">{</span><span class="n">icao24</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">aircraft_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_aircraft_type</span><span class="p">(</span><span class="n">icao24</span><span class="p">)</span>
+        <span class="n">callsign</span> <span class="o">=</span> <span class="p">(</span><span class="n">track_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;callsign&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">icao24</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">waypoints</span> <span class="o">=</span> <span class="p">[{</span>
+            <span class="s2">&quot;time&quot;</span><span class="p">:</span>          <span class="n">p</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;latitude&quot;</span><span class="p">:</span>      <span class="n">p</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;longitude&quot;</span><span class="p">:</span>     <span class="n">p</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;baro_altitude&quot;</span><span class="p">:</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;altitude_agl&quot;</span><span class="p">:</span>  <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;altitude_agl&quot;</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;velocity&quot;</span><span class="p">:</span>      <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;velocity&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+        <span class="p">}</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">clean_points</span><span class="p">]</span>
+
+        <span class="n">opensky_format</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;icao24&quot;</span><span class="p">:</span> <span class="n">icao24</span><span class="p">,</span>
+            <span class="s2">&quot;callsign&quot;</span><span class="p">:</span> <span class="n">callsign</span><span class="p">,</span>
+            <span class="s2">&quot;aircraft_type&quot;</span><span class="p">:</span> <span class="n">aircraft_type</span><span class="p">,</span>
+            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">],</span>
+                 <span class="n">p</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">],</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;true_track&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;on_ground&quot;</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">clean_points</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;waypoints&quot;</span><span class="p">:</span> <span class="n">waypoints</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">FlightOperation</span><span class="o">.</span><span class="n">from_opensky</span><span class="p">(</span><span class="n">opensky_format</span><span class="p">)</span></div>
+
+
+
+
+<span class="c1">#Méthodes privées</span>
+<span class="c1">#Méthodes de nettoyage</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_remove_outliers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">z_thresh</span><span class="o">=</span><span class="mf">2.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supprime les points dont l&#39;altitude barométrique est aberrante.</span>
+<span class="sd">        Un point est supprimé si |z| &gt; z_thresh.</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - points : list[dict]</span>
+<span class="sd">        - window : int (Taille de la fenêtre glissante - défaut : 5 points)</span>
+<span class="sd">        - z_thresh : float (Seuil de z-score au-delà duquel un point est supprimé - défaut : 3)</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - list[dict]</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">        Parfois un avion reporte une altitude de -9999 ou +99999 ft par erreur. Un z-score &gt; 3 signifie une valeur à plus de 3</span>
+<span class="sd">        écarts-types de la moyenne locale, statistiquement improbable pour</span>
+<span class="sd">        une trajectoire réelle.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">window</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">points</span>
+
+        <span class="n">altitudes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">cleaned</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
+            <span class="n">lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span> <span class="o">-</span> <span class="n">window</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">),</span> <span class="n">lo</span> <span class="o">+</span> <span class="n">window</span><span class="p">)</span>
+            <span class="n">window_vals</span> <span class="o">=</span> <span class="n">altitudes</span><span class="p">[</span><span class="n">lo</span><span class="p">:</span><span class="n">hi</span><span class="p">]</span>
+
+            <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">window_vals</span><span class="p">)</span>
+            <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">window_vals</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">std</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+                <span class="n">cleaned</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">abs</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">std</span> <span class="o">&lt;=</span> <span class="n">z_thresh</span><span class="p">:</span>
+                <span class="n">cleaned</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cleaned</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_interpolate_gaps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">max_gaps</span> <span class="o">=</span> <span class="n">DEFAULT_MAX_GAP_S</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comble les trous temporels courts par interpolation linéaire.</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - points : list[dict]</span>
+<span class="sd">        - max_gap : int (Seuil en secondes. Si gap &lt;= max_gap → interpolation linéaire</span>
+<span class="sd">                                            Si gap &gt; max_gap_s → segmentation - on n&#39;interpole pas).</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - list[dict] : Points originaux + points interpolés insérés aux bons endroits.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">        ADS-B envoie un signal environ toutes les 5 secondes. Des trous</span>
+<span class="sd">        apparaissent quand l&#39;avion est hors couverture radar ou quand le signal</span>
+<span class="sd">        est perdu. Au-delà de max_gap, l&#39;interpolation linéaire n&#39;est pas</span>
+<span class="sd">        fiable (l&#39;avion peut avoir manœuvré entre les deux points connus).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">points</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)):</span>
+            <span class="n">previous</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">gap</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">previous</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">gap</span> <span class="o">&lt;=</span> <span class="n">max_gaps</span><span class="p">:</span>
+                <span class="n">n_missing</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">gap</span> <span class="o">//</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_missing</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">alpha</span> <span class="o">=</span> <span class="n">k</span> <span class="o">/</span> <span class="p">(</span><span class="n">n_missing</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">interp</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">previous</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">gap</span><span class="p">),</span>
+                        <span class="s2">&quot;latitude&quot;</span><span class="p">:</span> <span class="n">previous</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">current</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">previous</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">]),</span>
+                        <span class="s2">&quot;longitude&quot;</span><span class="p">:</span> <span class="n">previous</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">current</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">previous</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">]),</span>
+                        <span class="s2">&quot;baro_altitude&quot;</span><span class="p">:</span> <span class="n">previous</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">current</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">previous</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">]),</span>
+                        <span class="s2">&quot;true_track&quot;</span><span class="p">:</span> <span class="n">previous</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;true_track&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                        <span class="s2">&quot;on_ground&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                        <span class="s2">&quot;velocity&quot;</span><span class="p">:</span> <span class="n">previous</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;velocity&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                    <span class="p">}</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interp</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_correct_altitude_agl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ajoute l&#39;altitude AGL (Above Ground Level) à chaque point.</span>
+
+<span class="sd">        Si un fichier SRTM a été chargé, on soustrait l&#39;élévation du terrain</span>
+<span class="sd">        sous l&#39;avion (lue dans le raster) de l&#39;altitude barométrique.</span>
+<span class="sd">        Sans fichier SRTM, alt_agl = alt_baro (approximation).</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        points : list[dict]</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        list[dict]: Même liste avec clé &#39;alt_agl&#39; ajoutée.</span>
+
+<span class="sd">        Exemple : avion à alt_baro = 500 m au-dessus de Montréal</span>
+<span class="sd">        (élévation terrain ≈ 29 m d&#39;après SRTM).</span>
+<span class="sd">        alt_agl = 500 - 29 = 471 m au-dessus du sol.</span>
+
+<span class="sd">        C&#39;est l&#39;altitude alt_agl qui est utilisée dans le calcul du</span>
+<span class="sd">        slant-range 3D par NoiseCalculator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dem</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">rowcol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dem</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">])</span>
+                    <span class="n">elevation</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dem</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">elevation</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">500</span> <span class="ow">or</span> <span class="n">elevation</span> <span class="o">&gt;</span> <span class="mi">5000</span><span class="p">:</span>
+                        <span class="n">elevation</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="n">elevation</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">elevation</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">p</span><span class="p">[</span><span class="s2">&quot;altitude_agl&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">elevation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">points</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_filter_yul_zone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">radius_km</span><span class="o">=</span><span class="n">DEFAULT_RADIUS_KM</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Conserve uniquement les points dans la zone d&#39;intérêt autour de YUL.</span>
+
+<span class="sd">        Un point est conservé si et seulement si :</span>
+<span class="sd">          - distance au centre de YUL &lt; radius_km (défaut 25 km)</span>
+<span class="sd">          - altitude AGL &lt; MAX_ALT_AGL_M (défaut 3 048 m / 10 000 ft)</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - points : list[dict]</span>
+<span class="sd">        - radius_km : float</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - list[dict]</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">        Au-delà de 25 km, l&#39;avion est trop loin pour impacter significativement</span>
+<span class="sd">        les riverains de YUL. Au-delà de 10 000 ft AGL, la contribution sonore</span>
+<span class="sd">        au sol est négligeable (&lt; 40 dB à cette distance). Ce filtrage réduit</span>
+<span class="sd">        aussi fortement la quantité de données à traiter dans NoiseCalculator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">filtered</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+            <span class="n">distance_km</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_haversine_distance_km</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">],</span> <span class="n">YUL_LATITUDE_KM</span><span class="p">,</span> <span class="n">YUL_LONGITUDE_KM</span><span class="p">)</span>
+            <span class="n">altitude_agl</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;altitude_agl&quot;</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">distance_km</span> <span class="o">&lt;=</span> <span class="n">radius_km</span> <span class="ow">and</span> <span class="n">altitude_agl</span> <span class="o">&lt;=</span> <span class="n">MAX_ALTITUDE_AGL_M</span><span class="p">:</span>
+                <span class="n">filtered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filtered</span>
+
+
+
+<span class="c1">#Méthodes utiles</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_api_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">parametres</span><span class="p">,</span> <span class="n">authentification</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Effectue un appel GET à l&#39;API OpenSky et retourne le JSON décodé.</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - endpoint : str (Chemin de l&#39;endpoint ex: &#39;/flights/arrival&#39;)</span>
+<span class="sd">        - params : dict (Paramètres de la requête)</span>
+<span class="sd">        - auth : tuple ou None (username, password ou None pour accès anonyme)</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - list ou dict (Réponse JSON décodée)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">BASE_URL</span> <span class="o">+</span> <span class="n">endpoint</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">parametres</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="n">authentification</span><span class="p">,</span> <span class="n">timeout</span> <span class="o">=</span> <span class="mi">30</span><span class="p">)</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_haversine_distance_km</span><span class="p">(</span><span class="n">lat1</span><span class="p">,</span> <span class="n">lon1</span><span class="p">,</span> <span class="n">lat2</span><span class="p">,</span> <span class="n">lon2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calcule la distance entre deux points GPS sou forme d&#39;un grand cercle</span>
+<span class="sd">        Paramètres:</span>
+<span class="sd">        lat1, lon1 : float — coordonnées du point 1 (degrés décimaux)</span>
+<span class="sd">        lat2, lon2 : float — coordonnées du point 2 (degrés décimaux)</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - float : Distance en kilomètres.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="mf">6371.0</span>
+        <span class="n">phi1</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span>
+        <span class="n">phi2</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span>
+        <span class="n">delta_phi</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">lat2</span> <span class="o">-</span> <span class="n">lat1</span><span class="p">)</span>
+        <span class="n">delta_lambda</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">lon2</span> <span class="o">-</span> <span class="n">lon1</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">delta_phi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi1</span><span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi2</span><span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">delta_lambda</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="k">return</span> <span class="n">R</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">a</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_speed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calcule la vitesse (m/s) entre points consécutifs.</span>
+
+<span class="sd">        La vitesse au point i est estimée comme la distance 3D entre les points</span>
+<span class="sd">        i-1 et i+1 divisée par la différence de temps correspondante. Pour le premier et le dernier point, on utilise</span>
+<span class="sd">        des différences avant/arrière.</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - points : list[dict]</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - list[dict] : Même liste avec clé &#39;velocity&#39; (m/s) renseignée.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">points</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">p</span><span class="p">[</span><span class="s2">&quot;velocity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="o">-</span> <span class="mi">2</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">dt</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">p</span><span class="p">[</span><span class="s2">&quot;velocity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="k">continue</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_haversine_distance_km</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">],</span> <span class="n">a</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="s2">&quot;latitude&quot;</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="s2">&quot;longitude&quot;</span><span class="p">])</span> <span class="o">*</span> <span class="mi">1000</span>
+            <span class="n">dz</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">a</span><span class="p">[</span><span class="s2">&quot;baro_altitude&quot;</span><span class="p">])</span>
+            <span class="n">distance_3d</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dx</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">dz</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">p</span><span class="p">[</span><span class="s2">&quot;velocity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">distance_3d</span> <span class="o">/</span> <span class="nb">abs</span><span class="p">(</span><span class="n">dt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">points</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_map_aircraft_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">icao24</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retourne le code OACI du type d&#39;aéronef depuis son identifiant ICAO24.</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - icao24 : str (Code hexadécimal de l&#39;avion ex: &#39;c07e32&#39;)</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - Code OACI (ex: &#39;A320&#39;). &#39;A320&#39; si inconnu.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ICAO24_TO_TYPE</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;c07e32&quot;</span><span class="p">:</span> <span class="s2">&quot;A320&quot;</span><span class="p">,</span>  <span class="c1"># Air Canada A320</span>
+            <span class="s2">&quot;c04b3a&quot;</span><span class="p">:</span> <span class="s2">&quot;B738&quot;</span><span class="p">,</span>  <span class="c1"># WestJet 737-800</span>
+            <span class="s2">&quot;c06184&quot;</span><span class="p">:</span> <span class="s2">&quot;A321&quot;</span><span class="p">,</span>  <span class="c1"># Air Canada A321</span>
+            <span class="s2">&quot;c05140&quot;</span><span class="p">:</span> <span class="s2">&quot;DH8D&quot;</span><span class="p">,</span>  <span class="c1"># Jazz Aviation Q400</span>
+            <span class="s2">&quot;c06c48&quot;</span><span class="p">:</span> <span class="s2">&quot;B77W&quot;</span><span class="p">,</span>  <span class="c1"># Air Canada 777-300ER</span>
+            <span class="s2">&quot;c07a97&quot;</span><span class="p">:</span> <span class="s2">&quot;A220&quot;</span><span class="p">,</span>  <span class="c1"># Air Canada A220-300</span>
+        <span class="p">}</span>
+        <span class="n">aircraft_type</span> <span class="o">=</span> <span class="n">ICAO24_TO_TYPE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">icao24</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">aircraft_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">aircraft_type</span> <span class="o">=</span> <span class="s2">&quot;A320&quot;</span>
+        <span class="k">return</span> <span class="n">aircraft_type</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Équipe 4 — MGA802, ÉTS Montréal
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=897fae25"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../../../_static/translations.js?v=e6b791cb"></script>
+    </body>
+</html>

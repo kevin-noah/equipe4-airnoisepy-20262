@@ -1,0 +1,1064 @@
+<!doctype html>
+<html class="no-js" lang="fr" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Recherche" href="search.html"><link rel="prev" title="Démarrage rapide" href="quickstart.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>Référence de l’API - AirNoisePy</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">AirNoisePy</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">AirNoisePy</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Recherche" name="q" aria-label="Recherche">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Sommaire</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Démarrage rapide</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Référence de l’API</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/api.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="reference-de-l-api">
+<h1>Référence de l’API<a class="headerlink" href="#reference-de-l-api" title="Lien vers cette rubrique">¶</a></h1>
+<p>Documentation générée automatiquement à partir des docstrings du code source.
+Les six classes principales suivent le pipeline du projet : données → vol →
+calcul → cartographie → export.</p>
+<section id="module-airnoisepy.database.anp">
+<span id="base-de-donnees-acoustique"></span><h2>Base de données acoustique<a class="headerlink" href="#module-airnoisepy.database.anp" title="Lien vers cette rubrique">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="airnoisepy.database.anp.ANPDatabase">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">airnoisepy.database.anp.</span></span><span class="sig-name descname"><span class="pre">ANPDatabase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/database/anp.html#ANPDatabase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.database.anp.ANPDatabase" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Bases : <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(dans Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="airnoisepy.database.anp.ANPDatabase.FT_COLS">
+<span class="sig-name descname"><span class="pre">FT_COLS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['L_200ft',</span> <span class="pre">'L_400ft',</span> <span class="pre">'L_630ft',</span> <span class="pre">'L_1000ft',</span> <span class="pre">'L_2000ft',</span> <span class="pre">'L_4000ft',</span> <span class="pre">'L_6300ft',</span> <span class="pre">'L_10000ft',</span> <span class="pre">'L_16000ft',</span> <span class="pre">'L_25000ft']</span></span><a class="headerlink" href="#airnoisepy.database.anp.ANPDatabase.FT_COLS" title="Lien vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="airnoisepy.database.anp.ANPDatabase.DISTANCES_M">
+<span class="sig-name descname"><span class="pre">DISTANCES_M</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[61,</span> <span class="pre">122,</span> <span class="pre">192,</span> <span class="pre">305,</span> <span class="pre">610,</span> <span class="pre">1219,</span> <span class="pre">1920,</span> <span class="pre">3048,</span> <span class="pre">4877,</span> <span class="pre">7620]</span></span><a class="headerlink" href="#airnoisepy.database.anp.ANPDatabase.DISTANCES_M" title="Lien vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="airnoisepy.database.anp.ANPDatabase.SYNTHETIC_THRUST_LBS">
+<span class="sig-name descname"><span class="pre">SYNTHETIC_THRUST_LBS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[4500.0,</span> <span class="pre">9000.0,</span> <span class="pre">13000.0,</span> <span class="pre">18000.0,</span> <span class="pre">23000.0]</span></span><a class="headerlink" href="#airnoisepy.database.anp.ANPDatabase.SYNTHETIC_THRUST_LBS" title="Lien vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="airnoisepy.database.anp.ANPDatabase.NPD_ID_MAP">
+<span class="sig-name descname"><span class="pre">NPD_ID_MAP</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'747400rn':</span> <span class="pre">'B744',</span> <span class="pre">'7673er':</span> <span class="pre">'B763',</span> <span class="pre">'7773er':</span> <span class="pre">'B773',</span> <span class="pre">'7879':</span> <span class="pre">'B789',</span> <span class="pre">'a320-250n':</span> <span class="pre">'A320',</span> <span class="pre">'a320-270n':</span> <span class="pre">'A320',</span> <span class="pre">'a321-270n':</span> <span class="pre">'A321',</span> <span class="pre">'a330-743l':</span> <span class="pre">'A333',</span> <span class="pre">'a330-941':</span> <span class="pre">'A339',</span> <span class="pre">'a350-1041':</span> <span class="pre">'A35K',</span> <span class="pre">'erj190-300':</span> <span class="pre">'E290',</span> <span class="pre">'erj190-400':</span> <span class="pre">'E295',</span> <span class="pre">'fal900ex':</span> <span class="pre">'FA7X',</span> <span class="pre">'g650er':</span> <span class="pre">'GLEX'}</span></span><a class="headerlink" href="#airnoisepy.database.anp.ANPDatabase.NPD_ID_MAP" title="Lien vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.database.anp.ANPDatabase.load_excel">
+<span class="sig-name descname"><span class="pre">load_excel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/database/anp.html#ANPDatabase.load_excel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.database.anp.ANPDatabase.load_excel" title="Lien vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.database.anp.ANPDatabase.load_synthetic">
+<span class="sig-name descname"><span class="pre">load_synthetic</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/database/anp.html#ANPDatabase.load_synthetic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.database.anp.ANPDatabase.load_synthetic" title="Lien vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.database.anp.ANPDatabase.get_npd">
+<span class="sig-name descname"><span class="pre">get_npd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aircraft_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SEL'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/database/anp.html#ANPDatabase.get_npd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.database.anp.ANPDatabase.get_npd" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Retourne la courbe NPD complète pour un avion donné.</p>
+<section id="parametres">
+<h3>Paramètres<a class="headerlink" href="#parametres" title="Lien vers cette rubrique">¶</a></h3>
+<p>aircraft_type : str — code OACI (ex: “A320”)
+operation     : str — “departure” ou “arrival”
+metric        : str — “SEL” (seule métrique chargée depuis Eurocontrol)</p>
+</section>
+<section id="retourne">
+<h3>Retourne<a class="headerlink" href="#retourne" title="Lien vers cette rubrique">¶</a></h3>
+<dl class="simple">
+<dt>pd.DataFrame — lignes = niveaux de poussée,</dt><dd><p>colonnes = distances en mètres</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.database.anp.ANPDatabase.interpolate">
+<span class="sig-name descname"><span class="pre">interpolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aircraft_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thrust</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SEL'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/database/anp.html#ANPDatabase.interpolate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.database.anp.ANPDatabase.interpolate" title="Lien vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.database.anp.ANPDatabase.list_aircraft">
+<span class="sig-name descname"><span class="pre">list_aircraft</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/database/anp.html#ANPDatabase.list_aircraft"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.database.anp.ANPDatabase.list_aircraft" title="Lien vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-airnoisepy.flight.operation">
+<span id="trajectoires-de-vol"></span><h2>Trajectoires de vol<a class="headerlink" href="#module-airnoisepy.flight.operation" title="Lien vers cette rubrique">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="airnoisepy.flight.operation.FlightOperation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">airnoisepy.flight.operation.</span></span><span class="sig-name descname"><span class="pre">FlightOperation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">icao24</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callsign</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operation_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">waypoints</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/operation.html#FlightOperation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.operation.FlightOperation" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Bases : <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(dans Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Représente une trajectoire de vol réelle sous forme de segments 3D
+exploitables pour le calcul acoustique ECAC Doc 29.</p>
+<p>Un vol OpenSky est une liste de points GPS bruts (~10s d’intervalle).
+Cette classe les convertit en segments rectilignes à vitesse et poussée
+constantes, format requis par NoiseCalculator.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.flight.operation.FlightOperation.from_opensky">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_opensky</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">track_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/operation.html#FlightOperation.from_opensky"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.operation.FlightOperation.from_opensky" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Construit un FlightOperation depuis la réponse brute de l’API OpenSky.</p>
+<section id="parametre">
+<h3>Paramètre<a class="headerlink" href="#parametre" title="Lien vers cette rubrique">¶</a></h3>
+<p>track_data : dict — {“icao24”, “callsign”, “path”: [[t, lat, lon, alt_m, hdg, on_ground], …]}</p>
+</section>
+<section id="id1">
+<h3>Retourne<a class="headerlink" href="#id1" title="Lien vers cette rubrique">¶</a></h3>
+<p>FlightOperation</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.flight.operation.FlightOperation.classify_operation">
+<span class="sig-name descname"><span class="pre">classify_operation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/operation.html#FlightOperation.classify_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.operation.FlightOperation.classify_operation" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Retourne “departure” ou “arrival” selon la tendance d’altitude globale.
+Altitude finale &gt; altitude initiale → décollage.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.flight.operation.FlightOperation.detect_go_around">
+<span class="sig-name descname"><span class="pre">detect_go_around</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/operation.html#FlightOperation.detect_go_around"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.operation.FlightOperation.detect_go_around" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Détecte une remise de gaz : descente suivie d’une remontée sous 2000 ft AGL.
+Une remise de gaz signifie que l’avion est bas ET remet pleine puissance —
+ce qui est acoustiquement critique et doit être signalé à NoiseCalculator.</p>
+<p>Retourne : bool</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.flight.operation.FlightOperation.compute_segments">
+<span class="sig-name descname"><span class="pre">compute_segments</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/operation.html#FlightOperation.compute_segments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.operation.FlightOperation.compute_segments" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Convertit les waypoints en segments rectilignes consécutifs.</p>
+<p>Chaque segment couvre une paire de waypoints (A → B) et contient
+les attributs requis par NoiseCalculator : position 3D, vitesse,
+durée, phase de vol et poussée estimée.</p>
+<dl class="simple">
+<dt>Retourne<span class="classifier">list de dicts</span></dt><dd><dl class="simple">
+<dt>{lat_start, lon_start, alt_start (m),</dt><dd><p>lat_end,   lon_end,   alt_end   (m),
+speed_ms (m/s), duration_s (s), thrust_pct, phase}</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.flight.operation.FlightOperation.get_thrust_profile">
+<span class="sig-name descname"><span class="pre">get_thrust_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phase</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/operation.html#FlightOperation.get_thrust_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.operation.FlightOperation.get_thrust_profile" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Retourne le % N1 estimé selon la phase de vol.</p>
+<dl class="simple">
+<dt>Valeurs (ECAC Doc 29, Vol. 2 — profils par défaut) :</dt><dd><p>takeoff  = 94 %   climb = 86 %   cruise   = 80 %
+approach = 68 %   landing = 68 %</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.flight.operation.FlightOperation.to_dict">
+<span class="sig-name descname"><span class="pre">to_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/operation.html#FlightOperation.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.operation.FlightOperation.to_dict" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Sérialise l’objet en dict JSON-compatible pour export/debug.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-airnoisepy.flight.opensky">airnoisepy.flight.opensky : Récupération et nettoyage des trajectoires ADS-B depuis OpenSky Network
+Responsable : Syndia Jean
+Référence :
+- <a class="reference external" href="https://openskynetwork.github.io/opensky-api/python.html">https://openskynetwork.github.io/opensky-api/python.html</a>
+- <a class="reference external" href="https://openskynetwork.github.io/opensky-api/python.html#opensky_api.FlightData">https://openskynetwork.github.io/opensky-api/python.html#opensky_api.FlightData</a>
+- opensky-network.org et ECAC Doc 29, vol 2 - segmentation de trajectoire</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="airnoisepy.flight.opensky.OpenSkyFetcher">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">airnoisepy.flight.opensky.</span></span><span class="sig-name descname"><span class="pre">OpenSkyFetcher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dem_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/opensky.html#OpenSkyFetcher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.opensky.OpenSkyFetcher" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Bases : <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(dans Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Récupère les trajectoires ADS-B depuis OpenSky Network et les nettoie
+pour les rendre exploitables par FlightOperation et NoiseCalculator.</p>
+<p>OpenSky collecte les signaux ADS-B émis par les avions en vol (comme un
+radar civil ouvert). Les données brutes contiennent des erreurs (sauts
+d’altitude, trous, altitude barométrique ≠ altitude réelle au-dessus du
+sol). Cette classe prend en charge tout le pipeline de nettoyage.</p>
+<p>Paramètres:
+- username : str (Identifiant openSky Network) ou None (accès public = limité aux dernières 1h seulement)</p>
+<blockquote>
+<div><p>Recommandé : os.environ.get(“OPENSKY_USER”).</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>password<span class="classifier">str (Mot de passe OpenSky Network) ou None</span></dt><dd><p>IMPORTANT : ne jamais mettre les identifiants en dur dans le code.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>dem_path<span class="classifier">str ou None</span></dt><dd><p>Chemin vers le fichier SRTM 30m (yul_dem.tif).  Si fourni, le modèle
+numérique de terrain est chargé pour la correction altitude AGL.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Attributs publics:
+- username  : str ou None
+- password  : str ou None
+- dem       : rasterio.DatasetReader ou None — fichier SRTM ouvert
+- BASE_URL  : str — “<a class="reference external" href="https://opensky-network.org/api">https://opensky-network.org/api</a>”</p>
+<p>Exemple:
+- fetcher = OpenSkyFetcher(</p>
+<blockquote>
+<div><p>username=os.environ.get(“OPENSKY_USER”),
+password=os.environ.get(“OPENSKY_PASS”),
+dem_path=”data/srtm/yul_dem.tif”)</p>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="airnoisepy.flight.opensky.OpenSkyFetcher.BASE_URL">
+<span class="sig-name descname"><span class="pre">BASE_URL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'https://opensky-network.org/api'</span></span><a class="headerlink" href="#airnoisepy.flight.opensky.OpenSkyFetcher.BASE_URL" title="Lien vers cette définition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.flight.opensky.OpenSkyFetcher.fetch_flights">
+<span class="sig-name descname"><span class="pre">fetch_flights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">airport</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">begin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/opensky.html#OpenSkyFetcher.fetch_flights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.opensky.OpenSkyFetcher.fetch_flights" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Récupère la liste des vols (arrivées + départs) pour un aéroport
+sur une période donnée (période fourni par l’utilisateur).</p>
+<p>Paramètres:
+- airport : str (Code OACI de l’aéroport ex: “CYUL”)
+- begin : int (Timestamp UNIX de début de la période)
+- end : int (Timestamp UNIX de fin de la période)</p>
+<blockquote>
+<div><p>Fenêtre maximale autorisée par OpenSky : 7 jours.</p>
+</div></blockquote>
+<p>Retourne:
+- list[dict] : Liste de vols fusionnant arrivées et départs.</p>
+<blockquote>
+<div><p>Chaque dict contient au minimum : “icao24”, “callsign”, “firstSeen”, “lastSeen”, “estDepartureAirport”, “estArrivalAirport”.</p>
+</div></blockquote>
+<p>Exemple:
+- import time
+- now   = int(time.time())
+- begin = now - 86_400   # il y a 24h
+- fetcher = OpenSkyFetcher(username=”…”, password=”…”, dem_path=”…”)
+- flights = fetcher.fetch_flights(“CYUL”, begin, now)
+- print(f »{len(flights)} vols trouvés »)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.flight.opensky.OpenSkyFetcher.fetch_track">
+<span class="sig-name descname"><span class="pre">fetch_track</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">icao24</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/opensky.html#OpenSkyFetcher.fetch_track"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.opensky.OpenSkyFetcher.fetch_track" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Récupère la trajectoire complète d’un avion pour un vol donné.</p>
+<p>Paramètres:
+- icao24 : str (Identifiant hexadécimal de l’avion ex: “c07e32” pour Air Canada)
+- time : int (Timestamp UNIX du vol - dans la fenêtre du vol, pas nécessairement exactement à firstSeen)</p>
+<p>Retourne:
+- dict: Trajectoire brute au format OpenSky :</p>
+<blockquote>
+<div><blockquote>
+<div><p>{“icao24”: …, “callsign”: …, “path”: [[time, latitude, longitude, baro_altitude, true_track, on_ground], …]}</p>
+</div></blockquote>
+<dl class="simple">
+<dt>où :</dt><dd><p>time   = timestamp UNIX
+latitude = latitude (degrés)
+longitude = longitude (degrés)
+baro_altitude = altitude barométrique (mètres)
+true_track = cap magnétique (degrés)
+on_ground = True si l’avion est au sol</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>Exemple:
+- track = fetcher.fetch_track(“c07e32”, 1748649600)
+- print(f »{len(track[“path”])} points de trajectoire »)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.flight.opensky.OpenSkyFetcher.fetch_realtime">
+<span class="sig-name descname"><span class="pre">fetch_realtime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bbox</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(45.3,</span> <span class="pre">45.65,</span> <span class="pre">-74.05,</span> <span class="pre">-73.4)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/opensky.html#OpenSkyFetcher.fetch_realtime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.opensky.OpenSkyFetcher.fetch_realtime" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Récupère les avions en vol en temps réel dans la zone YUL.</p>
+<p>Ne nécessite pas de compte OpenSky (données publiques).</p>
+<p>Paramètres:
+bbox : tuple de 4 float</p>
+<blockquote>
+<div><p>Boîte englobante (lat_min, lat_max, lon_min, lon_max).
+Valeur par défaut centrée sur YUL, rayon ~25 km.</p>
+</div></blockquote>
+<p>Retourne:
+list[dict] : Liste d’avions en vol, chaque dict contient :</p>
+<blockquote>
+<div><p>{“icao24”: …, “callsign”: …, “path”: [[time, latitude, longitude, baro_altitude, true_track, on_ground], …]}</p>
+</div></blockquote>
+<p>Exemple:
+- avions = fetcher.fetch_realtime()
+- print(f »{len(avions)} avions en vol autour de YUL »)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.flight.opensky.OpenSkyFetcher.clean_track">
+<span class="sig-name descname"><span class="pre">clean_track</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">track_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/opensky.html#OpenSkyFetcher.clean_track"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.opensky.OpenSkyFetcher.clean_track" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Nettoie une trajectoire brute OpenSky et ajoute l’altitude AGL.</p>
+<dl class="simple">
+<dt>Pipeline appliqué dans l’ordre :</dt><dd><ol class="arabic simple">
+<li><p>_remove_outliers() — supprimer les sauts d’altitude aberrants</p></li>
+<li><p>_interpolate_gaps() — combler les trous temporels &lt; max_gap_s</p></li>
+<li><p>_correct_altitude_agl() — corriger l’altitude (barométrique → AGL)</p></li>
+<li><p>_filter_yul_zone() — garder seulement la zone YUL</p></li>
+</ol>
+</dd>
+</dl>
+<p>Paramètres:
+- track_data : dict</p>
+<blockquote>
+<div><p>Trajectoire brute OpenSky (sortie de fetch_track()).</p>
+</div></blockquote>
+<p>Retourne:
+list[dict] : Points nettoyés, chaque dict contient :</p>
+<blockquote>
+<div><p>“time”, “latitude”, “longitude”, “baro_altitude”, “altitude_agl”, “velocity”, “on_ground”.</p>
+</div></blockquote>
+<p class="rubric">Notes</p>
+<p>L’altitude barométrique (baro_altitude) est relative au niveau de la mer
+(QNH). Pour le calcul acoustique ECAC Doc 29, on a besoin de l’altitude
+AGL (Above Ground Level). La différence est l’élévation du terrain
+sous l’avion, lue dans le fichier SRTM.</p>
+<p>Exemple:
+- track  = fetcher.fetch_track(“c07e32”, 1748649600)
+- points = fetcher.clean_track(track)
+- print(f »{len(points)} points après nettoyage »)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.flight.opensky.OpenSkyFetcher.to_flight_operation">
+<span class="sig-name descname"><span class="pre">to_flight_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">icao24</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/flight/opensky.html#OpenSkyFetcher.to_flight_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.flight.opensky.OpenSkyFetcher.to_flight_operation" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Convertit une trajectoire brute OpenSky en objet FlightOperation.</p>
+<p>Paramètres:
+- icao24 : str (Identifiant hexadécimal de l’avion)
+- track_data : dict (Trajectoire brute OpenSky - sortie de fetch_track())</p>
+<p>Retourne:
+- FlightOperation : Objet prêt à être passé à NoiseCalculator.</p>
+<p>Exemple:
+- track = fetcher.fetch_track(“c07e32”, 1748649600)
+- fo    = fetcher.to_flight_operations(“c07e32”, track)
+- print(fo.operation_type)   # “departure” ou “arrival”</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-airnoisepy.noise.calculator">
+<span id="calcul-du-bruit"></span><h2>Calcul du bruit<a class="headerlink" href="#module-airnoisepy.noise.calculator" title="Lien vers cette rubrique">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="airnoisepy.noise.calculator.NoiseCalculator">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">airnoisepy.noise.calculator.</span></span><span class="sig-name descname"><span class="pre">NoiseCalculator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anp_db</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">humidity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">70.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/noise/calculator.html#NoiseCalculator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.noise.calculator.NoiseCalculator" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Bases : <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(dans Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Calcule les niveaux de bruit SEL et Lden selon ECAC Doc 29, Vol. 2.</p>
+<dl class="simple">
+<dt>Pipeline pour un récepteur au sol :</dt><dd><ol class="arabic simple">
+<li><p>Slant-range 3D de chaque segment de vol</p></li>
+<li><p>Niveau NPD interpolé depuis ANPDatabase</p></li>
+<li><p>Trois corrections : durée, latérale, atmosphérique</p></li>
+<li><p>Agrégation logarithmique → SEL du vol</p></li>
+<li><p>Pondération jour/soir/nuit → Lden</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.noise.calculator.NoiseCalculator.compute_sel">
+<span class="sig-name descname"><span class="pre">compute_sel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flight_op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receptor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aircraft_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'A320'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/noise/calculator.html#NoiseCalculator.compute_sel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.noise.calculator.NoiseCalculator.compute_sel" title="Lien vers cette définition">¶</a></dt>
+<dd><p>SEL (Sound Exposure Level) en dB(A) pour un vol à un récepteur.</p>
+<section id="id2">
+<h3>Paramètres<a class="headerlink" href="#id2" title="Lien vers cette rubrique">¶</a></h3>
+<p>flight_op    : FlightOperation — trajectoire 3D segmentée
+receptor     : tuple (lat, lon) — coordonnées du récepteur au sol
+aircraft_type: str — code OACI de l’avion (ex: “A320”)</p>
+</section>
+<section id="id3">
+<h3>Retourne<a class="headerlink" href="#id3" title="Lien vers cette rubrique">¶</a></h3>
+<p>float — SEL total du vol en dB(A)</p>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.noise.calculator.NoiseCalculator.compute_lden">
+<span class="sig-name descname"><span class="pre">compute_lden</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receptor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aircraft_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'A320'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/noise/calculator.html#NoiseCalculator.compute_lden"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.noise.calculator.NoiseCalculator.compute_lden" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Lden (Level Day-Evening-Night) en dB(A) pour un récepteur.</p>
+<section id="id4">
+<h3>Paramètres<a class="headerlink" href="#id4" title="Lien vers cette rubrique">¶</a></h3>
+<p>flights      : list[FlightOperation] — tous les vols du jour
+receptor     : tuple (lat, lon)
+date         : datetime.date — jour à calculer
+aircraft_type: str — code OACI</p>
+</section>
+<section id="id5">
+<h3>Retourne<a class="headerlink" href="#id5" title="Lien vers cette rubrique">¶</a></h3>
+<p>float — Lden en dB(A)</p>
+<dl class="simple">
+<dt>Formule (directive 2002/49/CE) :</dt><dd><p>Lden = 10·log10[(E_jour + E_soir·10^0.5 + E_nuit·10^1.0) / 86400]
+Pénalités : soir (19h–23h) +5 dB, nuit (23h–07h) +10 dB.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.noise.calculator.NoiseCalculator.compute_grid">
+<span class="sig-name descname"><span class="pre">compute_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receptor_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aircraft_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'A320'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/noise/calculator.html#NoiseCalculator.compute_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.noise.calculator.NoiseCalculator.compute_grid" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Lden vectorisé pour une grille de récepteurs.</p>
+<section id="id6">
+<h3>Paramètres<a class="headerlink" href="#id6" title="Lien vers cette rubrique">¶</a></h3>
+<p>flights       : list[FlightOperation]
+receptor_grid : np.ndarray shape (N, 2) — colonnes [lat, lon]
+aircraft_type : str — code OACI</p>
+</section>
+<section id="id7">
+<h3>Retourne<a class="headerlink" href="#id7" title="Lien vers cette rubrique">¶</a></h3>
+<p>np.ndarray shape (N,) — Lden en dB(A) pour chaque récepteur</p>
+</section>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-airnoisepy.noise.contour">airnoisepy.noise.contour : Génération des contours isophoniques Lden sur carte géographique.
+Responsable : Syndia Jean
+Référence :
+- ECAC Doc 29, Vol. 1 — contours de bruit aérien
+- Directive européenne 2002/49/CE — seuils réglementaires Lden
+- Transport Canada — cartes de bruit YUL (ADM)</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="airnoisepy.noise.contour.NoiseContour">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">airnoisepy.noise.contour.</span></span><span class="sig-name descname"><span class="pre">NoiseContour</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calculator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_latitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">45.4706</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_longitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-73.7408</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_km</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">400</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/noise/contour.html#NoiseContour"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.noise.contour.NoiseContour" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Bases : <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(dans Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Transforme les niveaux Lden calculés par NoiseCalculator en carte visuelle
+avec contours isophoniques.</p>
+<p>NoiseCalculator.compute_grid() produit un tableau de valeurs Lden
+(une par point de la grille de récepteurs). NoiseContour transforme ce
+tableau en carte lisible : lignes de niveau à 55, 60, 65, 70 dB.</p>
+<p>La forme attendue est celle d’un « os » aligné sur les pistes :
+deux lobes elliptiques dans les axes de décollage/atterrissage,
+correspondant aux cartes officielles publiées par ADM.</p>
+<p>Paramètres:
+- calculator : NoiseCalculator (Instance du calculateur de bruit)
+- center_latitude : float (Latitude du centre de l’aéroport - valeur défaut : 45.4706 — YUL)
+- center_longitude : float (Longitude du centre de l’aéroport - valeur défaut : -73.7408)
+- radius_km  : float (Rayon de la zone d’étude en km défaut : 25 km)
+- grid_size  : int (Résolution de la grille. grid_size=400 → 400×400 = 160 000 récepteurs)</p>
+<p>Attributs publics:
+- calculator     : NoiseCalculator
+- center         : tuple — (lat, lon) du centre YUL
+- radius_km      : float
+- grid_size      : int
+- receptor_grid  : np.ndarray shape (N, 2) — tous les (lat, lon) de la grille</p>
+<p>Exemple:
+- from airnoisepy.noise.contour import NoiseContour
+- nc = NoiseContour(calculator=calc, grid_size=400)
+- lden_values = nc.compute_lden_grid(flights, date)
+- nc.plot(lden_values, title=”Contours Lden YUL — 31 mai 2026”, save_path=”results/contours_yul.png”)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.noise.contour.NoiseContour.get_receptor_grid">
+<span class="sig-name descname"><span class="pre">get_receptor_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/noise/contour.html#NoiseContour.get_receptor_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.noise.contour.NoiseContour.get_receptor_grid" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Retourne la grille de récepteurs au format attendu par NoiseCalculator.</p>
+<p>Retourne:
+- np.ndarray shape (N, 2)</p>
+<blockquote>
+<div><p>Tableau [[lat1, lon1], [lat2, lon2], …] de tous les récepteurs.
+Compatible directement avec NoiseCalculator.compute_grid()</p>
+</div></blockquote>
+<p>Exemple:
+- grid   = nc.get_receptor_grid()
+- lden   = calc.compute_grid(flights, grid)   # NoiseCalculator
+- nc.plot(lden)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.noise.contour.NoiseContour.compute_lden_grid">
+<span class="sig-name descname"><span class="pre">compute_lden_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aircraft_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'A320'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/noise/contour.html#NoiseContour.compute_lden_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.noise.contour.NoiseContour.compute_lden_grid" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Calcule le Lden pour tous les récepteurs de la grille.</p>
+<p>Encapsule l’appel à NoiseCalculator.compute_grid() avec la grille
+interne, pour simplifier l’usage depuis le notebook ou Streamlit.</p>
+<p>Paramètres:
+- flights       : list[FlightOperation] (Liste des vols de la journée — format FlightOperation)
+- date          : datetime.date (Jour à analyser pour la pondération jour/soir/nuit Lden)
+- aircraft_type : str (Code OACI du type d’avion - avion par défaut : “A320”)</p>
+<p>Retourne
+np.ndarray shape (N,)</p>
+<blockquote>
+<div><p>Niveau Lden en dB(A) pour chaque récepteur de la grille.</p>
+</div></blockquote>
+<p>Exemple:
+- import datetime
+- date  = datetime.date(2026, 5, 31)
+- lden  = nc.compute_lden_grid(flights, date)
+- nc.plot(lden, title=”Lden YUL 31 mai 2026”)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.noise.contour.NoiseContour.compute_lden_recepteur">
+<span class="sig-name descname"><span class="pre">compute_lden_recepteur</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">flights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recepteur</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">date</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aircraft_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'A320'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/noise/contour.html#NoiseContour.compute_lden_recepteur"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.noise.contour.NoiseContour.compute_lden_recepteur" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Calcule le Lden pour un seul récepteur ponctuel.</p>
+<p>Encapsule l’appel à NoiseCalculator.compute_lden() pour un usage
+simple (ex: vérification sur un point de validation ADM).</p>
+<p>Paramètres:
+- flights       : list[FlightOperation]
+- recepteur     : tuple (lat, lon) — coordonnées du récepteur au sol
+- date          : datetime.date
+- aircraft_type : str</p>
+<p>Retourne:
+- float — Lden en dB(A)</p>
+<p>Exemple:
+- recepteur_adm = (45.4706, -73.7408)
+- lden = nc.compute_lden_recepteur(flights, recepteur_adm, date)
+- print(f »Lden au centre YUL : {lden:.1f} dB »)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.noise.contour.NoiseContour.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lden_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Contours</span> <span class="pre">Lden</span> <span class="pre">YUL'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basemap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'standard'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/noise/contour.html#NoiseContour.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.noise.contour.NoiseContour.plot" title="Lien vers cette définition">¶</a></dt>
+<dd><blockquote>
+<div><p>Trace la carte de bruit avec contours isophoniques sur fond de carte.</p>
+<p>Paramètres:
+- lden_values : np.ndarray shape (N,)</p>
+<blockquote>
+<div><p>Niveaux Lden pour chaque récepteur (sortie de compute_lden_grid()).</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>title<span class="classifier">str</span></dt><dd><p>Titre de la figure.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>basemap<span class="classifier">bool</span></dt><dd><p>Si True et contextily disponible, ajoute un fond de carte OSM.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>save_path<span class="classifier">str ou None</span></dt><dd><p>Si fourni, sauvegarde la figure en PNG à ce chemin.</p>
+</dd>
+</dl>
+</li>
+<li><p>style : str (Standard ou dark).</p></li>
+</ul>
+<p>Retourne:
+- tuple (fig, ax) — figure matplotlib</p>
+<p>Exemple</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>fig, ax = nc.plot(lden_values, title=”Lden YUL 31 mai 2026”, save_path=”results/lden_yul.png”)</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.noise.contour.NoiseContour.plot_interactive">
+<span class="sig-name descname"><span class="pre">plot_interactive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lden_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Contours</span> <span class="pre">Lden</span> <span class="pre">YUL'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/noise/contour.html#NoiseContour.plot_interactive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.noise.contour.NoiseContour.plot_interactive" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Génère une carte interactive Folium avec les contours Lden.</p>
+<p>Paramètres:
+- lden_values : np.ndarray shape (N,) (Niveaux Lden pour chaque récepteur)
+- title : str (Titre affiché dans la carte HTML)
+- save_path : str ou None (Si fourni, sauvegarde la carte HTML à ce chemin)</p>
+<p>Retourne:
+- folium.Map ou None</p>
+<p>Exemple:
+- carte = nc.plot_interactive(lden_values, save_path=”results/lden.html”)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.noise.contour.NoiseContour.valider_contre_adm">
+<span class="sig-name descname"><span class="pre">valider_contre_adm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lden_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recepteurs_adm</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/noise/contour.html#NoiseContour.valider_contre_adm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.noise.contour.NoiseContour.valider_contre_adm" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Compare les Lden calculés aux mesures réelles des capteurs ADM WebTrak.</p>
+<p>Paramètres:
+- lden_values   : np.ndarray shape (N,)</p>
+<blockquote>
+<div><p>Lden calculés sur la grille.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>recepteurs_adm<span class="classifier">list[dict]</span></dt><dd><p>Liste de capteurs ADM, chaque dict contient :
+{“nom”: str, “lat”: float, “long”: float, “lden_mesure”: float}</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Retourne:
+list[dict]</p>
+<blockquote>
+<div><p>Résultats de comparaison, chaque dict contient :
+{“nom”, “lden_calcule”, “lden_mesure”, “erreur_db”}</p>
+</div></blockquote>
+<p>Exemple:
+- capteurs = [
+…     {“nom”: “Dorval”,   “lat”: 45.450, “long”: -73.750, “lden_mesure”: 62.5},
+…     {“nom”: “Lachine”,  “lat”: 45.430, “long”: -73.700, “lden_mesure”: 58.3},
+… ]
+- resultats = nc.valider_contre_adm(lden_values, capteurs)
+- for r in resultats:
+…     print(f »{r[“nom”]} : calculé={r[“lden_calcule”]:.1f} dB,  »
+…           f »mesuré={r[“lden_mesure”]:.1f} dB,  »
+…           f »erreur={r[“erreur_db”]:+.1f} dB »)</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-airnoisepy.export.results">
+<span id="export-des-resultats"></span><h2>Export des résultats<a class="headerlink" href="#module-airnoisepy.export.results" title="Lien vers cette rubrique">¶</a></h2>
+<p>Module d’exportation des résultats pour AirNoisePy.</p>
+<p>Ce module contient la classe ResultsExporter. Cette classe est responsable
+de sauvegarder les résultats produits par le programme sous différents formats :
+CSV, carte HTML, animation et rapport de validation.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="airnoisepy.export.results.ResultsExporter">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">airnoisepy.export.results.</span></span><span class="sig-name descname"><span class="pre">ResultsExporter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'results'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/export/results.html#ResultsExporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.export.results.ResultsExporter" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Bases : <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(dans Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Classe responsable de l’exportation des résultats du projet AirNoisePy.</p>
+<p>Cette classe centralise les méthodes permettant de sauvegarder les
+résultats finaux du calcul de bruit aérien. Elle ne calcule pas le bruit
+elle-même. Elle reçoit plutôt des résultats déjà produits par les autres
+modules du projet et les transforme en fichiers exploitables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>output_dir</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(dans Python v3.14)"><em>str</em></a>) – Dossier dans lequel les fichiers de sortie seront créés.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.export.results.ResultsExporter.export_csv">
+<span class="sig-name descname"><span class="pre">export_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_levels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receptor_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/export/results.html#ResultsExporter.export_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.export.results.ResultsExporter.export_csv" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Exporte les niveaux de bruit calculés dans un fichier CSV.</p>
+<p>Cette méthode reçoit les niveaux de bruit calculés pour chaque
+récepteur au sol et les coordonnées correspondantes. Elle crée ensuite
+un fichier CSV contenant trois colonnes principales : latitude,
+longitude et lden_db.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_levels</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(dans Python v3.14)"><em>list</em></a><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(dans NumPy v2.4)"><em>numpy.ndarray</em></a>) – Niveaux de bruit calculés, en dB(A).</p></li>
+<li><p><strong>receptor_grid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(dans Python v3.14)"><em>list</em></a><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(dans NumPy v2.4)"><em>numpy.ndarray</em></a>) – Coordonnées des récepteurs au sol sous la forme
+[(latitude, longitude), …].</p></li>
+<li><p><strong>output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(dans Python v3.14)"><em>str</em></a><em> or </em><em>None</em>) – Chemin optionnel du fichier CSV à créer. Si aucune
+valeur n’est fournie, le fichier est créé dans le dossier de sortie.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie<span class="colon">:</span></dt>
+<dd class="field-even"><p>Chemin du fichier CSV généré.</p>
+</dd>
+<dt class="field-odd">Type renvoyé<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(dans Python v3.14)">str</a></p>
+</dd>
+<dt class="field-even">Lève<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(dans Python v3.14)"><strong>ValueError</strong></a> – Si le nombre de niveaux de bruit ne correspond pas
+au nombre de récepteurs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.export.results.ResultsExporter.export_map">
+<span class="sig-name descname"><span class="pre">export_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_levels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receptor_grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/export/results.html#ResultsExporter.export_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.export.results.ResultsExporter.export_map" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Exporte les niveaux de bruit sur une carte HTML interactive.</p>
+<p>Cette méthode crée une carte interactive avec Folium. Chaque récepteur
+est représenté par un marqueur circulaire placé à sa latitude et sa
+longitude. La couleur du marqueur dépend du niveau de bruit Lden.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_levels</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(dans Python v3.14)"><em>list</em></a><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(dans NumPy v2.4)"><em>numpy.ndarray</em></a>) – Niveaux de bruit calculés, en dB(A).</p></li>
+<li><p><strong>receptor_grid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(dans Python v3.14)"><em>list</em></a><em> or </em><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(dans NumPy v2.4)"><em>numpy.ndarray</em></a>) – Coordonnées des récepteurs au sol sous la forme
+[(latitude, longitude), …].</p></li>
+<li><p><strong>output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(dans Python v3.14)"><em>str</em></a><em> or </em><em>None</em>) – Chemin optionnel du fichier HTML à créer. Si aucune
+valeur n’est fournie, le fichier est créé dans le dossier de sortie.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie<span class="colon">:</span></dt>
+<dd class="field-even"><p>Chemin du fichier HTML généré.</p>
+</dd>
+<dt class="field-odd">Type renvoyé<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(dans Python v3.14)">str</a></p>
+</dd>
+<dt class="field-even">Lève<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(dans Python v3.14)"><strong>ValueError</strong></a> – Si le nombre de niveaux de bruit ne correspond pas
+au nombre de récepteurs.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="airnoisepy.export.results.ResultsExporter.export_animation_gif">
+<span class="sig-name descname"><span class="pre">export_animation_gif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/airnoisepy/export/results.html#ResultsExporter.export_animation_gif"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#airnoisepy.export.results.ResultsExporter.export_animation_gif" title="Lien vers cette définition">¶</a></dt>
+<dd><p>Exporte une animation GIF à partir d’une liste d’images.</p>
+<p>Cette méthode reçoit une liste d’images représentant l’évolution du
+bruit dans le temps. Chaque image correspond à un instant ou à une
+période, par exemple une heure de la journée. Les images sont ensuite
+assemblées dans un fichier GIF animé.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Paramètres<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frames</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(dans Python v3.14)"><em>list</em></a>) – Liste d’images à assembler dans l’animation.</p></li>
+<li><p><strong>output_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(dans Python v3.14)"><em>str</em></a><em> or </em><em>None</em>) – Chemin optionnel du fichier GIF à créer. Si aucune
+valeur n’est fournie, le fichier est créé dans le dossier de sortie.</p></li>
+<li><p><strong>fps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(dans Python v3.14)"><em>int</em></a>) – Nombre d’images par seconde dans le GIF.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Renvoie<span class="colon">:</span></dt>
+<dd class="field-even"><p>Chemin du fichier GIF généré.</p>
+</dd>
+<dt class="field-odd">Type renvoyé<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(dans Python v3.14)">str</a></p>
+</dd>
+<dt class="field-even">Lève<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(dans Python v3.14)"><strong>ValueError</strong></a> – Si la liste d’images est vide.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(dans Python v3.14)"><strong>ValueError</strong></a> – Si fps est inférieur ou égal à zéro.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="quickstart.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Démarrage rapide</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Équipe 4 — MGA802, ÉTS Montréal
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Référence de l’API</a><ul>
+<li><a class="reference internal" href="#module-airnoisepy.database.anp">Base de données acoustique</a><ul>
+<li><a class="reference internal" href="#airnoisepy.database.anp.ANPDatabase"><code class="docutils literal notranslate"><span class="pre">ANPDatabase</span></code></a><ul>
+<li><a class="reference internal" href="#airnoisepy.database.anp.ANPDatabase.FT_COLS"><code class="docutils literal notranslate"><span class="pre">ANPDatabase.FT_COLS</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.database.anp.ANPDatabase.DISTANCES_M"><code class="docutils literal notranslate"><span class="pre">ANPDatabase.DISTANCES_M</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.database.anp.ANPDatabase.SYNTHETIC_THRUST_LBS"><code class="docutils literal notranslate"><span class="pre">ANPDatabase.SYNTHETIC_THRUST_LBS</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.database.anp.ANPDatabase.NPD_ID_MAP"><code class="docutils literal notranslate"><span class="pre">ANPDatabase.NPD_ID_MAP</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.database.anp.ANPDatabase.load_excel"><code class="docutils literal notranslate"><span class="pre">ANPDatabase.load_excel()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.database.anp.ANPDatabase.load_synthetic"><code class="docutils literal notranslate"><span class="pre">ANPDatabase.load_synthetic()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.database.anp.ANPDatabase.get_npd"><code class="docutils literal notranslate"><span class="pre">ANPDatabase.get_npd()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.database.anp.ANPDatabase.interpolate"><code class="docutils literal notranslate"><span class="pre">ANPDatabase.interpolate()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.database.anp.ANPDatabase.list_aircraft"><code class="docutils literal notranslate"><span class="pre">ANPDatabase.list_aircraft()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-airnoisepy.flight.operation">Trajectoires de vol</a><ul>
+<li><a class="reference internal" href="#airnoisepy.flight.operation.FlightOperation"><code class="docutils literal notranslate"><span class="pre">FlightOperation</span></code></a><ul>
+<li><a class="reference internal" href="#airnoisepy.flight.operation.FlightOperation.from_opensky"><code class="docutils literal notranslate"><span class="pre">FlightOperation.from_opensky()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.flight.operation.FlightOperation.classify_operation"><code class="docutils literal notranslate"><span class="pre">FlightOperation.classify_operation()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.flight.operation.FlightOperation.detect_go_around"><code class="docutils literal notranslate"><span class="pre">FlightOperation.detect_go_around()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.flight.operation.FlightOperation.compute_segments"><code class="docutils literal notranslate"><span class="pre">FlightOperation.compute_segments()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.flight.operation.FlightOperation.get_thrust_profile"><code class="docutils literal notranslate"><span class="pre">FlightOperation.get_thrust_profile()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.flight.operation.FlightOperation.to_dict"><code class="docutils literal notranslate"><span class="pre">FlightOperation.to_dict()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#airnoisepy.flight.opensky.OpenSkyFetcher"><code class="docutils literal notranslate"><span class="pre">OpenSkyFetcher</span></code></a><ul>
+<li><a class="reference internal" href="#airnoisepy.flight.opensky.OpenSkyFetcher.BASE_URL"><code class="docutils literal notranslate"><span class="pre">OpenSkyFetcher.BASE_URL</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.flight.opensky.OpenSkyFetcher.fetch_flights"><code class="docutils literal notranslate"><span class="pre">OpenSkyFetcher.fetch_flights()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.flight.opensky.OpenSkyFetcher.fetch_track"><code class="docutils literal notranslate"><span class="pre">OpenSkyFetcher.fetch_track()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.flight.opensky.OpenSkyFetcher.fetch_realtime"><code class="docutils literal notranslate"><span class="pre">OpenSkyFetcher.fetch_realtime()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.flight.opensky.OpenSkyFetcher.clean_track"><code class="docutils literal notranslate"><span class="pre">OpenSkyFetcher.clean_track()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.flight.opensky.OpenSkyFetcher.to_flight_operation"><code class="docutils literal notranslate"><span class="pre">OpenSkyFetcher.to_flight_operation()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-airnoisepy.noise.calculator">Calcul du bruit</a><ul>
+<li><a class="reference internal" href="#airnoisepy.noise.calculator.NoiseCalculator"><code class="docutils literal notranslate"><span class="pre">NoiseCalculator</span></code></a><ul>
+<li><a class="reference internal" href="#airnoisepy.noise.calculator.NoiseCalculator.compute_sel"><code class="docutils literal notranslate"><span class="pre">NoiseCalculator.compute_sel()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.noise.calculator.NoiseCalculator.compute_lden"><code class="docutils literal notranslate"><span class="pre">NoiseCalculator.compute_lden()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.noise.calculator.NoiseCalculator.compute_grid"><code class="docutils literal notranslate"><span class="pre">NoiseCalculator.compute_grid()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#airnoisepy.noise.contour.NoiseContour"><code class="docutils literal notranslate"><span class="pre">NoiseContour</span></code></a><ul>
+<li><a class="reference internal" href="#airnoisepy.noise.contour.NoiseContour.get_receptor_grid"><code class="docutils literal notranslate"><span class="pre">NoiseContour.get_receptor_grid()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.noise.contour.NoiseContour.compute_lden_grid"><code class="docutils literal notranslate"><span class="pre">NoiseContour.compute_lden_grid()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.noise.contour.NoiseContour.compute_lden_recepteur"><code class="docutils literal notranslate"><span class="pre">NoiseContour.compute_lden_recepteur()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.noise.contour.NoiseContour.plot"><code class="docutils literal notranslate"><span class="pre">NoiseContour.plot()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.noise.contour.NoiseContour.plot_interactive"><code class="docutils literal notranslate"><span class="pre">NoiseContour.plot_interactive()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.noise.contour.NoiseContour.valider_contre_adm"><code class="docutils literal notranslate"><span class="pre">NoiseContour.valider_contre_adm()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-airnoisepy.export.results">Export des résultats</a><ul>
+<li><a class="reference internal" href="#airnoisepy.export.results.ResultsExporter"><code class="docutils literal notranslate"><span class="pre">ResultsExporter</span></code></a><ul>
+<li><a class="reference internal" href="#airnoisepy.export.results.ResultsExporter.export_csv"><code class="docutils literal notranslate"><span class="pre">ResultsExporter.export_csv()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.export.results.ResultsExporter.export_map"><code class="docutils literal notranslate"><span class="pre">ResultsExporter.export_map()</span></code></a></li>
+<li><a class="reference internal" href="#airnoisepy.export.results.ResultsExporter.export_animation_gif"><code class="docutils literal notranslate"><span class="pre">ResultsExporter.export_animation_gif()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=897fae25"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/translations.js?v=e6b791cb"></script>
+    </body>
+</html>

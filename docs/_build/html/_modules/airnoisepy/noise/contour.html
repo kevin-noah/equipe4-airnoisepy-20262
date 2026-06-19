@@ -1,0 +1,809 @@
+<!doctype html>
+<html class="no-js" lang="fr" data-content_root="../../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html"><link rel="search" title="Recherche" href="../../../search.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>airnoisepy.noise.contour - AirNoisePy</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../../index.html"><div class="brand">AirNoisePy</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../../index.html">
+  
+  <span class="sidebar-brand-text">AirNoisePy</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Recherche" name="q" aria-label="Recherche">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Sommaire</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Démarrage rapide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">Référence de l’API</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Code source de airnoisepy.noise.contour</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">airnoisepy.noise.contour : Génération des contours isophoniques Lden sur carte géographique.</span>
+<span class="sd">Responsable : Syndia Jean</span>
+<span class="sd">Référence :</span>
+<span class="sd">- ECAC Doc 29, Vol. 1 — contours de bruit aérien</span>
+<span class="sd">- Directive européenne 2002/49/CE — seuils réglementaires Lden</span>
+<span class="sd">- Transport Canada — cartes de bruit YUL (ADM)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib.util</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">griddata</span>
+
+<span class="c1">#Import conditionnelle de contextily</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">contextily</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ctx</span>
+    <span class="n">CONTEXTILY_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">CONTEXTILY_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># Disponibilité de folium (importé localement au moment de l&#39;usage, ligne ~252)</span>
+<span class="n">FOLIUM_AVAILABLE</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">find_spec</span><span class="p">(</span><span class="s2">&quot;folium&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+<span class="c1">#Données</span>
+
+<span class="c1">#Centre de l&#39;aéroport YUL</span>
+
+<span class="n">YUL_LATITUDE</span> <span class="o">=</span> <span class="mf">45.4706</span>
+<span class="n">YUL_LONGITUDE</span> <span class="o">=</span> <span class="o">-</span><span class="mf">73.7408</span>
+
+<span class="c1">#Seuil réglementaire Lden en dB</span>
+
+<span class="n">CONTOUR_LEVELS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">55</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="mi">70</span><span class="p">]</span>
+
+<span class="c1">#Code couleur pour les cartes de bruits</span>
+
+<span class="n">CONTOUR_COLORS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">55</span><span class="p">:</span> <span class="s2">&quot;#FFFF00&quot;</span><span class="p">,</span> <span class="c1"># Jaune</span>
+    <span class="mi">60</span><span class="p">:</span> <span class="s2">&quot;#FFA500&quot;</span><span class="p">,</span> <span class="c1"># Orange</span>
+    <span class="mi">65</span><span class="p">:</span> <span class="s2">&quot;#FF0000&quot;</span><span class="p">,</span> <span class="c1"># Rouge</span>
+    <span class="mi">70</span><span class="p">:</span> <span class="s2">&quot;#8B008B&quot;</span><span class="p">,</span> <span class="c1"># Violet foncé</span>
+<span class="p">}</span>
+
+<span class="c1">#Labels pour la légende</span>
+
+<span class="n">CONTOUR_LABELS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">55</span><span class="p">:</span> <span class="s2">&quot;55 dB - Zone d&#39;information&quot;</span><span class="p">,</span>
+    <span class="mi">60</span><span class="p">:</span> <span class="s2">&quot;60 dB - Gêne modérée&quot;</span><span class="p">,</span>
+    <span class="mi">65</span><span class="p">:</span> <span class="s2">&quot;65 dB - Isolation obligatoire&quot;</span><span class="p">,</span>
+    <span class="mi">70</span><span class="p">:</span> <span class="s2">&quot;70 dB - Forte contrainte&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="c1">#Conversion degrés en km</span>
+<span class="n">KM_PAR_DEGRE_LATITUDE</span> <span class="o">=</span> <span class="mf">111.0</span>
+<span class="n">KM_PAR_DEGRE_LONGITUDE</span> <span class="o">=</span> <span class="mf">78.0</span>
+
+
+<span class="c1">#Classe principale</span>
+
+<div class="viewcode-block" id="NoiseContour">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.noise.contour.NoiseContour">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NoiseContour</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transforme les niveaux Lden calculés par NoiseCalculator en carte visuelle</span>
+<span class="sd">    avec contours isophoniques.</span>
+
+<span class="sd">    NoiseCalculator.compute_grid() produit un tableau de valeurs Lden</span>
+<span class="sd">    (une par point de la grille de récepteurs). NoiseContour transforme ce</span>
+<span class="sd">    tableau en carte lisible : lignes de niveau à 55, 60, 65, 70 dB.</span>
+
+<span class="sd">    La forme attendue est celle d&#39;un « os » aligné sur les pistes :</span>
+<span class="sd">    deux lobes elliptiques dans les axes de décollage/atterrissage,</span>
+<span class="sd">    correspondant aux cartes officielles publiées par ADM.</span>
+
+<span class="sd">    Paramètres:</span>
+<span class="sd">    - calculator : NoiseCalculator (Instance du calculateur de bruit)</span>
+<span class="sd">    - center_latitude : float (Latitude du centre de l&#39;aéroport - valeur défaut : 45.4706 — YUL)</span>
+<span class="sd">    - center_longitude : float (Longitude du centre de l&#39;aéroport - valeur défaut : -73.7408)</span>
+<span class="sd">    - radius_km  : float (Rayon de la zone d&#39;étude en km défaut : 25 km)</span>
+<span class="sd">    - grid_size  : int (Résolution de la grille. grid_size=400 → 400×400 = 160 000 récepteurs)</span>
+
+<span class="sd">    Attributs publics:</span>
+<span class="sd">    - calculator     : NoiseCalculator</span>
+<span class="sd">    - center         : tuple — (lat, lon) du centre YUL</span>
+<span class="sd">    - radius_km      : float</span>
+<span class="sd">    - grid_size      : int</span>
+<span class="sd">    - receptor_grid  : np.ndarray shape (N, 2) — tous les (lat, lon) de la grille</span>
+
+<span class="sd">    Exemple:</span>
+<span class="sd">    - from airnoisepy.noise.contour import NoiseContour</span>
+<span class="sd">    - nc = NoiseContour(calculator=calc, grid_size=400)</span>
+<span class="sd">    - lden_values = nc.compute_lden_grid(flights, date)</span>
+<span class="sd">    - nc.plot(lden_values, title=&#39;Contours Lden YUL — 31 mai 2026&#39;, save_path=&#39;results/contours_yul.png&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">calculator</span><span class="p">,</span> <span class="n">center_latitude</span><span class="o">=</span><span class="n">YUL_LATITUDE</span><span class="p">,</span> <span class="n">center_longitude</span><span class="o">=</span><span class="n">YUL_LONGITUDE</span><span class="p">,</span> <span class="n">radius_km</span><span class="o">=</span><span class="mf">25.0</span><span class="p">,</span> <span class="n">grid_size</span><span class="o">=</span><span class="mi">400</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calculator</span> <span class="o">=</span> <span class="n">calculator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="p">(</span><span class="n">center_latitude</span><span class="p">,</span> <span class="n">center_longitude</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radius_km</span> <span class="o">=</span> <span class="n">radius_km</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">=</span> <span class="n">grid_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">receptor_grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_grid</span><span class="p">()</span>
+
+<span class="c1">#Méthodes publiques</span>
+
+<div class="viewcode-block" id="NoiseContour.get_receptor_grid">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.noise.contour.NoiseContour.get_receptor_grid">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_receptor_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retourne la grille de récepteurs au format attendu par NoiseCalculator.</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - np.ndarray shape (N, 2)</span>
+<span class="sd">            Tableau [[lat1, lon1], [lat2, lon2], ...] de tous les récepteurs.</span>
+<span class="sd">            Compatible directement avec NoiseCalculator.compute_grid()</span>
+
+<span class="sd">        Exemple:</span>
+<span class="sd">        - grid   = nc.get_receptor_grid()</span>
+<span class="sd">        - lden   = calc.compute_grid(flights, grid)   # NoiseCalculator</span>
+<span class="sd">        - nc.plot(lden)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">receptor_grid</span></div>
+
+
+<div class="viewcode-block" id="NoiseContour.compute_lden_grid">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.noise.contour.NoiseContour.compute_lden_grid">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_lden_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flights</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">aircraft_type</span><span class="o">=</span><span class="s2">&quot;A320&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calcule le Lden pour tous les récepteurs de la grille.</span>
+
+<span class="sd">        Encapsule l&#39;appel à NoiseCalculator.compute_grid() avec la grille</span>
+<span class="sd">        interne, pour simplifier l&#39;usage depuis le notebook ou Streamlit.</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - flights       : list[FlightOperation] (Liste des vols de la journée — format FlightOperation)</span>
+<span class="sd">        - date          : datetime.date (Jour à analyser pour la pondération jour/soir/nuit Lden)</span>
+<span class="sd">        - aircraft_type : str (Code OACI du type d&#39;avion - avion par défaut : &#39;A320&#39;)</span>
+
+<span class="sd">        Retourne</span>
+<span class="sd">        np.ndarray shape (N,)</span>
+<span class="sd">            Niveau Lden en dB(A) pour chaque récepteur de la grille.</span>
+
+<span class="sd">        Exemple:</span>
+<span class="sd">        - import datetime</span>
+<span class="sd">        - date  = datetime.date(2026, 5, 31)</span>
+<span class="sd">        - lden  = nc.compute_lden_grid(flights, date)</span>
+<span class="sd">        - nc.plot(lden, title=&#39;Lden YUL 31 mai 2026&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculator</span><span class="o">.</span><span class="n">compute_grid</span><span class="p">(</span><span class="n">flights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">receptor_grid</span><span class="p">,</span> <span class="n">aircraft_type</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NoiseContour.compute_lden_recepteur">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.noise.contour.NoiseContour.compute_lden_recepteur">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_lden_recepteur</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flights</span><span class="p">,</span> <span class="n">recepteur</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">aircraft_type</span><span class="o">=</span><span class="s2">&quot;A320&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calcule le Lden pour un seul récepteur ponctuel.</span>
+
+<span class="sd">        Encapsule l&#39;appel à NoiseCalculator.compute_lden() pour un usage</span>
+<span class="sd">        simple (ex: vérification sur un point de validation ADM).</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - flights       : list[FlightOperation]</span>
+<span class="sd">        - recepteur     : tuple (lat, lon) — coordonnées du récepteur au sol</span>
+<span class="sd">        - date          : datetime.date</span>
+<span class="sd">        - aircraft_type : str</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - float — Lden en dB(A)</span>
+
+<span class="sd">        Exemple:</span>
+<span class="sd">        - recepteur_adm = (45.4706, -73.7408)</span>
+<span class="sd">        - lden = nc.compute_lden_recepteur(flights, recepteur_adm, date)</span>
+<span class="sd">        - print(f&quot;Lden au centre YUL : {lden:.1f} dB&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculator</span><span class="o">.</span><span class="n">compute_lden</span><span class="p">(</span><span class="n">flights</span><span class="p">,</span> <span class="n">recepteur</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">aircraft_type</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="NoiseContour.plot">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.noise.contour.NoiseContour.plot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lden_values</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Contours Lden YUL&quot;</span><span class="p">,</span>
+             <span class="n">basemap</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;standard&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Trace la carte de bruit avec contours isophoniques sur fond de carte.</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - lden_values : np.ndarray shape (N,)</span>
+<span class="sd">            Niveaux Lden pour chaque récepteur (sortie de compute_lden_grid()).</span>
+<span class="sd">        - title : str</span>
+<span class="sd">            Titre de la figure.</span>
+<span class="sd">        - basemap : bool</span>
+<span class="sd">            Si True et contextily disponible, ajoute un fond de carte OSM.</span>
+<span class="sd">        - save_path : str ou None</span>
+<span class="sd">            Si fourni, sauvegarde la figure en PNG à ce chemin.</span>
+<span class="sd">        - style : str (Standard ou dark).</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - tuple (fig, ax) — figure matplotlib</span>
+
+<span class="sd">        Exemple</span>
+<span class="sd">       - fig, ax = nc.plot(lden_values, title=&#39;Lden YUL 31 mai 2026&#39;, save_path=&#39;results/lden_yul.png&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s1">&#39;dark&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plot_dark</span><span class="p">(</span><span class="n">lden_values</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">save_path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plot_standard</span><span class="p">(</span><span class="n">lden_values</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">basemap</span><span class="p">,</span> <span class="n">save_path</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_plot_standard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lden_values</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">basemap</span><span class="p">,</span> <span class="n">save_path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Carte standard — fond blanc, couleurs réglementaires ADM.&quot;&quot;&quot;</span>
+        <span class="n">z_grid</span><span class="p">,</span> <span class="n">latitude_lin</span><span class="p">,</span> <span class="n">longitude_lin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interpoler_surface</span><span class="p">(</span><span class="n">lden_values</span><span class="p">)</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">CONTOUR_LEVELS</span><span class="p">):</span>
+            <span class="n">upper</span> <span class="o">=</span> <span class="n">level</span> <span class="o">+</span> <span class="mi">5</span> <span class="k">if</span> <span class="n">level</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">CONTOUR_LEVELS</span><span class="p">)</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">lden_values</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">longitude_lin</span><span class="p">,</span> <span class="n">latitude_lin</span><span class="p">,</span> <span class="n">z_grid</span><span class="p">,</span>
+                        <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="n">level</span><span class="p">,</span> <span class="n">upper</span><span class="p">],</span>
+                        <span class="n">colors</span><span class="o">=</span><span class="p">[</span><span class="n">CONTOUR_COLORS</span><span class="p">[</span><span class="n">level</span><span class="p">]],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">basemap</span> <span class="ow">and</span> <span class="n">CONTEXTILY_AVAILABLE</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ctx</span><span class="o">.</span><span class="n">add_basemap</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="s2">&quot;EPSG:4326&quot;</span><span class="p">,</span>
+                                <span class="n">source</span><span class="o">=</span><span class="s2">&quot;https://tile.openstreetmap.org/</span><span class="si">{z}</span><span class="s2">/</span><span class="si">{x}</span><span class="s2">/</span><span class="si">{y}</span><span class="s2">.png&quot;</span><span class="p">,</span>
+                                <span class="n">zoom</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[NoiseContour] Fond de carte non disponible : </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">center_latitude</span><span class="p">,</span> <span class="n">center_longitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">center_longitude</span><span class="p">,</span> <span class="n">center_latitude</span><span class="p">,</span> <span class="s2">&quot;k^&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="s2">&quot;YUL - Montréal-Trudeau&quot;</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+        <span class="n">legend_patches</span> <span class="o">=</span> <span class="p">[</span><span class="n">plt</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+                                        <span class="n">fc</span><span class="o">=</span><span class="n">CONTOUR_COLORS</span><span class="p">[</span><span class="n">lvl</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
+                                        <span class="n">label</span><span class="o">=</span><span class="n">CONTOUR_LABELS</span><span class="p">[</span><span class="n">lvl</span><span class="p">])</span> <span class="k">for</span> <span class="n">lvl</span> <span class="ow">in</span> <span class="n">CONTOUR_LEVELS</span><span class="p">]</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="o">=</span><span class="n">legend_patches</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;lower left&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">framealpha</span><span class="o">=</span><span class="mf">0.85</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Longitude&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Latitude&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">center_longitude</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius_km</span> <span class="o">/</span> <span class="n">KM_PAR_DEGRE_LONGITUDE</span><span class="p">,</span>
+                    <span class="n">center_longitude</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius_km</span> <span class="o">/</span> <span class="n">KM_PAR_DEGRE_LONGITUDE</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">center_latitude</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius_km</span> <span class="o">/</span> <span class="n">KM_PAR_DEGRE_LATITUDE</span><span class="p">,</span>
+                    <span class="n">center_latitude</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius_km</span> <span class="o">/</span> <span class="n">KM_PAR_DEGRE_LATITUDE</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s2">&quot;equal&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">save_path</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[NoiseContour] Carte sauvegardée : </span><span class="si">{</span><span class="n">save_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_plot_dark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lden_values</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">save_path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Carte style présentation — fond sombre, heatmap inferno continue.&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearSegmentedColormap</span>
+
+        <span class="n">z_grid</span><span class="p">,</span> <span class="n">latitude_lin</span><span class="p">,</span> <span class="n">longitude_lin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interpoler_surface</span><span class="p">(</span><span class="n">lden_values</span><span class="p">)</span>
+        <span class="n">lon_mesh</span><span class="p">,</span> <span class="n">lat_mesh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">longitude_lin</span><span class="p">,</span> <span class="n">latitude_lin</span><span class="p">)</span>
+
+        <span class="c1"># Colormap inferno avec transparence sur les bas niveaux</span>
+        <span class="n">couleurs_alpha</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>  <span class="c1"># transparent</span>
+            <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">),</span>  <span class="c1"># violet très transparent</span>
+            <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">),</span>  <span class="c1"># violet</span>
+            <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span>  <span class="c1"># rouge</span>
+            <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>  <span class="c1"># orange</span>
+            <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>  <span class="c1"># jaune</span>
+            <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>  <span class="c1"># blanc au centre</span>
+        <span class="p">]</span>
+        <span class="n">cmap_dark</span> <span class="o">=</span> <span class="n">LinearSegmentedColormap</span><span class="o">.</span><span class="n">from_list</span><span class="p">(</span>
+            <span class="s1">&#39;inferno_alpha&#39;</span><span class="p">,</span> <span class="n">couleurs_alpha</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">256</span>
+        <span class="p">)</span>
+
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s1">&#39;#0a0a1a&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s1">&#39;#0a0a1a&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Heatmap continue</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span>
+            <span class="n">lon_mesh</span><span class="p">,</span> <span class="n">lat_mesh</span><span class="p">,</span> <span class="n">z_grid</span><span class="p">,</span>
+            <span class="n">levels</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">z_grid</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">z_grid</span><span class="p">),</span> <span class="mi">60</span><span class="p">),</span>
+            <span class="n">cmap</span><span class="o">=</span><span class="n">cmap_dark</span><span class="p">,</span>
+            <span class="n">extend</span><span class="o">=</span><span class="s1">&#39;both&#39;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Contours étiquetés aux seuils réglementaires</span>
+        <span class="n">niveaux</span> <span class="o">=</span> <span class="p">[</span><span class="mi">45</span><span class="p">,</span> <span class="mi">55</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">75</span><span class="p">]</span>
+        <span class="n">cs</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">lon_mesh</span><span class="p">,</span> <span class="n">lat_mesh</span><span class="p">,</span> <span class="n">z_grid</span><span class="p">,</span>
+                        <span class="n">levels</span><span class="o">=</span><span class="n">niveaux</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span>
+                        <span class="n">linewidths</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">clabel</span><span class="p">(</span><span class="n">cs</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%d</span><span class="s1"> dB&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Barre de couleur</span>
+        <span class="n">cbar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.025</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.02</span><span class="p">)</span>
+        <span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;Lden (dB(A))&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+        <span class="n">cbar</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_tick_params</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">cbar</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">get_ticklabels</span><span class="p">(),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Marqueur YUL</span>
+        <span class="n">center_latitude</span><span class="p">,</span> <span class="n">center_longitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">center_longitude</span><span class="p">,</span> <span class="n">center_latitude</span><span class="p">,</span> <span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;cyan&#39;</span><span class="p">,</span>
+                <span class="n">markersize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;YUL</span><span class="se">\n</span><span class="s1">Montréal-Trudeau&#39;</span><span class="p">,</span>
+                    <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">center_longitude</span><span class="p">,</span> <span class="n">center_latitude</span><span class="p">),</span>
+                    <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="n">center_longitude</span> <span class="o">+</span> <span class="mf">0.03</span><span class="p">,</span> <span class="n">center_latitude</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">),</span>
+                    <span class="n">color</span><span class="o">=</span><span class="s1">&#39;cyan&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+                    <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">arrowstyle</span><span class="o">=</span><span class="s1">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;cyan&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="c1"># Mise en forme sombre</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Longitude&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Latitude&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">colors</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">spine</span> <span class="ow">in</span> <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">spine</span><span class="o">.</span><span class="n">set_edgecolor</span><span class="p">(</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">save_path</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">,</span>
+                        <span class="n">facecolor</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">get_facecolor</span><span class="p">())</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[NoiseContour] Carte sombre sauvegardée : </span><span class="si">{</span><span class="n">save_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span>
+
+<div class="viewcode-block" id="NoiseContour.plot_interactive">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.noise.contour.NoiseContour.plot_interactive">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_interactive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lden_values</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Contours Lden YUL&quot;</span><span class="p">,</span>
+                         <span class="n">save_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Génère une carte interactive Folium avec les contours Lden.</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - lden_values : np.ndarray shape (N,) (Niveaux Lden pour chaque récepteur)</span>
+<span class="sd">        - title : str (Titre affiché dans la carte HTML)</span>
+<span class="sd">        - save_path : str ou None (Si fourni, sauvegarde la carte HTML à ce chemin)</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        - folium.Map ou None</span>
+
+<span class="sd">        Exemple:</span>
+<span class="sd">        - carte = nc.plot_interactive(lden_values, save_path=&#39;results/lden.html&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">FOLIUM_AVAILABLE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;folium est requis pour la carte interactive. Installez-le avec : pip install folium&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">center_latitude</span><span class="p">,</span> <span class="n">center_longitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">folium</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_folium</span>
+        <span class="n">carte</span> <span class="o">=</span> <span class="n">_folium</span><span class="o">.</span><span class="n">Map</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="p">[</span><span class="n">center_latitude</span><span class="p">,</span> <span class="n">center_longitude</span><span class="p">],</span>
+                           <span class="n">zoom_start</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">tiles</span><span class="o">=</span><span class="s2">&quot;OpenStreetMap&quot;</span><span class="p">)</span>
+
+        <span class="n">z_grid</span><span class="p">,</span> <span class="n">latitude_lin</span><span class="p">,</span> <span class="n">longitude_lin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interpoler_surface</span><span class="p">(</span><span class="n">lden_values</span><span class="p">)</span>
+
+        <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib</span>
+        <span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;Agg&quot;</span><span class="p">)</span>
+        <span class="n">fig_tmp</span><span class="p">,</span> <span class="n">ax_tmp</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">CONTOUR_LEVELS</span><span class="p">:</span>
+            <span class="c1"># max(..., level + 1) garantit des niveaux croissants même quand</span>
+            <span class="c1"># le Lden maximal observé est inférieur au seuil (jour calme,</span>
+            <span class="c1"># données synthétiques) : sinon contourf lève &quot;levels must be increasing&quot;.</span>
+            <span class="n">upper</span> <span class="o">=</span> <span class="n">level</span> <span class="o">+</span> <span class="mi">5</span> <span class="k">if</span> <span class="n">level</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">CONTOUR_LEVELS</span><span class="p">)</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">lden_values</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">cs</span> <span class="o">=</span> <span class="n">ax_tmp</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">longitude_lin</span><span class="p">,</span> <span class="n">latitude_lin</span><span class="p">,</span> <span class="n">z_grid</span><span class="p">,</span>
+                                 <span class="n">levels</span><span class="o">=</span><span class="p">[</span><span class="n">level</span><span class="p">,</span> <span class="n">upper</span><span class="p">])</span>
+            <span class="c1"># matplotlib ≥ 3.8 : ContourSet est une Collection unique, l&#39;API</span>
+            <span class="c1"># cs.collections a disparu — on lit directement cs.get_paths().</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">cs</span><span class="o">.</span><span class="n">get_paths</span><span class="p">():</span>
+                <span class="n">coords</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">vertices</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">polygon_coords</span> <span class="o">=</span> <span class="p">[[</span><span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">]</span>
+                <span class="n">_folium</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span>
+                    <span class="n">locations</span><span class="o">=</span><span class="n">polygon_coords</span><span class="p">,</span>
+                    <span class="n">color</span><span class="o">=</span><span class="n">CONTOUR_COLORS</span><span class="p">[</span><span class="n">level</span><span class="p">],</span>
+                    <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">fill_color</span><span class="o">=</span><span class="n">CONTOUR_COLORS</span><span class="p">[</span><span class="n">level</span><span class="p">],</span>
+                    <span class="n">fill_opacity</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+                    <span class="n">tooltip</span><span class="o">=</span><span class="n">CONTOUR_LABELS</span><span class="p">[</span><span class="n">level</span><span class="p">]</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">carte</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig_tmp</span><span class="p">)</span>
+
+        <span class="n">_folium</span><span class="o">.</span><span class="n">Marker</span><span class="p">(</span>
+            <span class="n">location</span><span class="o">=</span><span class="p">[</span><span class="n">center_latitude</span><span class="p">,</span> <span class="n">center_longitude</span><span class="p">],</span>
+            <span class="n">popup</span><span class="o">=</span><span class="s2">&quot;YUL — Montréal-Trudeau&quot;</span><span class="p">,</span>
+            <span class="n">icon</span><span class="o">=</span><span class="n">_folium</span><span class="o">.</span><span class="n">Icon</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="s2">&quot;plane&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;fa&quot;</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">carte</span><span class="p">)</span>
+
+        <span class="c1"># Titre HTML</span>
+        <span class="n">titre_html</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        &lt;h3 align=&quot;center&quot; style=&quot;font-size:16px; font-family:Arial;&quot;&gt;</span>
+<span class="s2">            </span><span class="si">{</span><span class="n">title</span><span class="si">}</span>
+<span class="s2">        &lt;/h3&gt;</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+        <span class="n">carte</span><span class="o">.</span><span class="n">get_root</span><span class="p">()</span><span class="o">.</span><span class="n">html</span><span class="o">.</span><span class="n">add_child</span><span class="p">(</span><span class="n">_folium</span><span class="o">.</span><span class="n">Element</span><span class="p">(</span><span class="n">titre_html</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">save_path</span><span class="p">:</span>
+            <span class="n">carte</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">save_path</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[NoiseContour] Carte interactive sauvegardée : </span><span class="si">{</span><span class="n">save_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">carte</span></div>
+
+
+<div class="viewcode-block" id="NoiseContour.valider_contre_adm">
+<a class="viewcode-back" href="../../../api.html#airnoisepy.noise.contour.NoiseContour.valider_contre_adm">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">valider_contre_adm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lden_values</span><span class="p">,</span> <span class="n">recepteurs_adm</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compare les Lden calculés aux mesures réelles des capteurs ADM WebTrak.</span>
+
+<span class="sd">        Paramètres:</span>
+<span class="sd">        - lden_values   : np.ndarray shape (N,)</span>
+<span class="sd">            Lden calculés sur la grille.</span>
+<span class="sd">        - recepteurs_adm : list[dict]</span>
+<span class="sd">            Liste de capteurs ADM, chaque dict contient :</span>
+<span class="sd">            {&#39;nom&#39;: str, &#39;lat&#39;: float, &#39;long&#39;: float, &#39;lden_mesure&#39;: float}</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        list[dict]</span>
+<span class="sd">            Résultats de comparaison, chaque dict contient :</span>
+<span class="sd">            {&#39;nom&#39;, &#39;lden_calcule&#39;, &#39;lden_mesure&#39;, &#39;erreur_db&#39;}</span>
+
+<span class="sd">        Exemple:</span>
+<span class="sd">        - capteurs = [</span>
+<span class="sd">        ...     {&#39;nom&#39;: &#39;Dorval&#39;,   &#39;lat&#39;: 45.450, &#39;long&#39;: -73.750, &#39;lden_mesure&#39;: 62.5},</span>
+<span class="sd">        ...     {&#39;nom&#39;: &#39;Lachine&#39;,  &#39;lat&#39;: 45.430, &#39;long&#39;: -73.700, &#39;lden_mesure&#39;: 58.3},</span>
+<span class="sd">        ... ]</span>
+<span class="sd">        - resultats = nc.valider_contre_adm(lden_values, capteurs)</span>
+<span class="sd">        - for r in resultats:</span>
+<span class="sd">        ...     print(f&quot;{r[&#39;nom&#39;]} : calculé={r[&#39;lden_calcule&#39;]:.1f} dB, &quot;</span>
+<span class="sd">        ...           f&quot;mesuré={r[&#39;lden_mesure&#39;]:.1f} dB, &quot;</span>
+<span class="sd">        ...           f&quot;erreur={r[&#39;erreur_db&#39;]:+.1f} dB&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">resultats</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">capteur</span> <span class="ow">in</span> <span class="n">recepteurs_adm</span><span class="p">:</span>
+            <span class="n">latitudes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">receptor_grid</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">longitudes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">receptor_grid</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="p">((</span><span class="n">latitudes</span> <span class="o">-</span> <span class="n">capteur</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="n">KM_PAR_DEGRE_LATITUDE</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span>
+                <span class="p">((</span><span class="n">longitudes</span> <span class="o">-</span> <span class="n">capteur</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="n">KM_PAR_DEGRE_LONGITUDE</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="p">)</span>
+            <span class="n">idx_proche</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">distances</span><span class="p">))</span>
+            <span class="n">lden_calcule</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">lden_values</span><span class="p">[</span><span class="n">idx_proche</span><span class="p">])</span>
+
+            <span class="n">resultats</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s1">&#39;nom&#39;</span><span class="p">:</span> <span class="n">capteur</span><span class="p">[</span><span class="s1">&#39;nom&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;lden_calcule&#39;</span><span class="p">:</span> <span class="n">lden_calcule</span><span class="p">,</span>
+                <span class="s1">&#39;lden_mesure&#39;</span><span class="p">:</span> <span class="n">capteur</span><span class="p">[</span><span class="s1">&#39;lden_mesure&#39;</span><span class="p">],</span>
+                <span class="s1">&#39;erreur_db&#39;</span><span class="p">:</span> <span class="n">lden_calcule</span> <span class="o">-</span> <span class="n">capteur</span><span class="p">[</span><span class="s1">&#39;lden_mesure&#39;</span><span class="p">],</span>
+            <span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">resultats</span></div>
+
+
+
+<span class="c1">#Méthodes privées</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Génère la grille circulaire de récepteurs autour de YUL.</span>
+
+<span class="sd">        Retourne:</span>
+<span class="sd">        np.ndarray shape (N, 2)</span>
+<span class="sd">            Tableau [[lat, lon], ...] au format attendu par</span>
+<span class="sd">            NoiseCalculator.compute_grid(flights, receptor_grid).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">center_latitude</span><span class="p">,</span> <span class="n">center_longitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span>
+
+        <span class="n">delta_latitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius_km</span> <span class="o">/</span> <span class="n">KM_PAR_DEGRE_LATITUDE</span>
+        <span class="n">delta_longitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius_km</span> <span class="o">/</span> <span class="n">KM_PAR_DEGRE_LONGITUDE</span>
+
+        <span class="n">latitudes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">center_latitude</span> <span class="o">-</span> <span class="n">delta_latitude</span><span class="p">,</span> <span class="n">center_latitude</span> <span class="o">+</span> <span class="n">delta_latitude</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">)</span>
+        <span class="n">longitudes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">center_longitude</span> <span class="o">-</span> <span class="n">delta_longitude</span><span class="p">,</span> <span class="n">center_longitude</span> <span class="o">+</span> <span class="n">delta_longitude</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">)</span>
+
+        <span class="n">latitudes_grid</span><span class="p">,</span> <span class="n">longitudes_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">latitudes</span><span class="p">,</span> <span class="n">longitudes</span><span class="p">)</span>
+        <span class="n">latitudes_flat</span> <span class="o">=</span> <span class="n">latitudes_grid</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+        <span class="n">longitudes_flat</span> <span class="o">=</span> <span class="n">longitudes_grid</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+        <span class="n">distance_km</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="n">latitudes_flat</span> <span class="o">-</span> <span class="n">center_latitude</span><span class="p">)</span> <span class="o">*</span> <span class="n">KM_PAR_DEGRE_LATITUDE</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span>
+                              <span class="p">((</span><span class="n">longitudes_flat</span> <span class="o">-</span> <span class="n">center_longitude</span><span class="p">)</span> <span class="o">*</span> <span class="n">KM_PAR_DEGRE_LONGITUDE</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">masque</span> <span class="o">=</span> <span class="n">distance_km</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius_km</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">latitudes_flat</span><span class="p">[</span><span class="n">masque</span><span class="p">],</span> <span class="n">longitudes_flat</span><span class="p">[</span><span class="n">masque</span><span class="p">]))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_interpoler_surface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lden_values</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interpole les niveaux Lden discrets sur une grille régulière continue.</span>
+
+<span class="sd">        Paramètres</span>
+<span class="sd">        - lden_values : np.ndarray shape (N,)</span>
+
+<span class="sd">        Retourne</span>
+<span class="sd">        - z_grid  : np.ndarray shape (grid_size, grid_size) — Lden interpolés</span>
+<span class="sd">        - latitude_lin : np.ndarray shape (grid_size,) — latitudes de la grille</span>
+<span class="sd">        - longitude_lin : np.ndarray shape (grid_size,) — longitudes de la grille</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">center_latitude</span><span class="p">,</span> <span class="n">center_longitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span>
+        <span class="n">delta_latitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius_km</span> <span class="o">/</span> <span class="n">KM_PAR_DEGRE_LATITUDE</span>
+        <span class="n">delta_longitude</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius_km</span> <span class="o">/</span> <span class="n">KM_PAR_DEGRE_LONGITUDE</span>
+
+        <span class="n">latitude_lin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">center_latitude</span> <span class="o">-</span> <span class="n">delta_latitude</span><span class="p">,</span>
+                              <span class="n">center_latitude</span> <span class="o">+</span> <span class="n">delta_latitude</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">)</span>
+        <span class="n">longitude_lin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">center_longitude</span> <span class="o">-</span> <span class="n">delta_longitude</span><span class="p">,</span>
+                              <span class="n">center_longitude</span> <span class="o">+</span> <span class="n">delta_longitude</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="p">)</span>
+
+        <span class="n">longitude_mesh</span><span class="p">,</span> <span class="n">latitude_mesh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">longitude_lin</span><span class="p">,</span> <span class="n">latitude_lin</span><span class="p">)</span>
+
+        <span class="n">latitudes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">receptor_grid</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">longitudes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">receptor_grid</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">valeur_min</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">lden_values</span><span class="p">))</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lden_values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">30.0</span>
+
+        <span class="n">z_grid</span> <span class="o">=</span> <span class="n">griddata</span><span class="p">(</span>
+            <span class="n">points</span><span class="o">=</span><span class="p">(</span><span class="n">longitudes</span><span class="p">,</span> <span class="n">latitudes</span><span class="p">),</span>
+            <span class="n">values</span><span class="o">=</span><span class="n">lden_values</span><span class="p">,</span>
+            <span class="n">xi</span><span class="o">=</span><span class="p">(</span><span class="n">longitude_mesh</span><span class="p">,</span> <span class="n">latitude_mesh</span><span class="p">),</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span>
+            <span class="n">fill_value</span><span class="o">=</span><span class="n">valeur_min</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">z_grid</span><span class="p">,</span> <span class="n">latitude_lin</span><span class="p">,</span> <span class="n">longitude_lin</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">nb_recepteurs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">receptor_grid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;NoiseContour(center=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;radius_km=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">radius_km</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;grid_size=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;nb_recepteurs=</span><span class="si">{</span><span class="n">nb_recepteurs</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Équipe 4 — MGA802, ÉTS Montréal
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../../_static/documentation_options.js?v=897fae25"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../../../_static/translations.js?v=e6b791cb"></script>
+    </body>
+</html>
