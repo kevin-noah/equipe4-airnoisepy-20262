@@ -20,3 +20,6 @@ __pycache__/
 
 # Dossier de résultats générés automatiquement.
 results/
+
+# Documentation HTML générée par Sphinx.
+docs/_build/
