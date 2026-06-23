@@ -8,6 +8,7 @@
 [theme]
 base = "light"
 primaryColor = "#dc3a34"            # rouge accent unique : onglet actif, liens, boutons
+baseRadius = "12px"                  # coins arrondis façon Apple (boutons, inputs, conteneurs)
 backgroundColor = "#f5f6f8"          # fond général (neutre froid très clair)
 secondaryBackgroundColor = "#ffffff" # cartes / panneaux blancs qui ressortent
 textColor = "#1b1e25"                # texte principal

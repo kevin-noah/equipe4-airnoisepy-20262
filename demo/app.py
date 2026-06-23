@@ -23,7 +23,6 @@ import os
 import sys
 import math
 import json
-import base64
 import inspect
 import datetime
 
@@ -166,6 +165,29 @@ st.markdown(
     /* Système typographique IBM Plex : Sans pour l'UI (config.toml), Mono pour
        les valeurs chiffrées/techniques (règles ci-dessous). @import en premier. */
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+    /* ---- Mise en page : contenu collé en haut et au ruban de gauche ----
+       Streamlit ajoute par défaut un grand padding (haut + latéral) qui pousse
+       le contenu vers le bas et la droite. On le réduit fortement pour que le
+       héros monte en haut, que le contenu touche la barre latérale sombre et
+       que la carte soit visible sans défiler (comme la maquette). */
+    [data-testid="stMainBlockContainer"], .block-container,
+    [data-testid="stAppViewBlockContainer"] {
+        max-width: 100% !important;
+        padding-top: 0 !important;
+        padding-left: 1.6rem !important;
+        padding-right: 1.6rem !important;
+        padding-bottom: 2rem !important;
+    }
+    /* barre d'en-tête Streamlit (menu Deploy) masquée pour que la bande héros
+       couvre tout le haut, jusqu'au bord supérieur */
+    [data-testid="stHeader"] { display: none; }
+    /* Les blocs `st.markdown("<style>…")` injectés en tête créent des
+       conteneurs vides qui ajoutent un écart au-dessus du héros. On les
+       replie : leur CSS reste actif (un <style> s'applique globalement même si
+       son conteneur est masqué), mais ils ne réservent plus d'espace. */
+    [data-testid="stElementContainer"]:has(> [data-testid="stMarkdown"] style) {
+        display: none !important;
+    }
     /* ---- En-tête principal ---- */
     .titre-app {
         font-size: 2.15rem;
@@ -196,51 +218,92 @@ st.markdown(
         color: #9aa1ad;
         margin: 1.5rem 0 0.85rem;
     }
-    /* ---- Grille de cartes de mesures ---- */
+    /* ---- Grille de cartes de mesures (verre dépoli façon Apple) ---- */
     .cartes-metriques {
         display: grid;
         gap: 1rem;
         margin-bottom: 0.5rem;
     }
     .carte-metrique {
-        background: #ffffff;
-        border: 1px solid #e6e8ec;
-        border-radius: 14px;
-        padding: 1.1rem 1.2rem;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        position: relative;
+        background: rgba(255, 255, 255, 0.72);
+        -webkit-backdrop-filter: blur(28px) saturate(180%);
+        backdrop-filter: blur(28px) saturate(180%);
+        border: 0.5px solid rgba(255, 255, 255, 0.8);
+        border-radius: 16px;
+        padding: 1.15rem 1.15rem 1.05rem;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04),
+                    0 10px 30px rgba(16, 24, 40, 0.06);
+        transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+    .carte-metrique:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05),
+                    0 18px 40px rgba(220, 58, 52, 0.18),
+                    0 0 0 1px rgba(220, 58, 52, 0.18);
     }
     .carte-metrique .label {
-        color: #6b7280;
-        font-size: 0.85rem;
-        margin-bottom: 0.55rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: #8a9099;
+        font-size: 0.69rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 13px;
     }
+    .carte-metrique .label svg { width: 16px; height: 16px; flex: none; }
     .carte-metrique .valeur {
-        font-size: 2.4rem;
-        font-weight: 700;
-        line-height: 1;
+        font-size: 2.6rem;
+        font-weight: 500;
+        line-height: 0.9;
         display: flex;
         align-items: baseline;
-        gap: 0.25rem;
+        gap: 5px;
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
         font-family: 'IBM Plex Mono', ui-monospace, monospace;
     }
     /* carte « texte » (ex. Classe d'exposition) : pas un nombre → reste en Sans,
        un peu plus petite pour éviter les débordements (« Très élevée »). */
     .carte-metrique .valeur.valeur--texte {
         font-family: 'IBM Plex Sans', sans-serif;
-        font-size: 1.75rem;
-        font-weight: 700;
+        font-size: 1.7rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
     }
     .carte-metrique .unite {
         font-size: 1rem;
         font-weight: 500;
-        color: #9aa1ad;
+        color: #8a9099;
         font-family: 'IBM Plex Mono', ui-monospace, monospace;
     }
     .carte-metrique .sous {
         color: #6b7280;
-        font-size: 0.82rem;
-        margin-top: 0.6rem;
+        font-size: 11.5px;
+        line-height: 1.45;
+        margin-top: 9px;
     }
+    /* badge inline (maquette) : pastille sobre alignée à droite de la valeur */
+    .carte-metrique .valeur > .badge,
+    .carte-metrique .valeur > .carte-badge {
+        margin-left: auto; margin-top: 0; align-self: center;
+    }
+    .carte-badge {
+        display: inline-flex; align-items: center;
+        padding: 3px 9px; border-radius: 999px;
+        font-size: 10.5px; font-weight: 600;
+        font-family: 'IBM Plex Sans', sans-serif; letter-spacing: 0;
+    }
+    /* ---- Carte « Classe d'exposition » : grand mot coloré + barre segmentée ---- */
+    .classe-val { font-size: 1.7rem; font-weight: 600; letter-spacing: -0.02em;
+                  line-height: 1; }
+    .expo-bar { display: flex; gap: 5px; margin-top: 14px; }
+    .expo-bar span { flex: 1; height: 6px; border-radius: 999px; }
+    .expo-labels { display: flex; justify-content: space-between;
+                   font-size: 10px; color: #8a9099; margin-top: 6px; }
+    .expo-labels .on { font-weight: 600; }
     .badge {
         display: inline-flex;
         align-items: center;
@@ -255,45 +318,154 @@ st.markdown(
     .badge--amber { background: #fbf0d5; color: #d98a00; }
     .badge--red   { background: #fdecec; color: #dc3a34; }
     .badge--green { background: #e3f5e9; color: #16a34a; }
-    /* ---- Puces de fichiers (onglet Exports) ---- */
-    .chip-fichier {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        background: #eef0f3;
-        border: 1px solid #e6e8ec;
-        border-radius: 9px;
-        padding: 0.35rem 0.6rem;
-        margin: 0.25rem 0.4rem 0 0;
-        font-size: 0.85rem;
-    }
-    .chip-fichier code { background: #e6e8ec; border-radius: 5px; padding: 0 0.3rem; font-size: 0.8em; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
     /* ---- Marque de la barre latérale ---- */
-    .marque { display: flex; align-items: center; gap: 0.7rem; padding: 0.1rem 0 0.4rem; }
+    .marque { display: flex; align-items: center; gap: 12px; padding: 2px 6px 0; }
     .marque-logo {
-        width: 44px; height: 44px; border-radius: 13px;
-        background: linear-gradient(135deg, #e8554d, #c92f29);
+        width: 38px; height: 38px; border-radius: 11px; flex: none;
+        background: linear-gradient(160deg, #dc3a34, #9e2722);
         display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 14px rgba(220, 58, 52, 0.45),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+    .marque-nom { font-weight: 600; font-size: 16px; line-height: 1.15;
+                  letter-spacing: -0.01em; color: #eef1f5; }
+    .marque-sous { font-size: 11px; color: rgba(238, 241, 245, 0.62);
+                   letter-spacing: 0.02em; }
+    /* ---- Intitulés de section de la barre latérale (Réglages / Seuils) ---- */
+    .seuils-titre, .reglages-label {
+        text-transform: uppercase; letter-spacing: 0.10em;
+        font-size: 10.5px; font-weight: 600; color: rgba(238, 241, 245, 0.5);
+        margin: 0.3rem 0 0.55rem;
+    }
+    /* ---- Cartes de seuils (verre dépoli sur le dégradé sidebar) ---- */
+    .seuil-carte {
+        border-radius: 14px; padding: 13px 15px; margin-bottom: 0.6rem;
+        display: flex; gap: 10px; align-items: flex-start;
+    }
+    .seuil-dot { width: 9px; height: 9px; border-radius: 50%;
+                 margin-top: 0.42rem; flex: none; }
+    .seuil-titre { font-weight: 600; font-size: 18px; letter-spacing: -0.01em;
+                   color: #eef1f5;
+                   font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .seuil-titre .u { font-size: 11px; font-weight: 400;
+                      color: rgba(238, 241, 245, 0.6); margin-left: 3px;
+                      font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .seuil-desc { font-size: 11.5px; line-height: 1.4;
+                  color: rgba(238, 241, 245, 0.74); }
+    .seuil-note { font-size: 0.78rem; color: rgba(238, 241, 245, 0.42);
+                  margin-top: 0.3rem; }
+    /* ---- Point « live » pulsant sur l'élément de nav « Avions en direct »
+       (3e option). Point corail inline + anneau qui pulse via box-shadow. ---- */
+    @keyframes anp-pulse {
+        0%   { box-shadow: 0 0 0 0 rgba(255, 138, 130, 0.55); }
+        70%  { box-shadow: 0 0 0 6px rgba(255, 138, 130, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 138, 130, 0); }
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] > label:nth-of-type(3) p::after {
+        content: ""; display: inline-block; width: 7px; height: 7px;
+        margin-left: 8px; border-radius: 50%; background: #ff8a82;
+        vertical-align: middle;
+        animation: anp-pulse 2s ease-out infinite;
+    }
+    /* ---- En-tête héros (bandeau dégradé ardoise→rouge, surtitre + badges) ---- */
+    .hero {
+        position: relative;
+        border-radius: 0;
+        overflow: hidden;
+        padding: 1.5rem 1.6rem;
+        /* pleine largeur : on déborde sur les côtés pour toucher la barre
+           latérale à gauche ; en haut la bande part du bord supérieur */
+        margin: 0 -1.6rem 0.8rem -1.6rem;
+        background: linear-gradient(110deg, #16191f 0%, #2a2128 42%,
+                                    #7a2a2a 78%, #dc3a34 122%);
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.10),
+                    0 18px 44px -18px rgba(16, 24, 40, 0.45);
+    }
+    /* halo rouge diffus en haut à droite */
+    .hero::after {
+        content: ""; position: absolute; right: -40px; top: -60px;
+        width: 300px; height: 300px; border-radius: 50%; pointer-events: none;
+        background: radial-gradient(circle, rgba(255, 138, 130, 0.28),
+                                    transparent 65%);
+    }
+    .hero > * { position: relative; z-index: 1; }
+    /* ligne : texte à gauche, bouton Partager intégré en haut à droite */
+    .hero-row { display: flex; align-items: flex-start;
+                justify-content: space-between; gap: 1.5rem; }
+    .hero-share {
+        flex: none; display: inline-flex; align-items: center; gap: 8px;
+        padding: 0.62rem 1.1rem; border-radius: 12px; text-decoration: none;
+        background: rgba(255, 255, 255, 0.14); color: #fff;
+        border: 0.5px solid rgba(255, 255, 255, 0.26);
+        font-size: 0.84rem; font-weight: 600;
+        -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+        transition: transform 0.14s ease, background 0.14s ease;
+    }
+    .hero-share:hover { transform: translateY(-2px);
+                        background: rgba(255, 255, 255, 0.22); }
+    .hero-share svg { width: 15px; height: 15px; fill: currentColor; }
+    .hero .overline {
+        font-family: 'IBM Plex Mono', ui-monospace, monospace;
+        font-size: 0.7rem; font-weight: 500; letter-spacing: 0.14em;
+        text-transform: uppercase; color: rgba(255, 255, 255, 0.62);
+        margin-bottom: 0.7rem;
+    }
+    .hero h1 {
+        font-size: 2.06rem; font-weight: 600; letter-spacing: -0.022em;
+        line-height: 1.08; margin: 0; color: #ffffff;
+    }
+    .hero .badges { display: flex; flex-wrap: wrap; gap: 0.56rem; margin-top: 1rem; }
+    .hero .badge-hero {
+        display: inline-flex; align-items: center; gap: 7px;
+        font-size: 0.72rem; font-weight: 500; padding: 0.37rem 0.75rem;
+        border-radius: 999px; color: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.12);
+        border: 0.5px solid rgba(255, 255, 255, 0.18);
+        -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    }
+    .hero .badge-hero::before {
+        content: ""; width: 6px; height: 6px; border-radius: 50%;
+        background: #ff8a82; flex: none;
+    }
+    /* ---- Navigation latérale en pilules (radio → menu iPadOS) ---- */
+    [data-testid="stSidebar"] [role="radiogroup"] {
+        gap: 3px !important;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] > label {
+        display: flex !important; align-items: center;
+        width: 100%; padding: 11px 13px !important; margin: 0 !important;
+        border-radius: 13px; cursor: pointer; min-height: 0;
+        transition: background 0.14s ease, box-shadow 0.14s ease;
+    }
+    /* masquer le rond radio natif */
+    [data-testid="stSidebar"] [role="radiogroup"] > label > div:first-child {
+        display: none !important;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] > label p {
+        font-size: 14px; font-weight: 500; color: rgba(238, 241, 245, 0.82);
+        transition: color 0.14s ease;
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] > label:hover {
+        background: rgba(255, 255, 255, 0.09);
+    }
+    [data-testid="stSidebar"] [role="radiogroup"] > label:hover p { color: #fff; }
+    /* pilule active : dégradé rouge + ombre */
+    [data-testid="stSidebar"] [role="radiogroup"] > label:has(input:checked) {
+        background: linear-gradient(165deg, #e0463f, #dc3a34);
         box-shadow: 0 6px 16px rgba(220, 58, 52, 0.40);
     }
-    .marque-nom { font-weight: 800; font-size: 1.15rem; line-height: 1.1; }
-    .marque-sous { font-size: 0.78rem; color: #9098a6; }
-    /* ---- Cartes de seuils (barre latérale) ---- */
-    .seuils-titre {
-        text-transform: uppercase; letter-spacing: 0.12em;
-        font-size: 0.74rem; font-weight: 700; color: #9098a6;
-        margin: 0.4rem 0 0.6rem;
+    [data-testid="stSidebar"] [role="radiogroup"] > label:has(input:checked) p {
+        color: #fff; font-weight: 600;
     }
-    .seuil-carte {
-        background: #1e222a;
-        border: 1px solid #2b303a;
-        border-radius: 11px; padding: 0.6rem 0.75rem; margin-bottom: 0.55rem;
-        display: flex; gap: 0.6rem; align-items: flex-start;
+    /* ---- Sliders : pouce blanc à ombre, piste arrondie ---- */
+    [data-testid="stSlider"] div[role="slider"] {
+        background-color: #ffffff !important;
+        border: 0.5px solid rgba(0, 0, 0, 0.06) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16),
+                    0 4px 12px rgba(0, 0, 0, 0.22) !important;
     }
-    .seuil-dot { width: 11px; height: 11px; border-radius: 50%; margin-top: 0.3rem; flex: none; }
-    .seuil-titre { font-weight: 600; font-size: 0.92rem; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
-    .seuil-desc { font-size: 0.8rem; color: #9098a6; }
-    .seuil-note { font-size: 0.78rem; color: #9098a6; margin-top: 0.3rem; }
+    [data-testid="stSliderThumbValue"] { font-variant-numeric: tabular-nums; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -304,12 +476,11 @@ st.sidebar.markdown(
     """
     <div class="marque">
       <div class="marque-logo">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff"
-             xmlns="http://www.w3.org/2000/svg">
-          <path d="M2.5 19h19v2h-19v-2zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92
-                   10l-6.9-6.43-1.93.51 4.14 7.17-4.97 1.33-1.97-1.54-1.45.39 2.59
-                   4.49 1.97-.53L8.99 16l-1.94.52 2.59 4.49 1.45-.39.39-1.45
-                   1.97-.53 8.55-2.29c.81-.23 1.28-1.05 1.07-1.86z"/>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+             stroke="#ffffff" stroke-width="2" stroke-linecap="round"
+             stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 12h4l3-8 2 8h9"/>
+          <path d="M2 16h7l2 5 2-9"/>
         </svg>
       </div>
       <div>
@@ -321,37 +492,55 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
-# Image de fond de la barre latérale (coucher de soleil depuis un hublot),
-# encodée base64 pour rester hors-ligne / sur Streamlit Cloud. Voile dégradé
-# léger en haut (l'image reste bien visible, opacité élevée) puis plus dense
-# vers le bas pour garder les réglages et les seuils lisibles.
-_FOND_SIDEBAR = os.path.join(RACINE, 'assets', 'fond_sidebar.jpg')
-if os.path.exists(_FOND_SIDEBAR):
-    with open(_FOND_SIDEBAR, 'rb') as _f:
-        _b64 = base64.b64encode(_f.read()).decode()
-    st.markdown(
-        f"""
-        <style>
-        section[data-testid="stSidebar"] > div:first-child {{
-            background-image:
-                linear-gradient(rgba(22, 25, 31, 0.18), rgba(22, 25, 31, 0.74)),
-                url("data:image/jpeg;base64,{_b64}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }}
-        /* cartes de seuils en verre dépoli translucide : on voit l'image
-           derrière tout en gardant le texte lisible */
-        section[data-testid="stSidebar"] .seuil-carte {{
-            background: rgba(20, 24, 30, 0.55);
-            border-color: rgba(255, 255, 255, 0.10);
-            -webkit-backdrop-filter: blur(4px);
-            backdrop-filter: blur(4px);
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+# Fond de la barre latérale : dégradé « coucher de soleil » de la maquette
+# (ardoise nuit en haut → violet → ambre/or en bas), assombri par un voile
+# dégradé pour garder le texte lisible, plus un halo orange diffus derrière la
+# navigation. 100 % CSS → hors-ligne, pas de dépendance à un fichier image.
+st.markdown(
+    """
+    <style>
+    section[data-testid="stSidebar"] > div:first-child {
+        background:
+            radial-gradient(220px 260px at 52% 22%,
+                rgba(244, 158, 74, 0.42), rgba(220, 90, 60, 0.16) 42%,
+                transparent 68%),
+            linear-gradient(180deg, rgba(20, 23, 29, 0.62) 0%,
+                rgba(20, 23, 29, 0.80) 46%, rgba(20, 23, 29, 0.93) 100%),
+            linear-gradient(176deg, #16202f 0%, #233048 30%, #5a3f63 56%,
+                #b9603f 76%, #e0913f 90%, #f0b35a 100%);
+        background-attachment: local;
+    }
+    /* cartes de seuils en verre dépoli clair (maquette) : on voit le dégradé
+       derrière tout en gardant le texte lisible */
+    section[data-testid="stSidebar"] .seuil-carte {
+        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(255, 255, 255, 0.14);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+        -webkit-backdrop-filter: blur(16px) saturate(160%);
+        backdrop-filter: blur(16px) saturate(160%);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+# ---------------------------------------------------------------------------
+# Navigation principale (barre latérale) : menu vertical en pilules, comme la
+# maquette Claude Design. La pilule active est en dégradé rouge. La vue choisie
+# pilote l'affichage du corps de l'app plus bas (un bloc `if vue == ...`).
+# Les libellés portent une icône Material gérée nativement par Streamlit.
+# ---------------------------------------------------------------------------
+
+NAV = [
+    ':material/pin_drop: Le bruit chez vous',
+    ':material/schedule: Journée 24h',
+    ':material/flight: Avions en direct',
+    ':material/fact_check: Validation WebTrak',
+    ':material/download: Exports',
+]
+
+vue = st.sidebar.radio('Navigation', NAV, label_visibility='collapsed')
 
 
 # ---------------------------------------------------------------------------
@@ -1059,35 +1248,271 @@ def _badge(texte, type_):
             f'<span class="point"></span>{texte}</div>')
 
 
-def _svg_fichier(couleur):
-    """Petite icône « document » SVG inline (offline) de la couleur donnée,
-    pour les puces de fichiers de l'onglet Exports."""
-    return (
-        f'<svg width="15" height="15" viewBox="0 0 24 24" fill="{couleur}" '
-        f'style="vertical-align:-2px" xmlns="http://www.w3.org/2000/svg">'
-        f'<path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 '
-        f'0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>'
-        f'</svg>')
+# Icônes SVG inline (offline) pour les intitulés des cartes de résultat —
+# tracés Material (graphic_eq, show_chart, straighten, flight). Couleur via
+# currentColor (définie en style inline sur le <svg>).
+_ICONES_CARTE = {
+    "lden": "M7 18h2V6H7v12zm4 4h2V2h-2v20zm-8-8h2v-4H3v4zm12 4h2V6h-2v12zm"
+            "4-8v4h2v-4h-2z",
+    "expo": "M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z",
+    "distance": "M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-"
+                "1.1-.9-2-2-2zm0 10H3V8h2v4h2V8h2v4h2V8h2v4h2V8h2v4h2V8h2v8z",
+    "vols": "M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-"
+            "2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z",
+    # cible (point choisi / coordonnées)
+    "cible": "M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3"
+             "c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06"
+             " 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48"
+             "-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7"
+             " 3.13 7 7-3.13 7-7 7z",
+    "info": "M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-"
+            "4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 "
+            "8 8-3.59 8-8 8z",
+    "cloud_off": "M19.35 10.04C18.67 6.59 15.64 4 12 4c-1.48 0-2.85.43-4.01 1.17"
+                 "l1.46 1.46C10.21 6.23 11.08 6 12 6c3.04 0 5.5 2.46 5.5 5.5v.5H"
+                 "19c1.66 0 3 1.34 3 3 0 1.13-.64 2.11-1.56 2.62l1.45 1.45C23.16"
+                 " 18.16 24 16.68 24 15c0-2.64-2.05-4.78-4.65-4.96zM3 5.27l2.75 "
+                 "2.74C2.56 8.15 0 10.77 0 14c0 3.31 2.69 6 6 6h11.73l2 2L21 20."
+                 "73 4.27 4 3 5.27zM7.73 10l8 8H6c-2.21 0-4-1.79-4-4s1.79-4 4-4h"
+                 "1.73z",
+    # phases de vol (Material : flight_land / flight_takeoff / flight)
+    "land": "M2.5 19h19v2h-19v-2zm16.84-5.16c.8.21 1.62-.26 1.84-1.06.21-.8-.26"
+            "-1.62-1.06-1.84l-5.31-1.42-2.76-9.02L10.12 0v8.28L5.15 6.95l-.93-2"
+            ".32-1.45-.39v5.17l16.42 4.43z",
+    "takeoff": "M2.5 19h19v2h-19v-2zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92"
+               " 10l-6.9-6.43-1.93.51 4.14 7.17-4.97 1.33-1.97-1.54-1.45.39 2.59"
+               " 4.49 1.97-.53L8.99 16l-1.94.52 2.59 4.49 1.45-.39.39-1.45 1.97-"
+               ".53 8.55-2.29c.81-.23 1.28-1.05 1.07-1.86z",
+    "level": "M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-"
+             "2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z",
+    # onglet Exports : pastilles de session, icônes de fichiers, etc.
+    "grid_on": "M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1"
+               ".1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-"
+               "4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v"
+               "4zm0-6h-4V4h4v4z",
+    "sun": "M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2z"
+           "m9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-"
+           "1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2"
+           "h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16"
+           ".95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z",
+    "table": "M10 10.02h5V21h-5zM17 21h3c1.1 0 2-.9 2-2v-9h-5v11zm3-18H5c-1.1 0-"
+             "2 .9-2 2v3h19V5c0-1.1-.9-2-2-2zM3 19c0 1.1.9 2 2 2h3V10H3v9z",
+    "map": "M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28"
+           ".22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-"
+           ".28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z",
+    "movie": "M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 "
+             "2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z",
+    "bolt": "M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 "
+            "10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 1"
+            "7.55 11 21 11 21z",
+    "balance": "M12 3c-1.27 0-2.4.8-2.82 2H3v2h2.95L2 14c-.47 2 1 3 3.5 3s4.01-1"
+               " 3.5-3L6.05 7h3.12c.33.85.98 1.5 1.83 1.83V20H2v2h20v-2h-9V8.83c"
+               ".85-.33 1.5-.98 1.83-1.83h3.12L15 14c-.47 2 1 3 3.5 3s4.01-1 3.5"
+               "-3l-2.95-7H21V5h-6.18C14.4 3.8 13.27 3 12 3zm2.37 12l1.63-3.91L1"
+               "7.63 15h-3.26zm-8 0L8 11.09 9.63 15H6.37zM12 7c-.55 0-1-.45-1-1s"
+               ".45-1 1-1 1 .45 1 1-.45 1-1 1z",
+    "quote": "M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z",
+    "download": "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z",
+}
+
+
+def _ico(cle, couleur):
+    """SVG d'icône de carte (16×16) coloré, pour les intitulés."""
+    return (f'<svg viewBox="0 0 24 24" fill="{couleur}" '
+            f'xmlns="http://www.w3.org/2000/svg">'
+            f'<path d="{_ICONES_CARTE[cle]}"/></svg>')
+
+
+# Style des badges de phase (onglet Avions en direct), fidèle à la maquette :
+# (libellé, fond, couleur texte, clé d'icône).
+_PHASE_STYLE = {
+    "descente": ("Descente", "rgba(67,160,74,.12)",  "#2f8a3c", "land"),
+    "montée":   ("Montée",   "rgba(239,139,46,.14)", "#c46a16", "takeoff"),
+    "palier":   ("Palier",   "rgba(120,128,140,.12)", "#6b7280", "level"),
+}
+
+
+def _phase_badge(phase):
+    """Pastille de phase de vol (Descente/Montée/Palier) avec icône, fidèle
+    à la maquette des vols contributeurs."""
+    libelle, bg, couleur, cle = _PHASE_STYLE.get(
+        (phase or "").lower(), _PHASE_STYLE["palier"])
+    svg = (f'<svg viewBox="0 0 24 24" fill="{couleur}" '
+           f'xmlns="http://www.w3.org/2000/svg">'
+           f'<path d="{_ICONES_CARTE[cle]}"/></svg>')
+    return (f'<span class="phase-badge" style="background:{bg};color:{couleur}">'
+            f'{svg}{libelle}</span>')
+
+
+# CSS scopé à l'onglet « Avions en direct » (classes lv-*), fidèle à la maquette.
+_CSS_LIVE = """
+<style>
+.lv-head { display:flex; align-items:flex-start; justify-content:space-between;
+    gap:16px; margin:0.2rem 0 0.2rem; }
+.lv-titrow { display:flex; align-items:center; gap:11px; }
+.lv-titrow h2 { font-size:20px; font-weight:600; letter-spacing:-.015em;
+    margin:0; color:#1b1e25; }
+.lv-sub { margin:9px 0 0; font-size:13.5px; line-height:1.55; color:#6b7280;
+    max-width:760px; }
+.badge-live { display:inline-flex; align-items:center; gap:7px; padding:4px 11px;
+    border-radius:999px; background:rgba(220,58,52,.10); color:#dc3a34;
+    font-size:11px; font-weight:700; letter-spacing:.04em; }
+.badge-live .d { width:7px; height:7px; border-radius:50%; background:#dc3a34;
+    animation:anp-pulse 2s ease-out infinite; }
+.lv-offline { flex:none; display:inline-flex; align-items:center; gap:8px;
+    padding:8px 13px; border-radius:11px; background:rgba(67,160,74,.10);
+    border:0.5px solid rgba(67,160,74,.22); color:#2f8a3c; font-size:12px;
+    font-weight:600; white-space:nowrap; }
+.lv-offline svg { width:16px; height:16px; fill:#2f8a3c; }
+.lv-status { display:flex; align-items:center; gap:10px; padding:11px 16px;
+    border-radius:13px; background:rgba(67,160,74,.08);
+    border:0.5px solid rgba(67,160,74,.2); margin:0.3rem 0 0.7rem; }
+.lv-status .d { position:relative; width:8px; height:8px; flex:none; }
+.lv-status .d::before, .lv-status .d::after { content:""; position:absolute;
+    inset:0; border-radius:50%; background:#43a04a; }
+.lv-status .d::before { animation:anp-pulse 2s ease-out infinite; }
+.lv-status .t { font-size:13.5px; font-weight:600; color:#2f8a3c; }
+.lv-status .snap { font-family:'IBM Plex Mono',monospace; font-size:12px;
+    color:#6b7280; }
+.lv-status .virt { margin-left:auto; display:inline-flex; align-items:center;
+    gap:6px; font-size:12px; color:#6b7280; }
+.lv-status .virt svg { width:15px; height:15px; fill:#dc3a34; }
+/* carte niveau instantané */
+.lv-niveau-head { display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:10px; }
+.lv-niveau-head .lab { font-size:11px; font-weight:600; text-transform:uppercase;
+    letter-spacing:.05em; color:#8a9099; }
+.lv-pill-gray { display:inline-flex; align-items:center; padding:3px 9px;
+    border-radius:999px; background:rgba(120,128,140,.12); color:#6b7280;
+    font-size:10.5px; font-weight:600; }
+.lv-niveau-val { display:flex; align-items:baseline; gap:7px;
+    font-family:'IBM Plex Mono',monospace; font-variant-numeric:tabular-nums; }
+.lv-niveau-val .n { font-size:48px; font-weight:500; line-height:.9;
+    letter-spacing:-.03em; color:#1b1e25; }
+.lv-niveau-val .u { font-size:18px; font-weight:500; color:#8a9099; }
+.lv-coord { display:flex; align-items:center; gap:7px; margin-top:13px;
+    padding-top:13px; border-top:0.5px solid rgba(60,60,67,.1);
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:#6b7280;
+    font-variant-numeric:tabular-nums; }
+.lv-coord svg { width:15px; height:15px; fill:#dc3a34; flex:none; }
+/* table vols contributeurs */
+.vols-title { font-size:11px; font-weight:600; text-transform:uppercase;
+    letter-spacing:.05em; color:#8a9099; }
+.vols-head { display:grid; grid-template-columns:1.3fr 1fr 0.9fr; gap:4px 8px;
+    margin-top:12px; }
+.vols-head span { font-size:9.5px; font-weight:600; text-transform:uppercase;
+    letter-spacing:.04em; color:#a3a8b0; }
+.vols-head .r { text-align:right; }
+.vols-row { display:grid; grid-template-columns:1.3fr 1fr 0.9fr; gap:8px;
+    align-items:center; padding:9px 0; border-top:0.5px solid rgba(60,60,67,.08); }
+.vols-row .cs { display:flex; align-items:center; gap:7px;
+    font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:500;
+    color:#1b1e25; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.vols-row .cs .sim { width:7px; height:7px; border-radius:50%; background:#fff;
+    border:1.5px dashed #dc3a34; box-sizing:border-box; flex:none; }
+.vols-row .dn { text-align:right; font-family:'IBM Plex Mono',monospace;
+    font-size:12px; color:#6b7280; font-variant-numeric:tabular-nums;
+    line-height:1.3; }
+.vols-row .dn b { color:#1b1e25; font-weight:500; }
+.phase-badge { justify-self:end; display:inline-flex; align-items:center; gap:4px;
+    padding:4px 9px; border-radius:999px; font-size:10.5px; font-weight:600;
+    white-space:nowrap; }
+.phase-badge svg { width:13px; height:13px; }
+.lv-note { display:flex; gap:10px; padding:13px 15px; border-radius:14px;
+    background:rgba(243,196,26,.1); border:0.5px solid rgba(243,196,26,.28);
+    margin-top:0.3rem; }
+.lv-note svg { width:19px; height:19px; fill:#c99700; flex:none; }
+.lv-note span { font-size:12px; line-height:1.5; color:#7a6310; }
+</style>
+"""
+
+
+# CSS scopé à l'onglet « Exports » (classes exp-* / lic-*), fidèle à la maquette.
+_CSS_EXPORT = """
+<style>
+.exp-sub-code { font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+    color:#dc3a34; background:rgba(220,58,52,.08); padding:1px 6px;
+    border-radius:6px; }
+.exp-sess-lab { font-size:11px; font-weight:600; text-transform:uppercase;
+    letter-spacing:.06em; color:#8a9099; }
+.exp-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:9px; }
+.exp-chip { display:inline-flex; align-items:center; gap:6px; padding:5px 11px;
+    border-radius:999px; background:rgba(120,128,140,.1); font-size:12px;
+    font-weight:600; color:#3a3a3c; }
+.exp-chip svg { width:15px; height:15px; fill:#6b7280; }
+.exp-chip .m { font-family:'IBM Plex Mono',monospace; }
+.exp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px;
+    margin-top:14px; }
+.exp-card { padding:16px; background:#fff; border:0.5px solid rgba(60,60,67,.12);
+    border-radius:14px; box-shadow:0 1px 2px rgba(16,24,40,.04); display:flex;
+    flex-direction:column; gap:11px; min-height:150px;
+    transition:transform .16s ease, box-shadow .16s ease; }
+.exp-card:hover { transform:translateY(-3px);
+    box-shadow:0 1px 2px rgba(16,24,40,.05), 0 14px 30px rgba(16,24,40,.10); }
+.exp-card .top { display:flex; align-items:center; justify-content:space-between; }
+.exp-ico { width:40px; height:40px; border-radius:11px; display:flex;
+    align-items:center; justify-content:center; }
+.exp-ico svg { width:22px; height:22px; }
+.exp-ext { font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600;
+    letter-spacing:.04em; text-transform:uppercase; padding:3px 8px;
+    border-radius:7px; }
+.exp-name { font-family:'IBM Plex Mono',monospace; font-size:14.5px;
+    font-weight:500; color:#1b1e25; }
+.exp-desc { font-size:11.5px; line-height:1.45; color:#6b7280; margin-top:5px; }
+.exp-foot { display:flex; align-items:center; justify-content:space-between;
+    margin-top:auto; padding-top:9px; border-top:0.5px solid rgba(60,60,67,.08); }
+.exp-size { font-family:'IBM Plex Mono',monospace; font-size:11px; color:#a3a8b0; }
+.exp-dl { display:inline-flex; align-items:center; gap:6px; padding:6px 11px;
+    border-radius:9px; background:rgba(120,128,140,.1); color:#3a3a3c;
+    font-size:12px; font-weight:600; }
+.exp-dl svg { width:15px; height:15px; fill:#3a3a3c; }
+.exp-hint { display:flex; align-items:center; gap:10px; margin-top:14px;
+    padding:12px 15px; border-radius:13px; background:rgba(220,58,52,.05);
+    border:0.5px solid rgba(220,58,52,.16); }
+.exp-hint svg { width:18px; height:18px; fill:#dc3a34; flex:none; }
+.exp-hint span { font-size:12.5px; color:#6b7280; }
+.exp-hint b { color:#3a3a3c; }
+/* licence + citation */
+.lic-grid { display:grid; grid-template-columns:1fr 1.3fr; gap:14px;
+    margin-top:16px; }
+.lic-card { padding:18px 20px; background:rgba(255,255,255,.6);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    backdrop-filter:blur(20px) saturate(160%);
+    border:0.5px solid rgba(255,255,255,.7); border-radius:16px;
+    box-shadow:0 1px 2px rgba(16,24,40,.04), 0 6px 20px rgba(16,24,40,.05); }
+.lic-head { display:flex; align-items:center; gap:8px; margin-bottom:11px; }
+.lic-head svg { width:18px; height:18px; fill:#6b7280; }
+.lic-head .t { font-size:11px; font-weight:600; text-transform:uppercase;
+    letter-spacing:.06em; color:#8a9099; }
+.lic-card p { margin:0; font-size:13px; line-height:1.55; color:#3a3a3c; }
+.code-green { font-family:'IBM Plex Mono',monospace; font-size:12px;
+    color:#2f8a3c; background:rgba(67,160,74,.1); padding:1px 6px;
+    border-radius:6px; }
+</style>
+"""
 
 
 def _carte_html(label, valeur, unite="", sous="", accent="#1b1e25", badge="",
-                mono=True):
-    """HTML d'une carte de mesure : intitulé, grande valeur + unité,
-    pastille optionnelle, sous-texte optionnel. mono=False pour une valeur
-    textuelle (mot) qui doit rester en IBM Plex Sans plutôt qu'en Mono."""
+                mono=True, icone=""):
+    """HTML d'une carte de mesure : intitulé (icône optionnelle), grande valeur
+    + unité, pastille optionnelle (alignée à droite dans la ligne de valeur),
+    sous-texte optionnel. mono=False pour une valeur textuelle (mot) en Sans."""
     classe = "valeur" if mono else "valeur valeur--texte"
     sous_html = f'<div class="sous">{sous}</div>' if sous else ""
     return (f'<div class="carte-metrique">'
-            f'<div class="label">{label}</div>'
+            f'<div class="label">{icone}{label}</div>'
             f'<div class="{classe}" style="color:{accent}">{valeur}'
-            f'<span class="unite">{unite}</span></div>'
-            f'{badge}{sous_html}</div>')
+            f'<span class="unite">{unite}</span>{badge}</div>'
+            f'{sous_html}</div>')
 
 
 def rendre_cartes(cartes):
-    """Affiche une rangée de cartes de mesures (1 colonne par carte)."""
+    """Affiche une rangée de cartes de mesures. Chaque élément est soit un dict
+    (passé à _carte_html), soit une chaîne HTML déjà construite (ex. la carte
+    d'exposition à barre segmentée)."""
     cols = max(len(cartes), 1)
-    inner = "".join(_carte_html(**c) for c in cartes)
+    inner = "".join(c if isinstance(c, str) else _carte_html(**c)
+                    for c in cartes)
     st.markdown(
         f'<div class="cartes-metriques" '
         f'style="grid-template-columns:repeat({cols},minmax(0,1fr))">'
@@ -1096,15 +1521,53 @@ def rendre_cartes(cartes):
     )
 
 
+# Échelle d'exposition à 3 crans de la maquette (Faible / Modérée / Élevée) :
+# (couleur pleine du segment, couleur du libellé actif).
+_EXPO_SEGMENTS = [("Faible", "#43a04a"), ("Modérée", "#ef8b2e"),
+                  ("Élevée", "#dc3a34")]
+
+# Pastille inline de la carte « Niveau Lden » : (fond teinté, texte assombri)
+# par classe — texte foncé pour rester lisible sur le fond à 14 % d'opacité.
+_BADGE_EXPO = {
+    "Faible":      ("rgba(67,160,74,.14)",  "#2f7a37"),
+    "Modérée":     ("rgba(239,139,46,.14)", "#c46a16"),
+    "Élevée":      ("rgba(220,58,52,.14)",  "#b32d28"),
+    "Très élevée": ("rgba(220,58,52,.14)",  "#b32d28"),
+}
+
+
 def _classe_exposition(lden):
     """(mot, couleur, sous-texte) décrivant la classe d'exposition Lden."""
     if lden < 55:
-        return "Faible", "#16a34a", "Sous le seuil d'information (55 dB)"
+        return "Faible", "#43a04a", "Sous le seuil d'information (55 dB)"
     if lden < 65:
-        return "Modérée", "#fb923c", "Entre information (55) et isolation (65)"
+        return "Modérée", "#ef8b2e", "Entre information (55) et isolation (65)"
     if lden < 75:
-        return "Élevée", "#f1592a", "Au-delà du seuil d'isolation (65 dB)"
+        return "Élevée", "#dc3a34", "Au-delà du seuil d'isolation (65 dB)"
     return "Très élevée", "#c81e1e", "Exposition très forte, atténuation requise"
+
+
+def _carte_exposition(lden):
+    """Carte « Classe d'exposition » fidèle à la maquette : grand mot coloré +
+    barre à 3 segments (Faible/Modérée/Élevée), le cran courant mis en avant."""
+    classe, couleur, _ = _classe_exposition(lden)
+    # cran courant : 0 Faible, 1 Modérée, 2 Élevée (« Très élevée » → Élevée)
+    actif = 0 if lden < 55 else (1 if lden < 65 else 2)
+    segs = ""
+    for i, (_, coul) in enumerate(_EXPO_SEGMENTS):
+        # segment atteint = couleur pleine ; au-delà = rouge très atténué
+        fond = coul if i <= actif else "rgba(220,58,52,.18)"
+        segs += f'<span style="background:{fond}"></span>'
+    labels = "".join(
+        f'<span class="{"on" if i == actif else ""}"'
+        f'{f" style=color:{couleur}" if i == actif else ""}>{mot}</span>'
+        for i, (mot, _) in enumerate(_EXPO_SEGMENTS))
+    return (f'<div class="carte-metrique">'
+            f'<div class="label">{_ico("expo", "#ef8b2e")}'
+            f"Classe d'exposition</div>"
+            f'<div class="classe-val" style="color:{couleur}">{classe}</div>'
+            f'<div class="expo-bar">{segs}</div>'
+            f'<div class="expo-labels">{labels}</div></div>')
 
 
 # ---------------------------------------------------------------------------
@@ -1346,27 +1809,34 @@ def carte_plein_ecran(carte, cle, *, hauteur=780, hauteur_plein=1000,
 # Interface
 # ---------------------------------------------------------------------------
 
-# En-tête : titre + bouton « Partager », puis sous-titre à puces (chips).
-col_titre, col_partage = st.columns([8, 1.5], vertical_alignment="center")
-
-with col_titre:
-    st.markdown(
-        "<h1 class='titre-app'>Le bruit des avions autour de YUL</h1>",
-        unsafe_allow_html=True,
-    )
-
-with col_partage:
-    st.link_button(
-        "Partager",
-        "https://github.com/kevin-noah/equipe4-airnoisepy-20262",
-        icon=":material/share:",
-        use_container_width=True,
-    )
-
+# En-tête héros : bandeau dégradé pleine largeur (surtitre + titre + badges)
+# avec le bouton « Partager » intégré en haut à droite, comme la maquette. Les
+# badges reprennent les références techniques. Icône partage en SVG inline
+# (hors-ligne, pas de police d'icônes externe).
 st.markdown(
-    "<div class='sous-titre'>Modélisation <code>ECAC Doc 29</code> · "
-    "données <code>ADS-B OpenSky</code> · base <code>EASA ANP v9</code> "
-    "— MGA802 ÉTS Été 2026, Équipe 4</div>",
+    """
+    <div class="hero">
+      <div class="hero-row">
+        <div>
+          <div class="overline">MGA802 · ÉTS · Été 2026</div>
+          <h1>Le bruit des avions autour de YUL</h1>
+          <div class="badges">
+            <span class="badge-hero">ECAC Doc 29</span>
+            <span class="badge-hero">ADS-B OpenSky</span>
+            <span class="badge-hero">EASA ANP v9</span>
+          </div>
+        </div>
+        <a class="hero-share"
+           href="https://github.com/kevin-noah/equipe4-airnoisepy-20262"
+           target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 7.81C7.5 7.31 6.79 7 6 7c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+          </svg>
+          Partager
+        </a>
+      </div>
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 
@@ -1379,13 +1849,14 @@ st.markdown(
 # normale avec une journée où les vols nocturnes sont réduits.
 # ---------------------------------------------------------------------------
 
-st.sidebar.header(":material/settings: Paramètres")
+st.sidebar.markdown('<div class="reglages-label">Réglages</div>',
+                    unsafe_allow_html=True)
 
-grid_size = st.sidebar.selectbox(
+grid_size = st.sidebar.select_slider(
     "Résolution de la grille",
     options=[40, 60, 80],
-    index=1,
-    format_func=lambda n: f"{n} × {n} points",
+    value=60,
+    format_func=lambda n: f"{n} × {n}",
     help=(
         "40 = rapide, 80 = plus détaillé. "
         "Cette valeur sera utilisée par les cartes et les calculs de grille."
@@ -1393,7 +1864,7 @@ grid_size = st.sidebar.selectbox(
 )
 
 curfew_actif = st.sidebar.toggle(
-    "Scénario couvre-feu 23h–7h",
+    "Couvre-feu 23 h – 7 h",
     value=False,
     help=(
         "Active un scénario de démonstration où les vols nocturnes "
@@ -1401,27 +1872,27 @@ curfew_actif = st.sidebar.toggle(
     ),
 )
 
-st.sidebar.markdown("---")
-
 st.sidebar.markdown(
     """
-    <div class="seuils-titre">Seuils réglementaires</div>
+    <div class="seuils-titre" style="margin-top:1.1rem;">Seuils réglementaires</div>
     <div class="seuil-carte">
-      <span class="seuil-dot" style="background:#fbbf24"></span>
+      <span class="seuil-dot" style="background:#f3c41a;
+            box-shadow:0 0 0 4px rgba(243,196,26,.18)"></span>
       <div>
-        <div class="seuil-titre">55 dB Lden</div>
-        <div class="seuil-desc">Seuil d'information des riverains.</div>
+        <div class="seuil-titre">55<span class="u">dB</span></div>
+        <div class="seuil-desc">Information aux riverains — signalement
+        recommandé au-delà du seuil.</div>
       </div>
     </div>
     <div class="seuil-carte">
-      <span class="seuil-dot" style="background:#f1592a"></span>
+      <span class="seuil-dot" style="background:#dc3a34;
+            box-shadow:0 0 0 4px rgba(220,58,52,.20)"></span>
       <div>
-        <div class="seuil-titre">65 dB Lden</div>
-        <div class="seuil-desc">Seuil associé à l'isolation acoustique.</div>
+        <div class="seuil-titre">65<span class="u">dB</span></div>
+        <div class="seuil-desc">Éligibilité à l'isolation acoustique du bâti
+        (programme insonorisation).</div>
       </div>
     </div>
-    <div class="seuil-note">Ces seuils servent de repères pour interpréter
-    les cartes et les résultats affichés.</div>
     """,
     unsafe_allow_html=True,
 )
@@ -1431,6 +1902,20 @@ if not CONTOUR_DISPONIBLE:
         "⏳ NoiseContour en cours d'intégration : surface Lden affichée "
         "en attendant les contours isophoniques."
     )
+
+# Pied de la barre latérale (maquette) : provenance du modèle, séparé par un
+# mince filet, en bas du ruban.
+st.sidebar.markdown(
+    """
+    <div style="margin-top:1.2rem; padding-top:0.9rem;
+                border-top:0.5px solid rgba(255,255,255,0.10);
+                font-size:10px; line-height:1.5;
+                color:rgba(238,241,245,0.42);">
+      Modèle de propagation ECAC Doc 29 · trajectoires ADS-B.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ---------------------------------------------------------------------------
 # Calcul partagé par les onglets
@@ -1454,15 +1939,10 @@ if curfew_actif:
         f"Lden max : {lden_ref.max():.1f} → {lden.max():.1f} dB(A)."
     )
 
-tab_chez_vous, tab_anim, tab_live, tab_valid, tab_export = st.tabs([
-    ':material/home: Le bruit chez vous',
-    ':material/schedule: Journée 24h',
-    ':material/rss_feed: Avions en direct',
-    ':material/check: Validation WebTrak',
-    ':material/download: Exports',
-])
-
-with tab_chez_vous:
+# Vue active = élément choisi dans la navigation latérale (NAV). Chaque bloc
+# ci-dessous ne s'affiche que si sa vue est sélectionnée — un seul rendu à la
+# fois, comme un routeur de pages.
+if vue == NAV[0]:
     st.subheader(":material/home: Le bruit chez vous")
 
     st.markdown(
@@ -1499,6 +1979,12 @@ with tab_chez_vous:
         else:
             st.warning("Adresse introuvable (ou réseau injoignable). "
                        "Réessayez ou cliquez directement sur la carte.")
+
+    # Conteneur réservé AU-DESSUS de la carte (comme la maquette) : on le
+    # déclare ici, mais on le remplit plus bas, une fois le clic de la carte
+    # traité. Streamlit autorise cette écriture différée → les cartes de
+    # résultat s'affichent au-dessus tout en reflétant le dernier clic.
+    zone_resultats = st.container()
 
     # ------------------------------------------------------------------
     # Carte interactive centrée sur Montréal-Trudeau.
@@ -1552,58 +2038,64 @@ with tab_chez_vous:
             st.session_state["pt_chez_vous"] = (
                 cle_clic[0], cle_clic[1], "Point cliqué sur la carte")
 
-    st.markdown("<div class='section-label'>Résultat du point choisi</div>",
-                unsafe_allow_html=True)
+    # On remplit maintenant le conteneur réservé plus haut : tout ce bloc
+    # s'affiche AU-DESSUS de la carte, mais utilise le point fraîchement mis à
+    # jour par le clic ci-dessus.
+    with zone_resultats:
+        st.markdown(
+            "<div class='section-label'>Résultat du point choisi</div>",
+            unsafe_allow_html=True)
 
-    pt_chez_vous = st.session_state.get("pt_chez_vous")
-    if pt_chez_vous is not None:
-        lat, lon, source_pt = pt_chez_vous
+        pt_chez_vous = st.session_state.get("pt_chez_vous")
+        if pt_chez_vous is not None:
+            lat, lon, source_pt = pt_chez_vous
 
-        # Lden réel à ce point : agrégation de tous les survols de la journée.
-        recepteur = (lat, lon)
-        vols = charger_vols()
-        lden_point = calc.compute_lden(
-            vols, recepteur, datetime.date(2026, 6, 10))
-        distance_km = _haversine_m(YUL[0], YUL[1], lat, lon) / 1000
+            # Lden réel à ce point : agrégation de tous les survols du jour.
+            recepteur = (lat, lon)
+            vols = charger_vols()
+            lden_point = calc.compute_lden(
+                vols, recepteur, datetime.date(2026, 6, 10))
+            distance_km = _haversine_m(YUL[0], YUL[1], lat, lon) / 1000
 
-        # SEL de chaque survol : sert au repère « plus bruyant » et au compte
-        # des vols qui contribuent réellement (SEL >= 45 dB(A)) à ce point.
-        sels = [calc.compute_sel(v, recepteur) for v in vols]
-        sel_max = max(sels)
-        contributeurs = sum(1 for s in sels if s >= 45)
+            # SEL de chaque survol : repère « plus bruyant » + compte des
+            # vols qui contribuent réellement (SEL >= 45 dB(A)) à ce point.
+            sels = [calc.compute_sel(v, recepteur) for v in vols]
+            sel_max = max(sels)
+            contributeurs = sum(1 for s in sels if s >= 45)
 
-        # Carte 1 : pastille de seuil selon le niveau Lden.
-        if lden_point >= 65:
-            badge = _badge("Au-dessus du seuil 65 dB", "red")
-        elif lden_point >= 55:
-            badge = _badge("Au-dessus du seuil 55 dB", "amber")
+            # Pastille inline de la carte Lden = classe d'exposition, teintée.
+            classe, couleur, _classe_sous = _classe_exposition(lden_point)
+            bg_b, txt_b = _BADGE_EXPO.get(
+                classe, ("rgba(220,58,52,.14)", "#b32d28"))
+            badge_lden = (f'<span class="carte-badge" style="background:{bg_b};'
+                          f'color:{txt_b}">{classe}</span>')
+
+            rendre_cartes([
+                {"label": "Niveau Lden", "valeur": f"{lden_point:.0f}",
+                 "unite": "dB", "badge": badge_lden,
+                 "icone": _ico("lden", "#dc3a34"),
+                 "sous": "Indicateur jour-soir-nuit (24 h)"},
+                _carte_exposition(lden_point),
+                {"label": "Distance à YUL", "valeur": f"{distance_km:.1f}",
+                 "unite": "km", "sous": "À vol d'oiseau du centre de YUL",
+                 "icone": _ico("distance", "#6b7280")},
+                {"label": "Vols contributeurs", "valeur": f"{contributeurs}",
+                 "sous": f"sur ~{n_vols} mouvements / jour",
+                 "icone": _ico("vols", "#6b7280")},
+            ])
+
+            st.caption(
+                f"{comparaison_parlante(lden_point)}  \n"
+                f"Survol le plus bruyant de la journée : "
+                f"SEL {sel_max:.1f} dB(A) — "
+                f"{source_pt} (latitude {lat:.5f}, longitude {lon:.5f})"
+            )
+
         else:
-            badge = _badge("Sous les seuils réglementaires", "green")
+            st.info("Saisissez votre adresse ou cliquez sur la carte pour "
+                    "estimer le bruit à un point donné.")
 
-        classe, couleur, classe_sous = _classe_exposition(lden_point)
-
-        rendre_cartes([
-            {"label": "Niveau Lden", "valeur": f"{lden_point:.0f}",
-             "unite": "dB", "badge": badge},
-            {"label": "Classe d'exposition", "valeur": classe,
-             "accent": couleur, "sous": classe_sous, "mono": False},
-            {"label": "Distance à YUL", "valeur": f"{distance_km:.1f}",
-             "unite": "km", "sous": "Centre de Montréal-Trudeau"},
-            {"label": "Vols contributeurs", "valeur": f"{contributeurs}",
-             "sous": f"sur ~{n_vols} mouvements / jour"},
-        ])
-
-        st.caption(
-            f"{comparaison_parlante(lden_point)}  \n"
-            f"Survol le plus bruyant de la journée : SEL {sel_max:.1f} dB(A) — "
-            f"{source_pt} (latitude {lat:.5f}, longitude {lon:.5f})"
-        )
-
-    else:
-        st.info("Saisissez votre adresse ou cliquez sur la carte pour "
-                "estimer le bruit à un point donné.")
-
-with tab_anim:
+if vue == NAV[1]:
     st.subheader(":material/schedule: Journée 24h")
 
     st.markdown(
@@ -1641,22 +2133,29 @@ with tab_anim:
         explorer_journee(grid_size)
 
 
-with tab_live:
-    st.subheader(":material/rss_feed: Avions en direct")
+if vue == NAV[2]:
+    st.markdown(_CSS_LIVE, unsafe_allow_html=True)
 
+    # En-tête : titre + pastille LIVE pulsante à gauche, pastille « hors-ligne »
+    # verte à droite, puis sous-titre — fidèle à la maquette.
     st.markdown(
-        """
-        **Le bruit en direct, n'importe où** : actualisez la position des
-        avions, puis saisissez votre adresse ou cliquez sur la carte — le
-        niveau instantané estimé au point choisi est comparable à la lecture
-        d'un sonomètre ADM sur WebTrak au même moment.
-
-        Vous pouvez aussi **ajouter un avion virtuel** (position, altitude,
-        phase) pour voir son effet sonore combiné aux avions réels.
-
-        **Optionnel** : seul l'ajout des avions réels a besoin d'internet ;
-        l'avion virtuel et le reste de la démo fonctionnent hors-ligne.
-        """
+        f"""
+        <div class="lv-head">
+          <div>
+            <div class="lv-titrow">
+              <h2>Avions en direct</h2>
+              <span class="badge-live"><span class="d"></span>LIVE</span>
+            </div>
+            <p class="lv-sub">Actualisez la position des avions, puis cliquez
+            sur la carte ou saisissez votre adresse : le niveau instantané
+            estimé au point choisi est comparable à la lecture d'un sonomètre
+            ADM sur WebTrak au même moment.</p>
+          </div>
+          <span class="lv-offline">{_ico("cloud_off", "#2f8a3c")}Hors-ligne
+          — sauf actualisation OpenSky</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
     # ------------------------------------------------------------------
@@ -1665,32 +2164,53 @@ with tab_live:
     # pas casser la démo en salle.
     # ------------------------------------------------------------------
 
-    if st.button("Actualiser les avions (OpenSky)", icon=":material/sync:"):
-        try:
-            from airnoisepy.flight.opensky import OpenSkyFetcher
-            bruts = OpenSkyFetcher().fetch_realtime()
-            st.session_state["avions_live"] = [_normaliser_avion(a)
-                                               for a in bruts]
-            st.session_state["avions_live_heure"] = \
-                datetime.datetime.now().strftime("%H:%M:%S")
-        except Exception as exc:
-            st.error(f"API OpenSky injoignable ({exc}) — "
-                     "la démo continue avec les données locales.")
+    # Toolbar (maquette) : Actualiser · adresse · Localiser · Avion virtuel.
+    # Une seule rangée alignée en bas ; l'avion virtuel passe dans un popover
+    # (clic = panneau déroulant) pour rester fidèle au bouton en pointillés.
+    col_act, col_adr_live, col_btn_live, col_virt = st.columns(
+        [2.1, 4.4, 1.5, 1.8], vertical_alignment="bottom")
+
+    with col_act:
+        if st.button("Actualiser les avions", icon=":material/sync:",
+                     key="btn_actualiser_live", use_container_width=True):
+            try:
+                from airnoisepy.flight.opensky import OpenSkyFetcher
+                bruts = OpenSkyFetcher().fetch_realtime()
+                st.session_state["avions_live"] = [_normaliser_avion(a)
+                                                   for a in bruts]
+                st.session_state["avions_live_heure"] = \
+                    datetime.datetime.now().strftime("%H:%M:%S")
+            except Exception as exc:
+                st.error(f"API OpenSky injoignable ({exc}) — "
+                         "la démo continue avec les données locales.")
 
     # Saisie d'adresse : point retenu dans st.session_state['pt_live']
     # = (lat, lon, libellé), partagé avec le clic carte ci-dessous.
-    col_adr_live, col_btn_live = st.columns([5, 1],
-                                            vertical_alignment="bottom")
     with col_adr_live:
         adresse_live = st.text_input(
             "Votre adresse",
             placeholder="ex. 975 boulevard de la Côte-Vertu, Saint-Laurent",
-            key="adr_live",
+            key="adr_live", label_visibility="collapsed",
         )
     with col_btn_live:
-        localiser_live = st.button("Localiser", icon=":material/search:",
-                                   key="btn_adr_live",
+        localiser_live = st.button("Localiser", icon=":material/my_location:",
+                                   key="btn_adr_live", type="primary",
                                    use_container_width=True)
+
+    # ------------------------------------------------------------------
+    # Avion virtuel (popover) : l'utilisateur place un appareil fictif
+    # (position, altitude, phase) pour voir son effet sonore COMBINÉ aux
+    # avions réels. Stockés dans st.session_state['avions_virtuels'], ils
+    # passent par le même modèle (niveau_instantane) → l'onglet reste
+    # démontrable MÊME sans OpenSky (hors-ligne).
+    # ------------------------------------------------------------------
+    pt_live_defaut = st.session_state.get("pt_live")
+    lat_defaut = pt_live_defaut[0] if pt_live_defaut else YUL[0]
+    lon_defaut = pt_live_defaut[1] if pt_live_defaut else YUL[1]
+
+    with col_virt:
+        pop_virt = st.popover("Avion virtuel", icon=":material/add_circle:",
+                              use_container_width=True)
 
     if localiser_live:
         geo_live = geocoder_adresse(adresse_live)
@@ -1701,23 +2221,11 @@ with tab_live:
             st.warning("Adresse introuvable (ou réseau injoignable). "
                        "Réessayez ou cliquez directement sur la carte.")
 
-    # ------------------------------------------------------------------
-    # Avion virtuel : l'utilisateur place un appareil fictif (position,
-    # altitude, phase) pour voir son effet sonore COMBINÉ aux avions réels.
-    # Les avions virtuels sont stockés dans st.session_state['avions_virtuels']
-    # et passent par le même modèle (niveau_instantane). Avantage : ça marche
-    # MÊME sans OpenSky → l'onglet reste démontrable hors-ligne.
-    # ------------------------------------------------------------------
-    pt_live_defaut = st.session_state.get("pt_live")
-    lat_defaut = pt_live_defaut[0] if pt_live_defaut else YUL[0]
-    lon_defaut = pt_live_defaut[1] if pt_live_defaut else YUL[1]
-
-    with st.expander("Ajouter un avion virtuel (simulation A320)",
-                     icon=":material/add_circle:"):
+    with pop_virt:
         st.caption(
-            "Placez un avion fictif et observez son effet sur le niveau au "
-            "point choisi, additionné aux avions réels. Position par défaut : "
-            "au-dessus de votre point. Type A320 supposé (comme le modèle live)."
+            "Placez un avion fictif (type A320) et observez son effet sur le "
+            "niveau au point choisi, additionné aux avions réels. Position "
+            "par défaut : au-dessus de votre point."
         )
         with st.form("form_avion_virtuel"):
             cva, cvb = st.columns(2)
@@ -1771,49 +2279,112 @@ with tab_live:
     avions_virtuels = st.session_state.get("avions_virtuels", [])
     en_vol = en_vol_reels + avions_virtuels
 
+    # Bandeau de statut vert (maquette) : nb d'avions réels + heure du snapshot
+    # à gauche, compteur d'avions virtuels à droite.
+    n_virt = len(avions_virtuels)
+    virt_html = (
+        f'<span class="virt">{_ico("vols", "#dc3a34")}{n_virt} avion'
+        f'{"s" if n_virt > 1 else ""} virtuel{"s" if n_virt > 1 else ""}</span>'
+        if n_virt else "")
     if avions is not None:
-        st.success(
-            f"{len(en_vol_reels)} avions réels en vol autour de YUL "
-            f"(snapshot de {st.session_state['avions_live_heure']})"
-            + (f" + {len(avions_virtuels)} virtuel(s)"
-               if avions_virtuels else "")
-        )
+        st.markdown(
+            f'<div class="lv-status"><span class="d"></span>'
+            f'<span class="t">{len(en_vol_reels)} avions réels en vol autour '
+            f'de YUL</span>'
+            f'<span class="snap">snapshot · '
+            f'{st.session_state["avions_live_heure"]}</span>{virt_html}</div>',
+            unsafe_allow_html=True)
     elif avions_virtuels:
-        st.info(f"{len(avions_virtuels)} avion(s) virtuel(s) — mode hors-ligne "
-                "(OpenSky non sollicité). Actualisez pour ajouter les réels.")
+        st.markdown(
+            f'<div class="lv-status"><span class="d"></span>'
+            f'<span class="t">{n_virt} avion(s) virtuel(s) — mode hors-ligne'
+            f'</span><span class="snap">OpenSky non sollicité — actualisez '
+            f'pour les réels</span></div>',
+            unsafe_allow_html=True)
 
     if en_vol:
-        col_live_carte, col_live_info = st.columns([3, 2])
+        col_live_carte, col_live_info = st.columns([1.55, 1])
 
         with col_live_carte:
-            # Carte des avions, colorée par phase estimée (vertical_rate).
-            # Les avions virtuels sont en orange pour les distinguer.
+            # Carte des avions avec marqueurs façon maquette : pastille ardoise
+            # (avion réel) ou cercle blanc à liseré rouge pointillé (virtuel),
+            # avion orienté selon son cap. Anneau pointillé autour de YUL.
             m = folium.Map(location=YUL, zoom_start=10)
+            # anneau de portée autour de l'aéroport
+            folium.Circle(YUL, radius=8000, color="#dc3a34", weight=1.5,
+                          opacity=0.35, dash_array="5,5", fill=False).add_to(m)
             for a in en_vol:
                 vr = a.get("vertical_rate") or 0.0
                 etat = "↗ monte" if vr > 2 else ("↘ descend" if vr < -2
                                                  else "→ palier")
                 est_virtuel = a.get("virtuel")
+                cap = (a.get("track") or a.get("true_track")
+                       or a.get("heading") or 0)
+                bg = "#ffffff" if est_virtuel else "#16191f"
+                bord = ("2px dashed #dc3a34" if est_virtuel
+                        else "2.5px solid #ffffff")
+                plane_col = "#dc3a34" if est_virtuel else "#ffffff"
+                html_plane = (
+                    f'<div style="width:30px;height:30px;border-radius:50%;'
+                    f'background:{bg};border:{bord};box-sizing:border-box;'
+                    f'display:flex;align-items:center;justify-content:center;'
+                    f'box-shadow:0 2px 5px rgba(0,0,0,.3)">'
+                    f'<svg viewBox="0 0 24 24" width="15" height="15" '
+                    f'fill="{plane_col}" style="transform:rotate({cap}deg)">'
+                    f'<path d="{_ICONES_CARTE["vols"]}"/></svg></div>')
                 folium.Marker(
                     (a["lat"], a["lon"]),
                     tooltip=(("VIRTUEL · " if est_virtuel else "")
                              + f"{a['callsign'] or a['icao24']} — "
                              f"{(a['alt_baro'] or 0):.0f} m {etat}"),
-                    icon=folium.Icon(
-                        color="orange" if est_virtuel else "blue",
-                        icon="plane", prefix="fa"),
+                    icon=folium.DivIcon(html=html_plane, icon_size=(30, 30),
+                                        icon_anchor=(15, 15)),
                 ).add_to(m)
             # capteurs ADM/WebTrak en petits cercles gris
             ajouter_capteurs_adm(m)
-            # Marqueur sur le point choisi (adresse géocodée ou clic).
+            # repère YUL : point sombre + étiquette
+            folium.Marker(
+                YUL, tooltip="Montréal-Trudeau (YUL)",
+                icon=folium.DivIcon(
+                    html='<div style="display:flex;align-items:center">'
+                    '<span style="width:12px;height:12px;border-radius:50%;'
+                    'background:#16191f;border:2px solid #fff"></span>'
+                    '<span style="margin-left:4px;background:#16191f;color:#fff;'
+                    "font:600 11px 'IBM Plex Mono',monospace;padding:2px 7px;"
+                    'border-radius:5px">YUL</span></div>',
+                    icon_size=(60, 16), icon_anchor=(6, 8))).add_to(m)
+            # Marqueur sur le point choisi (adresse géocodée ou clic) : cible.
             pt_live_courant = st.session_state.get("pt_live")
             if pt_live_courant is not None:
                 folium.Marker(
                     (pt_live_courant[0], pt_live_courant[1]),
                     tooltip="Votre point",
-                    icon=folium.Icon(color="red", icon="home", prefix="fa"),
-                ).add_to(m)
-            retour_live = carte_plein_ecran(m, "live", hauteur=480)
+                    icon=folium.DivIcon(
+                        html='<div style="width:24px;height:24px;'
+                        'border-radius:50%;background:#dc3a34;'
+                        'border:3px solid #fff;box-shadow:0 2px 6px '
+                        'rgba(0,0,0,.35);display:flex;align-items:center;'
+                        'justify-content:center"><span style="width:7px;'
+                        'height:7px;border-radius:50%;background:#fff">'
+                        '</span></div>',
+                        icon_size=(24, 24), icon_anchor=(12, 12))).add_to(m)
+            retour_live = carte_plein_ecran(m, "live", hauteur=470)
+
+            # Légende (maquette) sous la carte.
+            st.markdown(
+                '<div style="display:flex;gap:18px;flex-wrap:wrap;'
+                'font-size:12px;color:#6b7280;margin-top:6px">'
+                '<span style="display:inline-flex;align-items:center;gap:7px">'
+                '<span style="width:13px;height:13px;border-radius:50%;'
+                'background:#16191f"></span>Avion réel</span>'
+                '<span style="display:inline-flex;align-items:center;gap:7px">'
+                '<span style="width:13px;height:13px;border-radius:50%;'
+                'background:#fff;border:2px dashed #dc3a34;box-sizing:border-box">'
+                '</span>Avion virtuel</span>'
+                '<span style="display:inline-flex;align-items:center;gap:7px">'
+                '<span style="width:11px;height:11px;border-radius:50%;'
+                'background:#dc3a34"></span>Votre point</span></div>',
+                unsafe_allow_html=True)
 
         # Un clic sur la carte remplace le point courant (s'il a changé).
         clic = (retour_live or {}).get("last_clicked")
@@ -1831,10 +2402,51 @@ with tab_live:
                 lat_live, lon_live, source_live = pt_live
                 total, contribs = niveau_instantane(
                     en_vol, (lat_live, lon_live), anp)
-                st.metric("Niveau instantané estimé (avions seulement)",
-                          f"{total:.1f} dB(A)")
-                st.caption(f"{source_live} — latitude {lat_live:.5f}, "
-                           f"longitude {lon_live:.5f}")
+
+                # Carte « Niveau instantané estimé » (verre dépoli, maquette).
+                niveau_html = (
+                    f'<div class="carte-metrique" '
+                    f'style="padding:20px 20px 18px">'
+                    f'<div class="lv-niveau-head">'
+                    f'<span class="lab">Niveau instantané estimé</span>'
+                    f'<span class="lv-pill-gray">avions seulement</span></div>'
+                    f'<div class="lv-niveau-val"><span class="n">{total:.1f}'
+                    f'</span><span class="u">dB(A)</span></div>'
+                    f'<div class="lv-coord">{_ico("cible", "#dc3a34")}'
+                    f'{lat_live:.5f}, {lon_live:.5f}</div></div>')
+
+                # Table « Vols contributeurs » avec badges de phase.
+                virt_cs = {(a.get("callsign") or "").strip()
+                           for a in avions_virtuels}
+                lignes = ""
+                for c in contribs[:6]:
+                    cs = c["callsign"]
+                    sim = '<span class="sim"></span>' if cs in virt_cs else ""
+                    lignes += (
+                        f'<div class="vols-row"><span class="cs">{sim}{cs}'
+                        f'</span><span class="dn">{c["distance_m"] / 1000:.1f}'
+                        f' km<br><b>{c["niveau_db"]:.1f} dB</b></span>'
+                        f'{_phase_badge(c.get("phase"))}</div>')
+                vols_html = (
+                    f'<div class="carte-metrique" '
+                    f'style="padding:16px 16px 8px">'
+                    f'<span class="vols-title">Vols contributeurs</span>'
+                    f'<div class="vols-head"><span>Indicatif</span>'
+                    f'<span class="r">Dist · niveau</span>'
+                    f'<span class="r">Phase</span></div>{lignes}</div>')
+
+                note_html = (
+                    f'<div class="lv-note">{_ico("info", "#c99700")}'
+                    f'<span>Contribution des avions uniquement. Un sonomètre '
+                    f'mesure aussi le bruit de fond urbain (~45–55 dB). '
+                    f'Estimation L<sub>Amax</sub> dérivée des courbes SEL '
+                    f'(−9 dB) ; comparable seulement pendant un survol.</span>'
+                    f'</div>')
+
+                st.markdown(
+                    '<div style="display:flex;flex-direction:column;gap:14px">'
+                    + niveau_html + vols_html + note_html + '</div>',
+                    unsafe_allow_html=True)
 
                 # Effet propre de l'avion virtuel : écart avec / sans.
                 if avions_virtuels:
@@ -1850,13 +2462,6 @@ with tab_live:
                             "Aucun autre avion ne contribue ici : le niveau "
                             "provient du seul avion virtuel.")
 
-                st.dataframe(contribs[:5], use_container_width=True)
-                st.caption(
-                    "⚠️ Contribution des avions uniquement : un sonomètre "
-                    "mesure aussi le bruit de fond urbain (~45-55 dB). "
-                    "Estimation LAmax dérivée des courbes SEL (−9 dB). La "
-                    "comparaison n'a de sens que pendant un survol."
-                )
                 mesure_live = st.number_input(
                     "Niveau lu sur WebTrak au même endroit (dB)",
                     value=0.0, step=0.5, key="mesure_webtrak_live")
@@ -1870,14 +2475,13 @@ with tab_live:
                                    "— hors tolérance (bruit de fond ? "
                                    "avion hors zone ?)")
             else:
-                st.markdown("👈 *Saisissez votre adresse ou cliquez sur la "
-                            "carte pour estimer le bruit instantané à cet "
-                            "endroit.*")
+                st.info("Saisissez votre adresse ou cliquez sur la carte "
+                        "pour estimer le bruit instantané à cet endroit.")
     else:
         st.info("Cliquez sur **Actualiser les avions** (internet) ou ajoutez "
-                "un **avion virtuel** ci-dessus pour estimer le bruit.")
+                "un **avion virtuel** pour estimer le bruit.")
 
-with tab_valid:
+if vue == NAV[3]:
     st.subheader(":material/check: Validation WebTrak / ADM")
 
     st.markdown(
@@ -1935,30 +2539,71 @@ with tab_valid:
         "ajustez la mesure WebTrak/ADM pour comparer."
     )
 
-with tab_export:
-    st.markdown("<div class='section-label'>Export des résultats</div>",
-                unsafe_allow_html=True)
+if vue == NAV[4]:
+    st.markdown(_CSS_EXPORT, unsafe_allow_html=True)
 
+    # Titre + sous-titre (avec ResultsExporter en code teinté), fidèle maquette.
     st.markdown(
-        "Partagez les résultats obtenus après calcul. La classe "
-        "`ResultsExporter` produit les exports complets du projet — "
-        "grille Lden (CSV), carte interactive (HTML) et animation 24 h (GIF)."
-    )
-
-    st.markdown(
-        f"""
-        <div class="carte-metrique" style="margin-top:0.6rem">
-          <div class="label">Exports de la session courante</div>
-          <div style="font-weight:700;font-size:1.05rem;margin:0.1rem 0 0.7rem">
-            Résolution {grid_size}×{grid_size} · journée type · ~{n_vols} vols
-          </div>
-          <span class="chip-fichier">{_svg_fichier('#6b7280')} lden_grid<code>.csv</code></span>
-          <span class="chip-fichier">{_svg_fichier('#6b7280')} carte<code>.html</code></span>
-          <span class="chip-fichier">{_svg_fichier('#6b7280')} animation<code>.gif</code></span>
+        """
+        <div style="margin-bottom:2px">
+          <h2 style="margin:0;font-size:20px;font-weight:600;
+            letter-spacing:-.015em;color:#1b1e25">Export des résultats</h2>
+          <p style="margin:9px 0 0;font-size:13.5px;line-height:1.55;
+            color:#6b7280;max-width:760px">Partagez les résultats obtenus après
+          calcul. La classe <span class="exp-sub-code">ResultsExporter</span>
+          produit les exports complets du projet — grille Lden, carte
+          interactive et animation 24 h.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    # En-tête de la carte de session : intitulé + pastilles à gauche, bouton
+    # « Générer les exports » à droite (vrai widget Streamlit).
+    c_lab, c_btn = st.columns([3, 1.15], vertical_alignment="center")
+    with c_lab:
+        st.markdown(
+            f"""
+            <div><span class="exp-sess-lab">Exports de la session courante</span>
+            <div class="exp-chips">
+              <span class="exp-chip">{_ico("grid_on", "#6b7280")}
+                <span class="m">{grid_size}×{grid_size}</span></span>
+              <span class="exp-chip">{_ico("sun", "#6b7280")}Journée type</span>
+              <span class="exp-chip">{_ico("vols", "#6b7280")}
+                <span class="m">~{n_vols}</span> vols</span>
+            </div></div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c_btn:
+        generer = st.button("Générer les exports", type="primary",
+                            icon=":material/download:",
+                            use_container_width=True)
+
+    # Trois cartes de fichiers (aperçu fidèle à la maquette).
+    _fichiers = [
+        ("table", "#2f8a3c", "rgba(67,160,74,.14)", "lden_grid", "csv",
+         f"Grille Lden complète — une valeur par cellule "
+         f"({grid_size}×{grid_size}).", "~412 Ko"),
+        ("map", "#c46a16", "rgba(239,139,46,.14)", "carte", "html",
+         "Carte isophonique interactive (Folium / Leaflet).", "~2.1 Mo"),
+        ("movie", "#dc3a34", "rgba(220,58,52,.12)", "animation", "gif",
+         "Animation 24 h — propagation heure par heure.", "~5.8 Mo"),
+    ]
+    _cartes = ""
+    for ic, ec, eb, nom, ext, desc, taille in _fichiers:
+        _cartes += (
+            f'<div class="exp-card"><div class="top">'
+            f'<span class="exp-ico" style="background:{eb}">{_ico(ic, ec)}</span>'
+            f'<span class="exp-ext" style="color:{ec};background:{eb}">'
+            f'.{ext}</span></div>'
+            f'<div><div class="exp-name">{nom}.{ext}</div>'
+            f'<div class="exp-desc">{desc}</div></div>'
+            f'<div class="exp-foot"><span class="exp-size">{taille}</span>'
+            f'<span class="exp-dl">{_ico("download", "#3a3a3c")}Télécharger'
+            f'</span></div></div>')
+    st.markdown(f'<div class="exp-grid">{_cartes}</div>',
+                unsafe_allow_html=True)
 
     # ------------------------------------------------------------------
     # Afin d'éviter que l'onglet Exports ne génère automatiquement
@@ -1969,7 +2614,7 @@ with tab_export:
     # chaque onglet reste indépendant des autres.
     # ------------------------------------------------------------------
 
-    if st.button("Générer les exports", type="primary", icon=":material/download:"):
+    if generer:
 
         # --------------------------------------------------------------
         # Jeu de données simplifié utilisé uniquement à des fins
@@ -2083,37 +2728,35 @@ with tab_export:
         except Exception as exc:
             st.warning(f"L'animation GIF n'a pas pu être générée : {exc}")
     else:
-        st.info(
-            "Cliquez sur le bouton ci-dessus pour générer les fichiers d'export "
-            "de la session courante."
+        st.markdown(
+            f'<div class="exp-hint">{_ico("bolt", "#dc3a34")}'
+            f'<span>Cliquez sur <b>Générer les exports</b> pour produire les '
+            f'fichiers de la session courante.</span></div>',
+            unsafe_allow_html=True,
         )
 
-# ---------------------------------------------------------------------
-# Pied de page
-#
-# La démonstration doit rester entièrement fonctionnelle hors-ligne.
-# Les logos sont donc chargés depuis le dossier local assets/
-# plutôt qu'à partir d'URLs externes.
-# ---------------------------------------------------------------------
-
-st.divider()
-
-col_lic, col_cit = st.columns(2)
-
-with col_lic:
-    st.markdown("<div class='section-label'>Licence</div>",
-                unsafe_allow_html=True)
-    st.write(
-        "Distribué sous licence MIT. "
-        "Voir le fichier `LICENSE.md` pour plus de détails."
-    )
-
-with col_cit:
-    st.markdown("<div class='section-label'>Citation</div>",
-                unsafe_allow_html=True)
-    st.caption(
-        "Kevin, Bouchra, Syndia, Laura. "
-        "AirNoisePy: a Python tool for aircraft noise modelling around "
-        "Montréal-Trudeau airport (ECAC Doc 29), "
-        "MGA802, École de technologie supérieure, Montréal, 2026."
+    # ------------------------------------------------------------------
+    # Pied de l'onglet : licence + citation (deux cartes verre dépoli),
+    # fidèle à la maquette. Reste 100 % hors-ligne (aucune ressource externe).
+    # ------------------------------------------------------------------
+    st.markdown(
+        f"""
+        <div class="lic-grid">
+          <div class="lic-card">
+            <div class="lic-head">{_ico("balance", "#6b7280")}
+              <span class="t">Licence</span></div>
+            <p>Distribué sous licence <b>MIT</b>. Voir le fichier
+            <span class="code-green">LICENSE.md</span> pour plus de détails.</p>
+          </div>
+          <div class="lic-card">
+            <div class="lic-head">{_ico("quote", "#6b7280")}
+              <span class="t">Citation</span></div>
+            <p>Kevin, Bouchra, Syndia, Laura. <i>AirNoisePy: a Python tool for
+            aircraft noise modelling around Montréal-Trudeau airport
+            (ECAC Doc 29)</i>, MGA802, École de technologie supérieure,
+            Montréal, 2026.</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
