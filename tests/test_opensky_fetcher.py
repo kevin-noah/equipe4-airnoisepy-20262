@@ -5,7 +5,8 @@ import pytest
 from airnoisepy.flight.opensky import (OpenSkyFetcher,
                                        DEFAULT_RADIUS_KM,
                                        YUL_LATITUDE_KM,
-                                       YUL_LONGITUDE_KM)
+                                       YUL_LONGITUDE_KM,
+                                       RASTERIO_AVAILABLE)
 from unittest.mock import patch, MagicMock
 
 #Données de test
@@ -81,6 +82,10 @@ class TestInit:
         assert fetcher_auth.username == "username"
         assert fetcher_auth.password == "test123"
 
+    @pytest.mark.skipif(not RASTERIO_AVAILABLE,
+                        reason="rasterio non installé : la correction AGL "
+                               "lève ImportError avant le test du chemin "
+                               "(cas couvert par test_rasterio_absent)")
     def test_dem_path_inexistant(self):
         "doit annoncer file not found"
         with pytest.raises(FileNotFoundError):

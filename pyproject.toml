@@ -103,3 +103,16 @@ docs = [
     "sphinx>=7.0",
     "furo>=2024.1",
 ]
+
+
+# ==========================================================
+# CONFIGURATION DE PYTEST
+# ==========================================================
+# On limite la découverte des tests au dossier tests/.
+# Sans cela, `pytest` lancé à la racine collecte aussi
+# data/test_opensky.py (un script de connexion OpenSky, pas un
+# test), dont le sys.exit() au niveau module fait planter toute
+# la collecte. Avec testpaths, `pytest` tout court fonctionne.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
