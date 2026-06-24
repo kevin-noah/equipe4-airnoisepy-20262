@@ -319,7 +319,8 @@ st.markdown(
     .badge--red   { background: #fdecec; color: #dc3a34; }
     .badge--green { background: #e3f5e9; color: #16a34a; }
     /* ---- Marque de la barre latérale ---- */
-    .marque { display: flex; align-items: center; gap: 12px; padding: 2px 6px 0; }
+    .marque { display: flex; align-items: center; gap: 12px;
+              padding: 2px 6px 0; margin-bottom: 0.9rem; }
     .marque-logo {
         width: 38px; height: 38px; border-radius: 11px; flex: none;
         background: linear-gradient(160deg, #dc3a34, #9e2722);
@@ -466,6 +467,33 @@ st.markdown(
                     0 4px 12px rgba(0, 0, 0, 0.22) !important;
     }
     [data-testid="stSliderThumbValue"] { font-variant-numeric: tabular-nums; }
+    /* ---- Slider de résolution (sidebar) façon maquette ----
+       valeur en haut à droite (HTML), piste pleine largeur, pas de pastille
+       sur le pouce ni de bornes min/max sous la piste. */
+    [data-testid="stSidebar"] [data-testid="stSliderThumbValue"],
+    [data-testid="stSidebar"] [data-testid="stSliderTickBar"],
+    [data-testid="stSidebar"] [data-testid="stSliderTickBarMin"],
+    [data-testid="stSidebar"] [data-testid="stSliderTickBarMax"] {
+        display: none !important;
+    }
+    /* piste un peu plus longue : on annule la marge interne du widget */
+    [data-testid="stSidebar"] [data-testid="stSlider"] { padding: 4px 0 2px; }
+    .grid-row { display: flex; align-items: baseline;
+        justify-content: space-between; margin-bottom: -6px; }
+    .grid-lab { font-size: 13px; font-weight: 500;
+        color: rgba(238, 241, 245, 0.92); }
+    .grid-val { font-family: 'IBM Plex Mono', ui-monospace, monospace;
+        font-size: 14px; font-weight: 500; color: #ff8a82;
+        font-variant-numeric: tabular-nums; }
+    .grid-ends { display: flex; justify-content: space-between;
+        font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 9.5px;
+        color: rgba(238, 241, 245, 0.42); margin-top: -10px; }
+    /* ---- Plus d'air vertical entre les blocs de la barre latérale ---- */
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 1.05rem;
+    }
+    /* sauf à l'intérieur du menu de navigation (pilules resserrées) */
+    [data-testid="stSidebar"] [role="radiogroup"] { gap: 4px !important; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -492,22 +520,18 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
-# Fond de la barre latérale : dégradé « coucher de soleil » de la maquette
-# (ardoise nuit en haut → violet → ambre/or en bas), assombri par un voile
-# dégradé pour garder le texte lisible, plus un halo orange diffus derrière la
+# Fond de la barre latérale (maquette) : base presque noire — sombre en haut
+# ET en bas — avec un halo chaud orange concentré au centre-droit, derrière la
 # navigation. 100 % CSS → hors-ligne, pas de dépendance à un fichier image.
 st.markdown(
     """
     <style>
     section[data-testid="stSidebar"] > div:first-child {
         background:
-            radial-gradient(220px 260px at 52% 22%,
-                rgba(244, 158, 74, 0.42), rgba(220, 90, 60, 0.16) 42%,
-                transparent 68%),
-            linear-gradient(180deg, rgba(20, 23, 29, 0.62) 0%,
-                rgba(20, 23, 29, 0.80) 46%, rgba(20, 23, 29, 0.93) 100%),
-            linear-gradient(176deg, #16202f 0%, #233048 30%, #5a3f63 56%,
-                #b9603f 76%, #e0913f 90%, #f0b35a 100%);
+            radial-gradient(480px 440px at 62% 31%,
+                rgba(233, 120, 58, 0.34), rgba(190, 72, 50, 0.12) 46%,
+                transparent 70%),
+            linear-gradient(180deg, #1b1e24 0%, #17181d 52%, #121215 100%);
         background-attachment: local;
     }
     /* cartes de seuils en verre dépoli clair (maquette) : on voit le dégradé
@@ -1852,24 +1876,31 @@ st.markdown(
 st.sidebar.markdown('<div class="reglages-label">Réglages</div>',
                     unsafe_allow_html=True)
 
+# Slider de résolution façon maquette : on place le label + la valeur sur une
+# même ligne (via un emplacement rempli APRÈS lecture de la valeur), la piste
+# pleine largeur (label du widget masqué), puis trois légendes sous la piste.
+_ph_grid = st.sidebar.empty()
 grid_size = st.sidebar.select_slider(
     "Résolution de la grille",
     options=[40, 60, 80],
     value=60,
-    format_func=lambda n: f"{n} × {n}",
-    help=(
-        "40 = rapide, 80 = plus détaillé. "
-        "Cette valeur sera utilisée par les cartes et les calculs de grille."
-    ),
+    format_func=lambda n: f"{n}×{n}",
+    label_visibility="collapsed",
+)
+_ph_grid.markdown(
+    f'<div class="grid-row"><span class="grid-lab">Résolution de grille</span>'
+    f'<span class="grid-val">{grid_size} × {grid_size}</span></div>',
+    unsafe_allow_html=True,
+)
+st.sidebar.markdown(
+    '<div class="grid-ends"><span>40×40</span><span>fine</span>'
+    '<span>80×80</span></div>',
+    unsafe_allow_html=True,
 )
 
 curfew_actif = st.sidebar.toggle(
     "Couvre-feu 23 h – 7 h",
     value=False,
-    help=(
-        "Active un scénario de démonstration où les vols nocturnes "
-        "sont réduits entre 23h et 7h."
-    ),
 )
 
 st.sidebar.markdown(

@@ -12,8 +12,14 @@ __pycache__/
 # Fichiers locaux générés par PyCharm.
 .idea/
 
-# Métadonnées de packaging générées automatiquement.
+# Métadonnées et artefacts de packaging générés automatiquement
+# (build/ est créé par « pip install . » / la construction du wheel).
 *.egg-info/
+build/
+dist/
+
+# Déchets macOS (Finder).
+.DS_Store
 
 # Fichier local pouvant contenir des mots de passe ou clés API.
 .env

@@ -2,14 +2,14 @@
 
 <img src="assets/ets.png" alt="ÉTS Montréal" height="70">
 
-# ✈️ AirNoisePy
+# <img src="https://api.iconify.design/material-symbols/flight.svg?color=%23dc3a34" height="30" alt=""> AirNoisePy
 
 **Modélisation du bruit aérien autour de l'aéroport Montréal-Trudeau (YUL)
 selon la norme ECAC Doc 29**
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
-[![Tests](https://img.shields.io/badge/tests-280%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-283%20passed-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![Streamlit](https://img.shields.io/badge/demo-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](demo/app.py)
 [![ECAC Doc 29](https://img.shields.io/badge/norme-ECAC%20Doc%2029-blueviolet)](https://www.ecac-ceac.org/)
 
@@ -20,7 +20,7 @@ selon la norme ECAC Doc 29**
 
 ---
 
-## 🎯 Le projet en une phrase
+## <img src="https://api.iconify.design/material-symbols/target.svg?color=%23dc3a34" height="24" alt=""> Le projet en une phrase
 
 Pour chaque avion qui décolle ou atterrit à YUL, AirNoisePy calcule le niveau
 sonore ressenti au sol par les riverains, en croisant **trois sources de
@@ -28,9 +28,9 @@ données indépendantes** :
 
 | Source | Ce qu'elle apporte |
 |---|---|
-| 🛰️ **OpenSky Network** (ADS-B) | la *géométrie* — trajectoires 3D réelles des vols |
-| 📊 **EASA ANP v9** | l'*acoustique* — courbes Noise-Power-Distance certifiées de 14 avions |
-| 🎙️ **WebTrak / ADM** | la *validation* — mesures des sonomètres physiques (tolérance ±3 dB) |
+| <img src="https://api.iconify.design/material-symbols/satellite-alt.svg?color=%236b7280" height="18" alt=""> **OpenSky Network** (ADS-B) | la *géométrie* — trajectoires 3D réelles des vols |
+| <img src="https://api.iconify.design/material-symbols/bar-chart.svg?color=%236b7280" height="18" alt=""> **EASA ANP v9** | l'*acoustique* — courbes Noise-Power-Distance certifiées de 13 avions |
+| <img src="https://api.iconify.design/material-symbols/mic.svg?color=%236b7280" height="18" alt=""> **WebTrak / ADM** | la *validation* — mesures des sonomètres physiques (tolérance ±3 dB) |
 
 Le résultat : des cartes de contours isophoniques **Lden** (l'indicateur
 officiel de la directive européenne 2002/49/CE, celui des cartes publiées
@@ -39,7 +39,7 @@ dans un rayon de 25 km.
 
 ---
 
-## 🏗️ Architecture
+## <img src="https://api.iconify.design/material-symbols/account-tree.svg?color=%23dc3a34" height="24" alt=""> Architecture
 
 Six classes, une responsabilité chacune, interfaces définies avant le code :
 
@@ -62,14 +62,14 @@ flowchart LR
     NC --> CT --> RE
 ```
 
-Les **280 tests** et la **démo Streamlit** consomment exactement les mêmes
+Les **283 tests** et la **démo Streamlit** consomment exactement les mêmes
 classes — aucune n'a été modifiée pour les besoins de l'interface. `NoiseCalculator` reçoit sa base NPD par injection de
 dépendance : chaque membre a pu développer et tester sa classe
 indépendamment des autres.
 
 ---
 
-## 🚀 Installation
+## <img src="https://api.iconify.design/material-symbols/rocket-launch.svg?color=%23dc3a34" height="24" alt=""> Installation
 
 ```bash
 git clone https://github.com/kevin-noah/equipe4-airnoisepy-20262.git
@@ -77,7 +77,7 @@ cd equipe4-airnoisepy-20262
 pip install .
 ```
 
-## ⚡ Démarrage rapide
+## <img src="https://api.iconify.design/material-symbols/bolt.svg?color=%23dc3a34" height="24" alt=""> Démarrage rapide
 
 ```python
 from airnoisepy import ANPDatabase, FlightOperation, NoiseCalculator
@@ -97,7 +97,7 @@ pour un correcteur qui vient de cloner le dépôt.
 
 ---
 
-## 🖥️ Démo interactive
+## <img src="https://api.iconify.design/material-symbols/desktop-windows.svg?color=%23dc3a34" height="24" alt=""> Démo interactive
 
 ```bash
 streamlit run demo/app.py
@@ -108,11 +108,11 @@ streamlit run demo/app.py
 
 | Onglet | Ce qu'il montre |
 |---|---|
-| 🏠 **Le bruit chez vous** | cliquez n'importe où → Lden + équivalent parlant + verdict réglementaire |
-| 🕐 **Journée 24 h** | l'accumulation du bruit heure par heure (566 mouvements, profil horaire réel de YUL) |
-| 📡 **Avions en direct** | les avions au-dessus de Montréal *maintenant* + niveau instantané estimé au clic |
-| ✅ **Validation WebTrak** | écart modèle/mesure avec la tolérance ECAC ±3 dB |
-| 💾 **Exports** | génération des fichiers de résultats (CSV, carte HTML) |
+| <img src="https://api.iconify.design/material-symbols/pin-drop.svg?color=%236b7280" height="18" alt=""> **Le bruit chez vous** | cliquez n'importe où → Lden + équivalent parlant + verdict réglementaire |
+| <img src="https://api.iconify.design/material-symbols/schedule.svg?color=%236b7280" height="18" alt=""> **Journée 24 h** | l'accumulation du bruit heure par heure (566 mouvements, profil horaire réel de YUL) |
+| <img src="https://api.iconify.design/material-symbols/flight.svg?color=%236b7280" height="18" alt=""> **Avions en direct** | les avions au-dessus de Montréal *maintenant* + niveau instantané estimé au clic |
+| <img src="https://api.iconify.design/material-symbols/fact-check.svg?color=%236b7280" height="18" alt=""> **Validation WebTrak** | écart modèle/mesure avec la tolérance ECAC ±3 dB |
+| <img src="https://api.iconify.design/material-symbols/download.svg?color=%236b7280" height="18" alt=""> **Exports** | génération des fichiers de résultats (CSV, carte HTML, animation GIF) |
 
 La barre latérale ajoute la résolution de grille et un scénario *what-if*
 **couvre-feu 23h-7h** : les vols de nuit sont retirés du calcul et les
@@ -120,7 +120,7 @@ contours se contractent en direct.
 
 ---
 
-## 🔬 La physique en bref
+## <img src="https://api.iconify.design/material-symbols/science.svg?color=%23dc3a34" height="24" alt=""> La physique en bref
 
 - **Les décibels ne s'additionnent pas** : 70 dB + 70 dB = 73 dB. Toutes les
   agrégations passent par l'énergie : `10·log10(Σ 10^(L/10))`.
@@ -139,10 +139,10 @@ isolation acoustique obligatoire.
 
 ---
 
-## ✅ Tests
+## <img src="https://api.iconify.design/material-symbols/check-circle.svg?color=%23dc3a34" height="24" alt=""> Tests
 
 ```bash
-python -m pytest tests/ -q        # 280 tests
+python -m pytest tests/ -q        # 283 tests
 ```
 
 Chaque classe a sa suite : mécanique de calcul vérifiée contre des valeurs
@@ -152,7 +152,7 @@ distance, croît avec la poussée, départ > arrivée).
 
 ---
 
-## 📖 Documentation
+## <img src="https://api.iconify.design/material-symbols/menu-book.svg?color=%23dc3a34" height="24" alt=""> Documentation
 
 La référence complète de l'API est générée automatiquement par **Sphinx** à
 partir des docstrings du code.
@@ -166,7 +166,7 @@ Ouvrez ensuite `docs/_build/html/index.html` dans un navigateur.
 
 ---
 
-## 📚 Références
+## <img src="https://api.iconify.design/material-symbols/library-books.svg?color=%23dc3a34" height="24" alt=""> Références
 
 - ECAC Doc 29, 4ᵉ éd. — *Report on Standard Method of Computing Noise
   Contours around Civil Airports*
@@ -176,7 +176,7 @@ Ouvrez ensuite `docs/_build/html/index.html` dans un navigateur.
 - [WebTrak YUL](https://webtrak.emsbk.com/yul) — Aéroports de Montréal
 - ISO 9613-1 — atténuation du son lors de sa propagation à l'air libre
 
-## 📄 Licence
+## <img src="https://api.iconify.design/material-symbols/balance.svg?color=%23dc3a34" height="24" alt=""> Licence
 
 Distribué sous licence MIT — voir [`LICENSE.md`](LICENSE.md).
 
