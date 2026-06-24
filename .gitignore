@@ -27,6 +27,9 @@ dist/
 # Dossier de résultats générés automatiquement.
 results/
 
-# Fichiers intermédiaires de Sphinx (le HTML final, lui, est versionné
-# car il fait partie du livrable de remise).
+# Caches de build internes de Sphinx (pickle d'environnement + inventaires
+# intersphinx) : ~10 Mo inutiles, régénérés à chaque « make html ». La doc
+# HTML visible (livrable pour le prof) reste versionnée, elle.
 docs/_build/doctrees/
+docs/_build/html/.doctrees/
+docs/_build/html/.buildinfo
